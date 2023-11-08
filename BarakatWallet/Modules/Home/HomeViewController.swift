@@ -1,0 +1,306 @@
+//
+//  MainViewController.swift
+//  BarakatWallet
+//
+//  Created by km1tj on 05/10/23.
+//
+
+import Foundation
+import UIKit
+
+protocol HomeViewControllerItemDelegate: AnyObject {
+    func goToAllTapped(cell: UICollectionViewCell)
+    func cardTapped(card: AppStructs.CreditDebitCard?)
+    func serviceGroupTapped(group: AppStructs.PaymentGroup)
+    func transferTapped(transfer: AppStructs.TransferTypes)
+    func showcaseTapped(showcase: AppStructs.Showcase)
+    func favouriteTapped(favouite: AppStructs.Favourite)
+}
+
+class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, HomeViewControllerItemDelegate {
+ 
+    let topBar: MainTopBarView = {
+        let view = MainTopBarView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .clear
+        return view
+    }()
+    let collectionView: UICollectionView = {
+        let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.keyboardDismissMode = .interactive
+        view.register(MainCardListCell.self, forCellWithReuseIdentifier: "card_list_cell")
+        view.register(MainServiceListCell.self, forCellWithReuseIdentifier: "service_list_cell")
+        view.register(PayWithNumberCell.self, forCellWithReuseIdentifier: "number_cell")
+        view.register(MainVitrinaListCell.self, forCellWithReuseIdentifier: "vitrina_list_cell")
+        view.register(MainFavouriteListCell.self, forCellWithReuseIdentifier: "favourite_list_cell")
+        view.register(MainRatesCell.self, forCellWithReuseIdentifier: "rates_cell")
+        view.backgroundColor = .clear
+        view.contentInset = .init(top: 30, left: 0, bottom: 20, right: 0)
+        return view
+    }()
+    lazy var topViewMinHeight: CGFloat = {
+        let topBar: CGFloat = 224 - 78
+        return UIApplication.statusBarHeight + topBar
+    }()
+    lazy var topViewMaxHeight: CGFloat = {
+        let topBar: CGFloat = 224
+        return UIApplication.statusBarHeight + topBar
+    }()
+    private var heightAnchor: NSLayoutConstraint!
+    
+    let viewModel: HomeViewModel
+    weak var coordinator: HomeCoordinator? = nil
+    
+    init(viewModel: HomeViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.view.backgroundColor = Theme.current.plainTableBackColor
+        self.view.addSubview(self.collectionView)
+        self.view.addSubview(self.topBar)
+        self.heightAnchor = self.topBar.heightAnchor.constraint(equalToConstant: self.topViewMaxHeight)
+        self.topBar.setup()
+        NSLayoutConstraint.activate([
+            self.topBar.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            self.topBar.topAnchor.constraint(equalTo: self.view.topAnchor),
+            self.topBar.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            self.heightAnchor,
+            self.collectionView.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 0),
+            self.collectionView.topAnchor.constraint(equalTo: self.topBar.bottomAnchor, constant: -10),
+            self.collectionView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: 0),
+            self.collectionView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: 0)
+        ])
+        self.collectionView.showsVerticalScrollIndicator = false
+        self.collectionView.showsHorizontalScrollIndicator = false
+        self.collectionView.contentInsetAdjustmentBehavior = .never
+        self.collectionView.delegate = self
+        self.collectionView.dataSource = self
+        self.topBar.headerView.avatarView.isUserInteractionEnabled = true
+        self.topBar.headerView.avatarView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTapped)))
+        self.topBar.headerView.menuView.addTarget(self, action: #selector(self.profileTapped), for: .touchUpInside)
+        self.topBar.headerView.notifyView.addTarget(self, action: #selector(self.notifyTapped), for: .touchUpInside)
+        self.collectionView.refreshControl = UIRefreshControl()
+        self.collectionView.refreshControl?.tintColor = Theme.current.tintColor
+        self.collectionView.refreshControl!.addTarget(self, action: #selector(reloadMainView), for: .valueChanged)
+        
+        self.viewModel.didLoadServices.subscribe(onNext: { [weak self] _ in
+            self?.collectionView.refreshControl?.endRefreshing()
+            self?.collectionView.reloadSections(IndexSet([2,3]))
+        }).disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadServicesError.subscribe(onNext: { [weak self] message in
+            self?.collectionView.refreshControl?.endRefreshing()
+            self?.showErrorAlert(title: "ERROR".localized, message: message)
+        }).disposed(by: self.viewModel.disposeBag)
+        
+        self.viewModel.loadServices()
+    }
+    
+    @objc func reloadMainView() {
+        self.viewModel.loadServices()
+    }
+    
+    @objc func profileTapped() {
+        self.coordinator?.navigateToProfile()
+    }
+    
+    @objc func notifyTapped() {
+        self.coordinator?.navigateToNotify()
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.isHidden = true
+        self.setStatusBarStyle(dark: false)
+    }
+    
+    override func themeChanged(newTheme: Theme) {
+        super.themeChanged(newTheme: newTheme)
+        self.view.backgroundColor = Theme.current.plainTableBackColor
+        self.collectionView.reloadData()
+        self.topBar.themeChanged(newTheme: newTheme)
+    }
+    
+    func goToAllTapped(cell: UICollectionViewCell) {
+        guard let indexPath = self.collectionView.indexPath(for: cell) else { return }
+        if indexPath.section == 2 {
+            self.coordinator?.navigateToPayments(fromTransfers: false)
+        } else if indexPath.section == 3 {
+            self.coordinator?.navigateToPayments(fromTransfers: true)
+        } else if indexPath.section == 4 {
+            self.coordinator?.navigateToShowcaseList()
+        } else if indexPath.section == 5 {
+            self.coordinator?.navigateToFavouriteList()
+        } else if indexPath.section == 6 {
+            self.coordinator?.navigateToRates(openConvertor: true)
+        }
+    }
+    
+    func serviceGroupTapped(group: AppStructs.PaymentGroup) {
+        self.coordinator?.navigateToServicesList(selectedGroup: group)
+    }
+    
+    func transferTapped(transfer: AppStructs.TransferTypes) {
+        self.coordinator?.navigateToTransferView(transfer: transfer)
+    }
+    
+    func showcaseTapped(showcase: AppStructs.Showcase) {
+        self.coordinator?.navigateToShowcaseView(showcase: showcase)
+    }
+    
+    func favouriteTapped(favouite: AppStructs.Favourite) {
+        self.coordinator?.navigateToServiceByFavourite(favourite: favouite)
+    }
+    
+    func cardTapped(card: AppStructs.CreditDebitCard?) {
+        self.coordinator?.navigateToCardView(card: card)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        if indexPath.section == 1 {
+            self.coordinator?.navigateToTransferByNumberView()
+        } else if indexPath.section == 6 {
+            self.coordinator?.navigateToRates(openConvertor: false)
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        if indexPath.section == 0 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_list_cell", for: indexPath) as! MainCardListCell
+            cell.delegate = self
+            cell.configure(cards: self.viewModel.creditDebitCards)
+            return cell
+        } else if indexPath.section == 1 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "number_cell", for: indexPath) as! PayWithNumberCell
+            cell.delegate = self
+            cell.configure()
+            return cell
+        } else if indexPath.section == 2 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "service_list_cell", for: indexPath) as! MainServiceListCell
+            cell.delegate = self
+            cell.configure(services: self.viewModel.serviceGroups)
+            return cell
+        } else if indexPath.section == 3 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "service_list_cell", for: indexPath) as! MainServiceListCell
+            cell.delegate = self
+            cell.configure(transfers: self.viewModel.transfers)
+            return cell
+        } else if indexPath.section == 4 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "vitrina_list_cell", for: indexPath) as! MainVitrinaListCell
+            cell.delegate = self
+            cell.configure()
+            return cell
+        } else if indexPath.section == 5 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "favourite_list_cell", for: indexPath) as! MainFavouriteListCell
+            cell.delegate = self
+            cell.configure(service: true)
+            return cell
+        } else if indexPath.section == 6 {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "rates_cell", for: indexPath) as! MainRatesCell
+            cell.delegate = self
+            cell.configure()
+            return cell
+        }
+        return collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath)
+    }
+    
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 7
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        if section == 0 {
+            return 1
+        } else if section == 1 {
+            return 1
+        } else if section == 2 {
+            return 1
+        } else if section == 3 {
+            return 1
+        } else if section == 4 {
+            return 1
+        } else if section == 5 {
+            return 1
+        } else if section == 6 {
+            return 1
+        }
+        return 0
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        if indexPath.section == 0 {
+            // the size of credit cards is 85.60 × 53.98 mm ratio is 1.5858
+            let itemWidth = (self.view.frame.width - 22) / 2.5
+            let height = (itemWidth - 10) * 0.63
+            return .init(width: collectionView.frame.width, height: height + 48)
+        } else if indexPath.section == 1 {
+            return .init(width: collectionView.frame.width, height: 80)
+        } else if indexPath.section == 2 || indexPath.section == 3 {
+            let itemWidth = ((self.view.frame.width - 22) / 4)
+            let height = (itemWidth - 10) - 2
+            return .init(width: collectionView.frame.width, height: height + 54)
+        } else if indexPath.section == 4 {
+            let itemWidth = ((self.view.frame.width - 22) / 2.6)
+            let height = (itemWidth - 10) * 0.6
+            return .init(width: collectionView.frame.width, height: height + 54)
+        } else if indexPath.section == 5 {
+            let itemWidth = ((self.view.frame.width - 22) / 4)
+            let height = (itemWidth - 10) - 2
+            return .init(width: collectionView.frame.width, height: height + 34)
+        } else if indexPath.section == 6 {
+            return .init(width: collectionView.frame.width, height: collectionView.frame.width * 0.5)
+        }
+        return .zero
+    }
+    
+    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if scrollView.isDragging || scrollView.isDecelerating {
+            let yOffset = scrollView.contentOffset.y
+            //print(yOffset)
+            if yOffset > 0 {
+                let now = self.topViewMaxHeight - yOffset
+                let set = min(max(now, self.topViewMinHeight), self.topViewMaxHeight)
+                if self.topViewMinHeight >= self.heightAnchor.constant && now < self.topViewMinHeight {
+                    return
+                }
+                if self.heightAnchor.constant - set > 2 || set - self.heightAnchor.constant > 2 {
+                    //print("setting: \(set) for \(self.heightAnchor.constant)")
+                    self.heightAnchor.constant = set
+                }
+            } else {
+                self.heightAnchor.constant = self.topViewMaxHeight
+            }
+//            if yOffset < -self.topViewMaxHeight {
+//                if self.collectionView.contentInset.top < floor(self.topViewMaxHeight) {
+//                    self.heightAnchor.constant = self.topViewMaxHeight
+//                    //self.collectionView.contentInset.top = self.topViewMaxHeight
+//                    //self.collectionView.scrollIndicatorInsets.top = self.topViewMaxHeight
+//                }
+//            } else if yOffset < -self.topViewMinHeight {
+//                self.heightAnchor.constant = yOffset * -1
+//                //self.collectionView.contentInset.top = yOffset * -1
+//                //self.collectionView.scrollIndicatorInsets.top = yOffset * -1
+//            } else {
+//                self.heightAnchor.constant = self.topViewMinHeight
+//                //self.collectionView.contentInset.top = self.topViewMinHeight
+//                //self.collectionView.scrollIndicatorInsets.top = self.topViewMinHeight
+//            }
+        }
+    }
+}

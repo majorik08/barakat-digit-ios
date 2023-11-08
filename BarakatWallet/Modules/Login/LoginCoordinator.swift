@@ -1,0 +1,80 @@
+//
+//  LoginCoordinator.swift
+//  BarakatWallet
+//
+//  Created by km1tj on 26/10/23.
+//
+
+import Foundation
+import UIKit
+
+class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINavigationControllerDelegate {
+    
+    var children: [Coordinator] = []
+    let nav: BaseNavigationController
+    let loginService: LoginService
+    
+    weak var parent: AppCoordinator? = nil
+    
+    init(nav: BaseNavigationController, loginService: LoginService) {
+        self.loginService = loginService
+        self.nav = nav
+        self.nav.navigationBar.isHidden = true
+    }
+    
+    func start() {
+        let vc = FirstLaunchViewController(nibName: nil, bundle: nil)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func backToLogin() {
+        self.navigateToLogin()
+    }
+    
+    func navigateBack() {
+        self.nav.popViewController(animated: true)
+    }
+    
+    func navigateToLogin() {
+        let vc = LoginViewController(viewModel: LoginViewModel(service: self.loginService))
+        vc.hidesBottomBarWhenPushed = true
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToTransfer() {
+        let transfer = TransferCoordinator(nav: self.nav)
+        transfer.delegate = self
+        transfer.start()
+        self.nav.delegate = self
+        self.children.append(transfer)
+    }
+    
+    func navigateToValidate(phoneNumber: String, key: String) {
+        let vc = VerifyCodeViewController(viewModel: .init(service: self.loginService, phoneNumber: phoneNumber, key: key))
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToSetPin(account: CoreAccount) {
+        let vc = SetPinViewController(viewModel: .init(account: account, startFor: .setup, checkComplition: nil))
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToMain(account: CoreAccount) {
+        self.parent?.showMain(account: account)
+    }
+    
+    
+    func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
+        guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from) else { return }
+        if navigationController.viewControllers.contains(fromViewController) {
+            return
+        }
+        if let vvc = fromViewController as? TransferMainViewController {
+            self.childDidFinish(vvc.coordinator)
+        }
+    }
+}
