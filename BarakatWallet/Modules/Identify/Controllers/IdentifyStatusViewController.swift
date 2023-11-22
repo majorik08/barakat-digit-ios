@@ -73,7 +73,7 @@ class IndentifyMainViewController: BaseViewController {
             rootView.widthAnchor.constraint(equalTo: self.scrollView.widthAnchor),
             rootHeight,
             self.statusView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 0),
-            self.statusView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 20),
+            self.statusView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 0),
             self.statusView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: 0),
             self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
             self.nextButton.topAnchor.constraint(equalTo: self.statusView.bottomAnchor, constant: 20),

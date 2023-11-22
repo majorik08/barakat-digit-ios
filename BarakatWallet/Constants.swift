@@ -127,6 +127,26 @@ struct Constants {
         return "https://itunes.apple.com/app/id6469633721"
     }
     
+    static var FacebookUrl: String {
+        return "https://google.com"
+    }
+    
+    static var LinkedinUrl: String {
+        return "https://google.com"
+    }
+    
+    static var InstagramUrl: String {
+        return "https://google.com"
+    }
+    
+    static var TelegramUrl: String {
+        return "https://google.com"
+    }
+    
+    static var SupportNumber: String {
+        return "+992987010395"
+    }
+    
     static var DarkGlobalColor: UIColor {
         return UIColor(red: 0.00, green: 0.67, blue: 1.00, alpha: 1.00)
     }

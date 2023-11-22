@@ -12,10 +12,10 @@ class BeforeAuthRootViewController: BaseTabBarController, UITabBarControllerDele
     
     enum MainItems: Int {
         case main = 1, history = 2, menu = 3, cards = 4
-        var controller: UIViewController {
+        func getContrller(vc: BeforeAuthRootViewController) -> UIViewController {
             switch self {
             case .main:
-                let vc = TransferMainViewController(nibName: nil, bundle: nil)
+                let vc = TransferMainViewController(bannerService: vc.coordinator!.bannerService)
                 vc.tabBarItem.title = "MAIN".localized
                 vc.tabBarItem.image = UIImage(name: .tab_home)
                 vc.tabBarItem.tag = self.rawValue
@@ -75,7 +75,7 @@ class BeforeAuthRootViewController: BaseTabBarController, UITabBarControllerDele
         self.updateShadow()
         self.updateShapeView()
         self.hidesBottomBarWhenPushed = false
-        self.setViewControllers(self.items.map({ $0.controller }), animated: false)
+        self.setViewControllers(self.items.map({ $0.getContrller(vc: self) }), animated: false)
     }
     
     private func updateShadow() {

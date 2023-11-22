@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import MobileCoreServices
+import RxSwift
 
 class ProfileEditViewController: BaseViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -204,6 +205,25 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
         self.lastNameField.fieldView.inputAccessoryView = self.toolbar
         self.surNameField.fieldView.inputAccessoryView = self.toolbar
         self.emailField.fieldView.inputAccessoryView = self.toolbar
+        switch self.viewModel.accountInfo.client.limit.identifyed {
+        case .noIdentified:
+            self.firstNameField.fieldView.isEnabled = true
+            self.lastNameField.fieldView.isEnabled = true
+            self.surNameField.fieldView.isEnabled = true
+            self.docBirthdayField.fieldView.isEnabled = true
+            self.maleButton.isEnabled = true
+            self.femaleButton.isEnabled = true
+        case .onlineIdentified, .identified:
+            self.firstNameField.fieldView.isEnabled = false
+            self.lastNameField.fieldView.isEnabled = false
+            self.surNameField.fieldView.isEnabled = false
+            self.docBirthdayField.fieldView.isEnabled = false
+            self.maleButton.isEnabled = false
+            self.femaleButton.isEnabled = false
+        }
+        self.maleButton.addTarget(self, action: #selector(self.maleFemaleChanged(_:)), for: .touchUpInside)
+        self.femaleButton.addTarget(self, action: #selector(self.maleFemaleChanged(_:)), for: .touchUpInside)
+        self.nextButton.addTarget(self, action: #selector(self.setInfo(_:)), for: .touchUpInside)
         
         self.viewModel.didUpdateFailed.subscribe(onNext: { [weak self] message in
             self?.topBar.avatarView.progressView.stopAnimating()
@@ -222,6 +242,19 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
             self?.setInfo()
         }).disposed(by: self.viewModel.disposeBag)
         self.setInfo()
+        
+        let validEmail = self.emailField.fieldView.rx.text.orEmpty.map({ $0 == "" || self.isValid($0) }).share(replay: 1)
+        let birthdate = self.docBirthdayField.fieldView.rx.text.orEmpty.map({ $0 == "" || self.isValidDate($0) }).share(replay: 1)
+        if self.viewModel.accountInfo.client.limit.identifyed == .noIdentified {
+            
+            let enableButton = Observable.combineLatest(validEmail, birthdate) { $0 && $1 }.share(replay: 1)
+            enableButton.bind(to: self.nextButton.rx.isEnabled).disposed(by: self.viewModel.disposeBag)
+            
+        } else {
+            let enableButton = Observable.combineLatest(validEmail, birthdate) { $0 && $1 }.share(replay: 1)
+            enableButton.bind(to: self.viewModel.isSendActive).disposed(by: self.viewModel.disposeBag)
+        }
+        self.viewModel.isSendActive.bind(to: self.nextButton.rx.isEnabled).disposed(by: self.viewModel.disposeBag)
     }
     
     override func themeChanged(newTheme: Theme) {
@@ -231,6 +264,30 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
     
     @objc func goIdentify() {
         self.coordinator?.navigateToIdentify()
+    }
+    
+    @objc func maleFemaleChanged(_ sender: UIButton) {
+        sender.isSelected = !sender.isSelected
+        if sender === self.maleButton {
+            if self.femaleButton.isSelected && sender.isSelected {
+                self.femaleButton.isSelected = false
+            }
+        } else if sender === self.femaleButton {
+            if self.maleButton.isSelected && sender.isSelected {
+                self.maleButton.isSelected = false
+            }
+        }
+    }
+    
+    @objc func setInfo(_ sender: UIButton) {
+        self.showProgressView()
+        switch self.viewModel.accountInfo.client.limit.identifyed {
+        case .noIdentified:
+            let gender = self.maleButton.isSelected ? "male" : "female"
+            self.viewModel.setProfile(birthDate: self.docBirthdayField.fieldView.text ?? self.viewModel.accountInfo.client.birthDate, email: self.emailField.fieldView.text ?? self.viewModel.accountInfo.client.email, firstName: self.firstNameField.fieldView.text ?? self.viewModel.accountInfo.client.firstName, lastName: self.lastNameField.fieldView.text ?? self.viewModel.accountInfo.client.lastName, midName: self.surNameField.fieldView.text ?? self.viewModel.accountInfo.client.midName, gender: gender)
+        case .onlineIdentified, .identified:
+            self.viewModel.setProfile(birthDate: self.viewModel.accountInfo.client.birthDate, email: self.emailField.fieldView.text ?? self.viewModel.accountInfo.client.email, firstName: self.viewModel.accountInfo.client.firstName, lastName: self.viewModel.accountInfo.client.lastName, midName: self.viewModel.accountInfo.client.midName, gender: self.viewModel.accountInfo.client.gender)
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -282,12 +339,14 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
     }
     
     func setInfo() {
-        self.firstNameField.fieldView.text = self.viewModel.clientInfo.firstName
-        self.lastNameField.fieldView.text = self.viewModel.clientInfo.lastName
-        self.surNameField.fieldView.text = self.viewModel.clientInfo.midName
-        self.docBirthdayField.fieldView.text = self.viewModel.clientInfo.birthDate
-        self.emailField.fieldView.text = self.viewModel.clientInfo.email
-        if self.viewModel.clientInfo.gender == "female" {
+        self.topBar.statusView.configure(limits: self.viewModel.accountInfo.client.limit)
+        APIManager.instance.loadImage(into: self.topBar.avatarView, filePath: self.viewModel.accountInfo.client.avatar)
+        self.firstNameField.fieldView.text = self.viewModel.accountInfo.client.firstName
+        self.lastNameField.fieldView.text = self.viewModel.accountInfo.client.lastName
+        self.surNameField.fieldView.text = self.viewModel.accountInfo.client.midName
+        self.docBirthdayField.fieldView.text = self.viewModel.accountInfo.client.birthDate
+        self.emailField.fieldView.text = self.viewModel.accountInfo.client.email
+        if self.viewModel.accountInfo.client.gender == "female" {
             self.femaleButton.isSelected = true
             self.maleButton.isSelected = false
         } else {
@@ -319,11 +378,11 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
         }
         let deleteAvatar = UIAlertAction(title: "DELETE_PHOTO".localized, style: .destructive) { (_) in
             self.showProgressView()
-            self.viewModel.setProfile(avatar: "")
+            self.viewModel.setAvatar(avatar: "")
         }
         mediaAlert.addAction(cameraAction)
         mediaAlert.addAction(photoAction)
-        if !self.viewModel.clientInfo.avatar.isEmpty {
+        if !self.viewModel.accountInfo.client.avatar.isEmpty {
             mediaAlert.addAction(deleteAvatar)
         }
         mediaAlert.addAction(UIAlertAction(title: "CANCEL".localized, style: .cancel, handler: nil))
@@ -357,5 +416,12 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
         let emailRegEx = "(?:[a-z0-9!#$%\\&'*+/=?\\^_`{|}~-]+(?:\\.[a-z0-9!#$%\\&'*+/=?\\^_`{|}"+"~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\"+"x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-"+"z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5"+"]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-"+"9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21"+"-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])"
         let emailTest = NSPredicate(format:"SELF MATCHES[c] %@", emailRegEx)
         return emailTest.evaluate(with: email)
+    }
+    
+    private func isValidDate(_ birthdate: String) -> Bool {
+        let datePattern = "^\\d{2}-\\d{2}-\\d{4}"
+        let emailTest = NSPredicate(format:"SELF MATCHES[c] %@", datePattern)
+        let result = emailTest.evaluate(with: birthdate.trimmingCharacters(in: .whitespacesAndNewlines))
+        return result
     }
 }

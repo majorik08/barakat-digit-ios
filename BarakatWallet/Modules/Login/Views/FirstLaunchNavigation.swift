@@ -22,7 +22,7 @@ class FirstLaunchNavigation: BaseNavigationController {
     public override func themeChanged(newTheme: Theme) {
         super.themeChanged(newTheme: newTheme)
         self.view.backgroundColor = Theme.current.plainTableBackColor
-        UINavigationBar.appearance().tintColor = .white
+        UINavigationBar.appearance().tintColor = Theme.current.tintColor
         UISearchBar.appearance().tintColor = newTheme.tintColor
         UITableView.appearance().backgroundColor = newTheme.plainTableBackColor
         UITabBar.appearance().tintColor = newTheme.tintColor

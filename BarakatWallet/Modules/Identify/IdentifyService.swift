@@ -9,9 +9,51 @@ import Foundation
 import RxSwift
 
 protocol IdentifyService: Service {
-    
+    func uploadPhoto(url: URL) -> Single<String?>
+    func sendIdentify(front: String, back: String, selfie: String) -> Single<AppMethods.Client.IdentifySet.Result>
+    func getIdentify() -> Single<AppMethods.Client.IdentifyGet.IdentifyResult>
 }
 
 final class IdentifyServiceImpl: IdentifyService {
     
+    func uploadPhoto(url: URL) -> RxSwift.Single<String?> {
+        return Single.create { single in
+            APIManager.instance.startUpload(file: url) { response in
+                single(.success(response))
+            }
+            return Disposables.create()
+        }
+    }
+    
+    func sendIdentify(front: String, back: String, selfie: String) -> Single<AppMethods.Client.IdentifySet.Result> {
+        return Single.create { single in
+            APIManager.instance.request(.init(AppMethods.Client.IdentifySet(.init(front: front, rear: back, selfie: selfie, status: 0))), auth: .auth) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
+    func getIdentify() -> RxSwift.Single<AppMethods.Client.IdentifyGet.IdentifyResult> {
+        return Single.create { single in
+            APIManager.instance.request(.init(AppMethods.Client.IdentifyGet(.init())), auth: .auth) { response in
+                switch response.result {
+                case .success(let result):
+                    if let first = result.first {
+                        single(.success(first))
+                    } else {
+                        single(.failure(APIManager.decodeError))
+                    }
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
 }

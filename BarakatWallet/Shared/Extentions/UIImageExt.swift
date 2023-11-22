@@ -29,6 +29,7 @@ internal extension UIImage {
         case delete
         case unchecked
         case checked
+        case checked_fill
         case check_x
         case down_arrow
         case back_arrow
@@ -37,12 +38,16 @@ internal extension UIImage {
         case camera_pick
         case arrow_right
         
+        case close_x
         case transfer_help
         case transfer_card
         case transfer_number
         
         case status_id
         case plus_inset
+        case repeat_icon
+        case fav_icon
+        case add_bold
         
         case card_american
         case card_diners
@@ -55,12 +60,20 @@ internal extension UIImage {
         case card_union
         case card_visa
         
+        case card_action_history
+        case card_action_pay
+        case card_action_topup
+        case card_action_transfer
+        
         case per_icon
         case rubl_icon
         case card_icon
         case recipe
         case share
         case success
+        
+        case face_icon
+        case touch_icon
         
         case logout
         case doc
@@ -72,6 +85,14 @@ internal extension UIImage {
         case profile_save
         case profile_settings
         case profile_share
+        
+        case check_dark
+        case check_light
+        
+        case facebook_icon
+        case instagram_icon
+        case linkedin_icon
+        case telegram_icon
     }
     
     convenience init(name: ImageName) {

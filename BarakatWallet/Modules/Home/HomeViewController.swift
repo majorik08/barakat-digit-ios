@@ -10,20 +10,18 @@ import UIKit
 
 protocol HomeViewControllerItemDelegate: AnyObject {
     func goToAllTapped(cell: UICollectionViewCell)
+    func reloadTapped(cell: UICollectionViewCell)
     func cardTapped(card: AppStructs.CreditDebitCard?)
     func serviceGroupTapped(group: AppStructs.PaymentGroup)
     func transferTapped(transfer: AppStructs.TransferTypes)
     func showcaseTapped(showcase: AppStructs.Showcase)
-    func favouriteTapped(favouite: AppStructs.Favourite)
+    func favouriteTapped(favouite: AppStructs.Favourite?)
 }
 
-class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, HomeViewControllerItemDelegate {
- 
+class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, HomeViewControllerItemDelegate, StoriesViewDelegate {
+  
     let topBar: MainTopBarView = {
-        let view = MainTopBarView(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .clear
-        return view
+        return MainTopBarView()
     }()
     let collectionView: UICollectionView = {
         let view = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
@@ -36,7 +34,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         view.register(MainFavouriteListCell.self, forCellWithReuseIdentifier: "favourite_list_cell")
         view.register(MainRatesCell.self, forCellWithReuseIdentifier: "rates_cell")
         view.backgroundColor = .clear
-        view.contentInset = .init(top: 30, left: 0, bottom: 20, right: 0)
+        view.contentInset = .init(top: 20, left: 0, bottom: 20, right: 0)
         return view
     }()
     lazy var topViewMinHeight: CGFloat = {
@@ -83,6 +81,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.collectionView.contentInsetAdjustmentBehavior = .never
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
+        self.topBar.storiesView.delegate = self
         self.topBar.headerView.avatarView.isUserInteractionEnabled = true
         self.topBar.headerView.avatarView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTapped)))
         self.topBar.headerView.menuView.addTarget(self, action: #selector(self.profileTapped), for: .touchUpInside)
@@ -90,21 +89,43 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.collectionView.refreshControl = UIRefreshControl()
         self.collectionView.refreshControl?.tintColor = Theme.current.tintColor
         self.collectionView.refreshControl!.addTarget(self, action: #selector(reloadMainView), for: .valueChanged)
+        self.topBar.configure(viewModel: self.viewModel)
         
-        self.viewModel.didLoadServices.subscribe(onNext: { [weak self] _ in
-            self?.collectionView.refreshControl?.endRefreshing()
-            self?.collectionView.reloadSections(IndexSet([2,3]))
-        }).disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didLoadServicesError.subscribe(onNext: { [weak self] message in
+        self.viewModel.didLoadError.subscribe(onNext: { [weak self] message in
             self?.collectionView.refreshControl?.endRefreshing()
             self?.showErrorAlert(title: "ERROR".localized, message: message)
         }).disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadServices.subscribe(onNext: { [weak self] _ in
+            self?.collectionView.reloadSections(IndexSet([2,3]))
+        }).disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadStories.subscribe { [weak self] _ in
+            self?.topBar.storiesView.configure(stories: self?.viewModel.storiesList ?? [])
+        }.disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadShowcase.subscribe { [weak self] _ in
+            self?.collectionView.reloadSections(IndexSet([4]))
+        }.disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadFavorites.subscribe { [weak self] _ in
+            self?.collectionView.reloadSections(IndexSet([5]))
+        }.disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadCards.subscribe { [weak self] _ in
+            self?.collectionView.reloadSections(IndexSet([0]))
+        }.disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadAccountInfo.subscribe { [weak self] _ in
+            guard let self = self else { return }
+            self.collectionView.refreshControl?.endRefreshing()
+            self.topBar.configure(viewModel: self.viewModel)
+        }.disposed(by: self.viewModel.disposeBag)
         
         self.viewModel.loadServices()
+        self.viewModel.loadStoriesList()
+        self.viewModel.loadCardList()
+        self.viewModel.loadShowcaseList()
+        self.viewModel.loadFavorites()
+        self.viewModel.loadRates()
     }
     
     @objc func reloadMainView() {
-        self.viewModel.loadServices()
+        self.viewModel.loadAccountInfo()
     }
     
     @objc func profileTapped() {
@@ -136,18 +157,39 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.topBar.themeChanged(newTheme: newTheme)
     }
     
+    func didTapStoriesItem(stories: [AppStructs.Stories], index: Int) {
+        self.coordinator?.presentStoriesPreView(stories: stories, handPickedStoryIndex: index)
+    }
+    
+    func didScrolledBar(scrollView: UIScrollView) {}
+    
     func goToAllTapped(cell: UICollectionViewCell) {
         guard let indexPath = self.collectionView.indexPath(for: cell) else { return }
         if indexPath.section == 2 {
-            self.coordinator?.navigateToPayments(fromTransfers: false)
+            self.coordinator?.navigateToPayments(fromTransfers: false, paymentGroups: self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers)
         } else if indexPath.section == 3 {
-            self.coordinator?.navigateToPayments(fromTransfers: true)
+            self.coordinator?.navigateToPayments(fromTransfers: true, paymentGroups: self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers)
         } else if indexPath.section == 4 {
             self.coordinator?.navigateToShowcaseList()
         } else if indexPath.section == 5 {
             self.coordinator?.navigateToFavouriteList()
         } else if indexPath.section == 6 {
             self.coordinator?.navigateToRates(openConvertor: true)
+        }
+    }
+    
+    func reloadTapped(cell: UICollectionViewCell) {
+        guard let indexPath = self.collectionView.indexPath(for: cell) else { return }
+        if indexPath.section == 2 {
+            self.viewModel.loadServices()
+        } else if indexPath.section == 3 {
+            self.viewModel.loadServices()
+        } else if indexPath.section == 4 {
+            self.viewModel.loadShowcaseList()
+        } else if indexPath.section == 5 {
+            self.viewModel.loadFavorites()
+        } else if indexPath.section == 6 {
+            self.viewModel.loadRates()
         }
     }
     
@@ -163,20 +205,22 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.coordinator?.navigateToShowcaseView(showcase: showcase)
     }
     
-    func favouriteTapped(favouite: AppStructs.Favourite) {
-        self.coordinator?.navigateToServiceByFavourite(favourite: favouite)
+    func favouriteTapped(favouite: AppStructs.Favourite?) {
+        if let favouite {
+            self.coordinator?.navigateToServiceByFavourite(favourite: favouite)
+        } else {
+            //add fav
+        }
     }
     
     func cardTapped(card: AppStructs.CreditDebitCard?) {
-        self.coordinator?.navigateToCardView(card: card)
+        self.coordinator?.navigateToCardView(userCards: self.viewModel.cardList, selectedCard: card)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
         if indexPath.section == 1 {
             self.coordinator?.navigateToTransferByNumberView()
-        } else if indexPath.section == 6 {
-            self.coordinator?.navigateToRates(openConvertor: false)
         }
     }
     
@@ -184,7 +228,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         if indexPath.section == 0 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_list_cell", for: indexPath) as! MainCardListCell
             cell.delegate = self
-            cell.configure(cards: self.viewModel.creditDebitCards)
+            cell.configure(cards: self.viewModel.cardList)
             return cell
         } else if indexPath.section == 1 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "number_cell", for: indexPath) as! PayWithNumberCell
@@ -204,17 +248,17 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         } else if indexPath.section == 4 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "vitrina_list_cell", for: indexPath) as! MainVitrinaListCell
             cell.delegate = self
-            cell.configure()
+            cell.configure(items: self.viewModel.showcaseList)
             return cell
         } else if indexPath.section == 5 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "favourite_list_cell", for: indexPath) as! MainFavouriteListCell
             cell.delegate = self
-            cell.configure(service: true)
+            cell.configure(items: self.viewModel.favoritesList)
             return cell
         } else if indexPath.section == 6 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "rates_cell", for: indexPath) as! MainRatesCell
             cell.delegate = self
-            cell.configure()
+            cell.configure(rates: self.viewModel.ratesList)
             return cell
         }
         return collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath)
@@ -262,7 +306,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         } else if indexPath.section == 5 {
             let itemWidth = ((self.view.frame.width - 22) / 4)
             let height = (itemWidth - 10) - 2
-            return .init(width: collectionView.frame.width, height: height + 34)
+            return .init(width: collectionView.frame.width, height: height + 54)
         } else if indexPath.section == 6 {
             return .init(width: collectionView.frame.width, height: collectionView.frame.width * 0.5)
         }

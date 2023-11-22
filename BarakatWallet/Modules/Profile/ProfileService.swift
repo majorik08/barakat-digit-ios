@@ -10,9 +10,13 @@ import RxSwift
 
 protocol ProfileService: Service {
     
-    var clientInfo: AppStructs.ClientInfo { get }
+    var accountInfo: AppStructs.AccountInfo { get }
     
-    func setProfile(avatar: String?, birthDate: String?, email: String?, firstName: String?, lastName: String?, midName: String?, gender: String?, inn: String?, pushNotify: Bool?, smsPush: Bool?) -> Single<Bool>
+    func setProfile(birthDate: String, email: String, firstName: String, lastName: String, midName: String, gender: String) -> Single<Bool>
+    
+    func setAvatar(avatar: String) -> Single<Bool>
+    
+    func setSettings(pushNotify: Bool, smsPush: Bool) -> Single<Bool>
     
     func updateDevice(device: AppStructs.Device)
     
@@ -23,17 +27,57 @@ protocol ProfileService: Service {
 
 final class ProfileServiceImpl: ProfileService {
   
-    let clientInfo: AppStructs.ClientInfo
+    let accountInfo: AppStructs.AccountInfo
     
-    init(clientInfo: AppStructs.ClientInfo) {
-        self.clientInfo = clientInfo
+    init(accountInfo: AppStructs.AccountInfo) {
+        self.accountInfo = accountInfo
     }
     
-    func setProfile(avatar: String? = nil, birthDate: String? = nil, email: String? = nil, firstName: String? = nil, lastName: String? = nil, midName: String? = nil, gender: String? = nil, inn: String? = nil, pushNotify: Bool? = nil, smsPush: Bool? = nil) -> Single<Bool> {
+    func setProfile(birthDate: String, email: String, firstName: String, lastName: String, midName: String, gender: String) -> RxSwift.Single<Bool> {
         return Single<Bool>.create { single in
-            APIManager.instance.request(.init(AppMethods.Client.InfoSet(.init(avatar: avatar, birthDate: birthDate, email: email, firstName: firstName, gender: gender, inn: inn, lastName: lastName, midName: midName, pushNotify: pushNotify, smsPush: smsPush))), auth: .auth) { response in
+            APIManager.instance.request(.init(AppMethods.Client.InfoSet(.init(birthDate: birthDate, email: email, firstName: firstName, gender: gender, lastName: lastName, midName: midName))), auth: .auth) { response in
                 switch response.result {
                 case .success(_):
+                    self.accountInfo.client.birthDate = birthDate
+                    self.accountInfo.client.email = email
+                    self.accountInfo.client.firstName = firstName
+                    self.accountInfo.client.lastName = lastName
+                    self.accountInfo.client.midName = midName
+                    self.accountInfo.client.gender = gender
+                    self.accountInfo.didUpdateClient.onNext(())
+                    single(.success(true))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
+    func setAvatar(avatar: String) -> RxSwift.Single<Bool> {
+        return Single<Bool>.create { single in
+            APIManager.instance.request(.init(AppMethods.Client.AvatarSet(.init(avatar: avatar))), auth: .auth) { response in
+                switch response.result {
+                case .success(_):
+                    self.accountInfo.client.avatar = avatar
+                    self.accountInfo.didUpdateClient.onNext(())
+                    single(.success(true))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
+    func setSettings(pushNotify: Bool, smsPush: Bool) -> RxSwift.Single<Bool> {
+        return Single<Bool>.create { single in
+            APIManager.instance.request(.init(AppMethods.Client.SettingsSet(.init(pushNotify: pushNotify, smsPush: smsPush))), auth: .auth) { response in
+                switch response.result {
+                case .success(_):
+                    self.accountInfo.client.pushNotify = pushNotify
+                    self.accountInfo.client.smsPush = smsPush
+                    self.accountInfo.didUpdateClient.onNext(())
                     single(.success(true))
                 case .failure(let error):
                     single(.failure(error))
@@ -44,7 +88,7 @@ final class ProfileServiceImpl: ProfileService {
     }
     
     func updateDevice(device: AppStructs.Device) {
-        APIManager.instance.request(.init(AppMethods.Auth.DeviceUpdate(device))) { _ in }
+        APIManager.instance.request(.init(AppMethods.Auth.DeviceUpdate(device)), auth: .auth) { _ in }
     }
     
     func logout() -> Bool {

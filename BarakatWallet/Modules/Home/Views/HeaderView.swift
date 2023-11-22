@@ -14,7 +14,7 @@ class HeaderView: UIView {
         let view = AvatarImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFill
-        view.layer.borderColor = UIColor.white.cgColor
+        view.layer.borderColor = Theme.current.borderColor.cgColor
         view.layer.borderWidth = 1
         return view
     }()
@@ -23,14 +23,14 @@ class HeaderView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.placeholder = "SEARCH".localized
         view.borderStyle = .none
-        view.layer.borderColor = UIColor.white.cgColor
+        view.layer.borderColor = Theme.current.borderColor.cgColor
         view.layer.borderWidth = 1
         view.layer.cornerRadius = 18
-        view.textColor = UIColor.white
+        view.textColor = Theme.current.whiteColor
         view.backgroundColor = .clear
         view.leftViewMode = .always
         view.leftImage = UIImage(name: .search)
-        view.color = UIColor.white
+        view.color = Theme.current.borderColor
         //view.attributedPlaceholder = NSAttributedString(string: "SEARCH".localized, attributes: [.foregroundColor: UIColor.white])
         //view.textContainerInset = .init(top: 0, left: 10, bottom: 0, right: 0)
         return view
@@ -39,19 +39,21 @@ class HeaderView: UIView {
         let view = UIButton(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setImage(UIImage(name: .notify), for: .normal)
-        view.imageView?.tintColor = UIColor.white
+        view.imageView?.tintColor = Theme.current.whiteColor
         return view
     }()
     let menuView: UIButton = {
         let view = UIButton(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setImage(UIImage(name: .menu_icon), for: .normal)
-        view.imageView?.tintColor = UIColor.white
+        view.imageView?.tintColor = Theme.current.whiteColor
         return view
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        self.translatesAutoresizingMaskIntoConstraints = false
+        self.backgroundColor = .clear
         self.addSubview(self.avatarView)
         self.addSubview(self.searchView)
         self.addSubview(self.notifyView)
@@ -81,11 +83,12 @@ class HeaderView: UIView {
     }
     
     func themeChanged(newTheme: Theme) {
-//        self.avatarView.backgroundColor = Theme.current.secondaryTextColor
-//        self.avatarView.layer.borderColor = Theme.current.primaryTextColor.cgColor
-//        self.searchView.layer.borderColor = Theme.current.primaryTextColor.cgColor
-//        self.searchView.textColor = Theme.current.primaryTextColor
-//        self.searchView.color = Theme.current.primaryTextColor
-//        self.notifyView.imageView?.tintColor = Theme.current.primaryTextColor
+        self.avatarView.layer.borderColor = Theme.current.borderColor.cgColor
+        self.avatarView.backgroundColor = Theme.current.secondTintColor
+        self.menuView.imageView?.tintColor = Theme.current.whiteColor
+        self.notifyView.imageView?.tintColor = Theme.current.whiteColor
+        self.searchView.color = Theme.current.borderColor
+        self.searchView.textColor = Theme.current.whiteColor
+        self.searchView.layer.borderColor = Theme.current.borderColor.cgColor
     }
 }

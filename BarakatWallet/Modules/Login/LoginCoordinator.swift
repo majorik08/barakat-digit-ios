@@ -14,6 +14,10 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
     let nav: BaseNavigationController
     let loginService: LoginService
     
+    var bannerService: BannerService {
+        return ENVIRONMENT.isMock ? BannerServiceImpl() : BannerServiceMockImpl()
+    }
+    
     weak var parent: AppCoordinator? = nil
     
     init(nav: BaseNavigationController, loginService: LoginService) {
@@ -23,7 +27,7 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
     }
     
     func start() {
-        let vc = FirstLaunchViewController(nibName: nil, bundle: nil)
+        let vc = FirstLaunchViewController(bannerService: self.bannerService)
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
@@ -58,15 +62,8 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
     }
     
     func navigateToSetPin(account: CoreAccount) {
-        let vc = SetPinViewController(viewModel: .init(account: account, startFor: .setup, checkComplition: nil))
-        vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        self.parent?.showPasscode(account: account)
     }
-    
-    func navigateToMain(account: CoreAccount) {
-        self.parent?.showMain(account: account)
-    }
-    
     
     func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
         guard let fromViewController = navigationController.transitionCoordinator?.viewController(forKey: .from) else { return }
@@ -76,5 +73,10 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
         if let vvc = fromViewController as? TransferMainViewController {
             self.childDidFinish(vvc.coordinator)
         }
+    }
+    
+    func presentStoriesPreView(stories: [AppStructs.Stories], handPickedStoryIndex: Int) {
+        let vc = StoriesViewController(viewModel: .init(service: self.bannerService, stories: stories, handPickedStoryIndex: handPickedStoryIndex))
+        self.nav.present(vc, animated: true)
     }
 }

@@ -34,4 +34,18 @@ extension String {
             return self
         }
     }
+    
+    var djb2hash: Int {
+        let unicodeScalars = self.unicodeScalars.map { $0.value }
+        return unicodeScalars.reduce(5381) {
+            ($0 << 5) &+ $0 &+ Int($1)
+        }
+    }
+
+    var sdbmhash: Int {
+        let unicodeScalars = self.unicodeScalars.map { $0.value }
+        return unicodeScalars.reduce(0) {
+            (Int($1) &+ ($0 << 6) &+ ($0 << 16)).addingReportingOverflow(-$0).partialValue
+        }
+    }
 }

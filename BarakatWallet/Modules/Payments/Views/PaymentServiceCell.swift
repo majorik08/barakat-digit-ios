@@ -26,7 +26,7 @@ class PaymentServiceCell: UITableViewCell {
     let titleView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 17)
+        view.font = UIFont.regular(size: 16)
         view.textColor = Theme.current.primaryTextColor
         view.numberOfLines = 1
         view.adjustsFontSizeToFitWidth = true
@@ -53,10 +53,10 @@ class PaymentServiceCell: UITableViewCell {
         self.rootView.addSubview(self.iconView)
         self.rootView.addSubview(self.titleView)
         NSLayoutConstraint.activate([
-            self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 20),
-            self.rootView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 8),
-            self.rootView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -20),
-            self.rootView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -8),
+            self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
+            self.rootView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 10),
+            self.rootView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.rootView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -6),
             self.iconView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 0),
             self.iconView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 0),
             self.iconView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 0),

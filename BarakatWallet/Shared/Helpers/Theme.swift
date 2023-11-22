@@ -10,6 +10,11 @@ import UIKit
 
 public class Theme {
     
+    public var mainPaddings: CGFloat = 24
+    public var mainButtonHeight: CGFloat = 52
+    
+    public var whiteColor: UIColor = UIColor(red: 0.976, green: 0.976, blue: 0.976, alpha: 1)
+    
     public var value: String = "DEFAULT"
     public var dark: Bool = false
     public var lightStatusBar: Bool = false
@@ -18,6 +23,7 @@ public class Theme {
     public var secondTintColor: UIColor = UIColor(red: 0.73, green: 0.86, blue: 1.00, alpha: 1.00)
     public var grayColor: UIColor = UIColor(red: 0.969, green: 0.973, blue: 0.98, alpha: 1)
     public var shadowColor: UIColor = UIColor(red: 0.204, green: 0.584, blue: 0.918, alpha: 0.38)
+    public var borderColor: UIColor = UIColor(red: 0.729, green: 0.859, blue: 1, alpha: 1)
     public var dimColor: UIColor = UIColor(red: 0.00, green: 0.04, blue: 0.15, alpha: 0.2)
    
     public var navigationColor: UIColor = .white

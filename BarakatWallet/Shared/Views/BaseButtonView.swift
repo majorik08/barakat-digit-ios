@@ -49,6 +49,7 @@ class BaseButtonView: UIButton {
             updateShadow()
         }
     }
+    var circle: Bool = false
    
     private var gradientLayer: CAGradientLayer?
     private var shadowLayer: CALayer?
@@ -67,6 +68,9 @@ class BaseButtonView: UIButton {
         super.layoutSubviews()
         self.gradientLayer?.frame = self.bounds
         self.shadowLayer?.frame = self.bounds
+        if self.circle {
+            self.radius = self.bounds.width / 2
+        }
         self.updateGradient()
         self.updateShadow()
     }
@@ -75,6 +79,9 @@ class BaseButtonView: UIButton {
         didSet {
             self.gradientLayer?.frame = self.bounds
             self.shadowLayer?.frame = self.bounds
+            if self.circle {
+                self.radius = self.bounds.width / 2
+            }
             self.updateGradient()
             self.updateShadow()
         }
@@ -83,14 +90,16 @@ class BaseButtonView: UIButton {
     private func installLayers() {
         self.backgroundColor = .clear
         self.clipsToBounds = false
+        if self.circle {
+            self.radius = self.bounds.width / 2
+        }
         if let gradient = self.gradientLayer {
             gradient.removeFromSuperlayer()
         }
         let gradient = CAGradientLayer()
         gradient.frame = self.bounds
-        self.layer.addSublayer(gradient)
+        self.layer.insertSublayer(gradient, at: 0)
         self.gradientLayer = gradient
-        
         if let shadowLayer = self.shadowLayer {
             shadowLayer.removeFromSuperlayer()
         }
@@ -105,6 +114,8 @@ class BaseButtonView: UIButton {
         layer0.position = self.center
         self.layer.insertSublayer(layer0, at: 0)
         self.shadowLayer = layer0
+        guard let imageView else { return }
+        self.bringSubviewToFront(imageView)
     }
     
     func updateShadow() {

@@ -73,6 +73,15 @@ class MainCardListCell: UICollectionViewCell, UICollectionViewDelegate, UICollec
         self.titleView.textColor = Theme.current.primaryTextColor
         self.cards = cards
         self.collectionView.reloadData()
+        let allCount = cards.count + 1
+        var count: Int = 0
+        if allCount > 0 {
+            let resutl: Double = Double(allCount) / 2.5
+            count = Int(resutl.rounded(.up))
+        } else {
+            count = 1
+        }
+        self.controlView.numberOfPages = count
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -108,6 +117,17 @@ class MainCardListCell: UICollectionViewCell, UICollectionViewDelegate, UICollec
         let itemWidth = ((width - 22) / 2.5)
         let height = (itemWidth - 10) * 0.63
         return .init(width: itemWidth, height: height)
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let witdh = scrollView.frame.width - (scrollView.contentInset.left + scrollView.contentInset.right)
+        let index = scrollView.contentOffset.x / witdh
+        let roundedIndex = index.rounded(.up)
+        if self.controlView.numberOfPages > Int(roundedIndex) {
+            self.controlView.setPage(Int(roundedIndex))
+        } else {
+            self.controlView.setPage(self.controlView.numberOfPages - 1)
+        }
     }
 }
 

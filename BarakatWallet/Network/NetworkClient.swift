@@ -9,6 +9,11 @@ import Foundation
 import Alamofire
 import UIKit
 
+public protocol ImageSet {
+    func setImage(image: UIImage?)
+    func loadFailed()
+}
+
 class APIManager {
     
     public enum Authentication {
@@ -16,9 +21,10 @@ class APIManager {
         case auth
     }
     
-    let encodeError = NetworkError(message: "encodeError", error: "-1111")
-    let decodeError = NetworkError(message: "decodeError", error: "-1112")
-    let networkError = NetworkError(message: "networkError", error: "-1113")
+    public static let encodeError = NetworkError(message: "encodeError", error: "-1111")
+    public static let decodeError = NetworkError(message: "decodeError", error: "-1112")
+    public static let networkError = NetworkError(message: "networkError", error: "-1113")
+    public static let uploadError = NetworkError(message: "uploadError", error: "-1114")
     
     enum ServerErrors: String, Codable {
     case expiredToken = "0x000"
@@ -32,6 +38,7 @@ class APIManager {
     case UpdateDeviceData = "3x001"
     case UpdateDeviceInternal = "3x002"
     case ResourceNotFound = "4x001"
+    case tokenRefreshTimeExpired = "0x900"
     }
     
     static let instance = APIManager()
@@ -96,7 +103,7 @@ class APIManager {
     
     public func request<Params: Codable, Response: Codable>(_ request: EndpointRequest<Params, Response>, auth: Authentication = .noAuth, timeOut: Int64 = 30, completion: @escaping ((_ T: ResponseModel<Response>) -> Void)) {
         guard let data = try? self.encoder.encode(request.params) else {
-            let requestEncodeError: ResponseModel<Response> = ResponseModel(result: .failure(self.encodeError))
+            let requestEncodeError: ResponseModel<Response> = ResponseModel(result: .failure(Self.encodeError))
             completion(requestEncodeError)
             return
         }
@@ -107,15 +114,17 @@ class APIManager {
         if req.method != .get {
             req.httpBody = data
         }
-        AF.request(req).responseData { resp in
-            let requestDecodeError: ResponseModel<Response> = ResponseModel(result: .failure(self.decodeError))
+        Logger.log(tag: "NetworkClient", message: "request: \(String(data: data, encoding: .utf8) ??  "")")
+        AF.request(req).validate().responseData { resp in
+            Logger.log(tag: "NetworkClient", message: "statusCode: \(String(describing: resp.response?.statusCode))")
+            let requestDecodeError: ResponseModel<Response> = ResponseModel(result: .failure(Self.decodeError))
             switch resp.result {
             case .success(let data):
-                Logger.log(tag: "NetworkClient", message: "http: \(String(data: data, encoding: .utf8) ??  "")")
+                Logger.log(tag: "NetworkClient", message: "response: \(String(data: data, encoding: .utf8) ??  "")")
                 do {
                     let natsResp = try self.decoder.decode(ResponseModel<Response>.self, from: data)
                     if case Result.failure(let networkError) = natsResp.result {
-                        self.checkRefreshToken(error: networkError.error)
+                        self.checkRefreshToken(error: networkError.error, token: self.token)
                     }
                     completion(natsResp)
                 } catch {
@@ -129,9 +138,10 @@ class APIManager {
                     completion(networkError)
                     return
                 }
+                Logger.log(tag: "NetworkClient", message: "failure: \(String(data: data, encoding: .utf8) ??  "")")
                 do {
                     let natsResp = try self.decoder.decode(NetworkError.self, from: data)
-                    self.checkRefreshToken(error: natsResp.error)
+                    self.checkRefreshToken(error: natsResp.error, token: self.token)
                     completion(.init(result: .failure(natsResp)))
                 } catch {
                     Logger.log(tag: "NetworkClient", error: error)
@@ -141,18 +151,16 @@ class APIManager {
         }
     }
     
-    func checkRefreshToken(error: String?) {
+    func checkRefreshToken(error: String?, token: String?) {
         guard let error = error, error == ServerErrors.expiredToken.rawValue else { return }
         guard self.tokenUpdateRetry < 2 else { return }
-        guard let token = self.token else { return }
-        guard let account = CoreAccount.accounts().first(where: { $0.token == token }) else { return }
+        guard let oldToken = token else { return }
         self.tokenUpdateRetry += 1
         self.request(.init(AppMethods.Auth.RefreshToken(.init())), auth: .auth) { response in
             switch response.result {
             case .success(let token):
+                CoreAccount.updateToken(oldToken: oldToken, newToken: token.token)
                 self.token = token.token
-                account.token = token.token
-                account.update()
             case .failure(let error):
                 debugPrint(error)
             }
@@ -184,24 +192,35 @@ class APIManager {
         var message: String
     }
     
-    func startDownload() {
-//        let req = self.sessionManager.download("\(Constants.ApiUrl)/files/file", method: .get, headers: headers, to: { _, _ in
-//            return (to, [.removePreviousFile, .createIntermediateDirectories])
-//        }).downloadProgress(queue: session.rootQueue, closure: { progress in
-//            print("progress: \(progress.fractionCompleted)")
-//        }).response(queue: session.rootQueue, completionHandler: { response in
-//            switch response.result {
-//            case .success(_):
-//                if let code = response.response?.statusCode, code == 200 {
-//                    self.status = .finished(result: self.localUrl.absoluteString)
-//                } else {
-//                    self.status = .error(error: AFError.responseValidationFailed(reason: .unacceptableStatusCode(code: response.response?.statusCode ?? -1)))
-//                }
-//            case .failure(let afError):
-//                self.status = .error(error: afError)
-//            }
-//        })
-//        self.requests.append(req)
+    //public typealias ClosureCallback = ((Task) -> Void)
+    //public typealias ImageCallback = ((Task?, KFCrossPlatformImage?) -> Void)
+    
+    func loadImage(into: ImageSet, filePath: String) {
+        guard !filePath.isEmpty else { return }
+        self.queue.async(flags: .barrier) {
+            let hash = String(filePath.djb2hash)
+            if let image = UIImage(contentsOfFile: self.getFileUrl(type: .image, name: hash).path) {
+                into.setImage(image: image)
+            } else {
+                let localUrl = self.getFileUrl(type: .image, name: hash)
+                let url = "\(Constants.ApiUrl)/\(filePath)"
+                AF.download(url, method: .get, headers: self.fileHeaders(auth: .auth), to:  { temporaryURL, response in
+                    return (localUrl, [.removePreviousFile, .createIntermediateDirectories])
+                }).downloadProgress { progress in
+                    print("downloadProgress: \(progress.fractionCompleted)")
+                }.response { response in
+                    switch response.result {
+                    case .success(_):
+                        let image = UIImage(contentsOfFile: localUrl.path)
+                        into.setImage(image: image)
+                    case .failure(let error):
+                        Logger.log(error: error)
+                        debugPrint(error)
+                        into.loadFailed()
+                    }
+                }
+            }
+        }
     }
     
     func startUpload(file: URL, completion: @escaping ((_ result: String?) -> Void)) {
@@ -209,7 +228,7 @@ class APIManager {
             multipartFormData.append(file, withName: "file", fileName: file.lastPathComponent, mimeType: "image/jpeg")
         }, to: "\(Constants.ApiUrl)/files/file", method: .post, headers: self.fileHeaders(auth: .auth))
         .uploadProgress { progress in
-            print("progress: \(progress.fractionCompleted)")
+            print("uploadProgress: \(progress.fractionCompleted)")
         }.responseData { responseData in
             switch responseData.result {
             case .success(let data):

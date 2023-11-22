@@ -36,8 +36,15 @@ class PaymentsCoordinator: Coordinator {
         }
     }
     
-    func navigateToServiceGroups(paymentsOrder: PaymentsViewController.Order) {
-        let vc = PaymentsViewController(viewModel: .init(service: self.paymentsService, accountInfo: self.accountInfo), order: paymentsOrder)
+    func navigateToRootViewController() {
+        self.nav.popToRootViewController(animated: true)
+    }
+    
+    func navigateToServiceGroups(paymentsOrder: PaymentsViewController.Order, paymentGroups: [AppStructs.PaymentGroup], transferTypes: [AppStructs.TransferTypes]) {
+        let vm = PaymentsViewModel(service: self.paymentsService, accountInfo: self.accountInfo)
+        vm.paymentGroups = paymentGroups
+        vm.transferTypes = transferTypes
+        let vc = PaymentsViewController(viewModel: vm, order: paymentsOrder)
         vc.hidesBottomBarWhenPushed = true
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
@@ -55,6 +62,28 @@ class PaymentsCoordinator: Coordinator {
         self.nav.pushViewController(vc, animated: true)
     }
     
+    func navigateToHistoryView() {
+        let history = HistoryCoordinator(nav: self.nav, accountInfo: self.accountInfo)
+        history.parent = self.parent
+        history.navigateToHistoryDetails(item: .init(date: Date()))
+        self.children.append(history)
+    }
+    
+    func presentPaymentConfirmResult(service: AppStructs.PaymentGroup.ServiceItem, amount: Double, currency: Currency) {
+        let vc = PaymentConfirmViewController(viewModel: .init(service: self.paymentsService, accountInfo: self.accountInfo), service: service, amount: amount, currency: currency)
+        vc.coordinator = self
+        self.nav.present(vc, animated: true)
+    }
+    
+    func presentSaveToFavorites() {
+        let vc = AddFavoriteViewController(nibName: nil, bundle: nil)
+        if let presented = self.nav.presentedViewController {
+            presented.present(vc, animated: true)
+        } else {
+            self.nav.present(vc, animated: true)
+        }
+    }
+    
     func navigateToTransferView(transfer: AppStructs.TransferTypes) {
         let vc = TransferViewController(viewModel: .init(service: self.paymentsService, accountInfo: self.accountInfo), transfer: transfer)
         vc.coordinator = self
@@ -67,5 +96,15 @@ class PaymentsCoordinator: Coordinator {
         self.nav.pushViewController(vc, animated: true)
     }
     
+    func navigateToTransferAccounts(topupCreditCard: AppStructs.CreditDebitCard?) {
+        let vc = TransferAccountsViewController(viewModel: .init(service: self.paymentsService, accountInfo: self.accountInfo), topupCreditCard: topupCreditCard)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
     
+    func presentTransferPaymentChoose(paymentCard: AppStructs.CreditDebitCard?, transfers: Bool) {
+        let vc = ChooseTransferViewController(type: transfers ? .transfers : .payments, viewModel: .init(service: self.paymentsService, accountInfo: self.accountInfo), paymentCreditCard: paymentCard)
+        vc.coordinator = self
+        self.nav.present(vc, animated: true)
+    }
 }

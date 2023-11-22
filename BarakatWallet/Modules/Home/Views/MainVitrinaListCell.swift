@@ -46,6 +46,14 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+    let emptyView: MainEmptyView = {
+        let view = MainEmptyView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.titleView.text = "SHOWCASE_LOAD_ERROR_TRY".localized
+        view.isHidden = true
+        return view
+    }()
+    var showcases: [AppStructs.Showcase] = []
     weak var delegate: HomeViewControllerItemDelegate? = nil
     
     override init(frame: CGRect) {
@@ -53,6 +61,7 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.backgroundColor = .clear
         self.contentView.addSubview(self.titleView)
         self.contentView.addSubview(self.allButton)
+        self.contentView.addSubview(self.emptyView)
         self.contentView.addSubview(self.collectionView)
         self.contentView.addSubview(self.controlView)
         NSLayoutConstraint.activate([
@@ -63,6 +72,10 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
             self.allButton.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
             self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
             self.allButton.heightAnchor.constraint(equalToConstant: 18),
+            self.emptyView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.emptyView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
+            self.emptyView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.emptyView.bottomAnchor.constraint(equalTo: self.controlView.topAnchor, constant: -8),
             self.collectionView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 0),
             self.collectionView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
             self.collectionView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: 0),
@@ -73,6 +86,7 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
             self.controlView.heightAnchor.constraint(equalToConstant: 12)
         ])
         self.allButton.addTarget(self, action: #selector(self.allTapped), for: .touchUpInside)
+        self.emptyView.addTarget(self, action: #selector(self.reloadTapped), for: .touchUpInside)
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
         self.controlView.drawer = ExtendedDotDrawer(numberOfPages: 1, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
@@ -86,18 +100,22 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.delegate?.goToAllTapped(cell: self)
     }
     
+    @objc func reloadTapped() {
+        self.delegate?.reloadTapped(cell: self)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 3
+        return self.showcases.count
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
-        self.delegate?.showcaseTapped(showcase: .init())
+        self.delegate?.showcaseTapped(showcase: self.showcases[indexPath.item])
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! MainVitrinaCell
-        cell.configure()
+        cell.configure(item: self.showcases[indexPath.item])
         return cell
     }
     
@@ -111,9 +129,30 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         return .init(width: itemWidth, height: height)
     }
     
-    func configure() {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let witdh = scrollView.frame.width - (scrollView.contentInset.left + scrollView.contentInset.right)
+        let index = scrollView.contentOffset.x / witdh
+        let roundedIndex = index.rounded(.up)
+        if self.controlView.numberOfPages > Int(roundedIndex) {
+            self.controlView.setPage(Int(roundedIndex))
+        } else {
+            self.controlView.setPage(self.controlView.numberOfPages - 1)
+        }
+    }
+    
+    func configure(items: [AppStructs.Showcase]) {
+        self.emptyView.isHidden = !items.isEmpty
+        self.showcases = items
         self.titleView.textColor = Theme.current.primaryTextColor
         self.collectionView.reloadData()
+        var count: Int = 0
+        if items.count > 0 {
+            let resutl: Double = Double(items.count) / 2.6
+            count = Int(resutl.rounded(.up))
+        } else {
+            count = 1
+        }
+        self.controlView.numberOfPages = count
     }
 }
 
@@ -160,8 +199,8 @@ class MainVitrinaCell: UICollectionViewCell {
         super.init(frame: frame)
         self.backgroundColor = .clear
         self.contentView.addSubview(self.rootView)
-        self.rootView.addSubview(self.mainImage)
         self.rootView.addSubview(self.titleView)
+        self.rootView.addSubview(self.mainImage)
         NSLayoutConstraint.activate([
             self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 5),
             self.rootView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 0),
@@ -182,8 +221,9 @@ class MainVitrinaCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure() {
+    func configure(item: AppStructs.Showcase) {
         self.titleView.textColor = Theme.current.primaryTextColor
         self.rootView.backgroundColor = Theme.current.plainTableCellColor
+        self.titleView.text = item.name
     }
 }

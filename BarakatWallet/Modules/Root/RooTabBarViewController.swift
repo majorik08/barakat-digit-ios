@@ -129,7 +129,7 @@ class RooTabBarViewController: BaseTabBarController, UITabBarControllerDelegate 
             self.tabBar.backgroundImage = UIImage()
         }
         UITabBar.appearance().tintColor = newTheme.tintColor
-        UINavigationBar.appearance().tintColor = .white
+        UINavigationBar.appearance().tintColor = newTheme.tintColor
         UISearchBar.appearance().tintColor = newTheme.tintColor
         UITableView.appearance().backgroundColor = newTheme.plainTableBackColor
         self.tabBar.backgroundColor = Theme.current.plainTableBackColor

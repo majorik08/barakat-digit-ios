@@ -10,8 +10,8 @@ import UIKit
 
 class VerticalButtonView: UIControl {
     
-    let iconView: UIImageView = {
-        let view = UIImageView(frame: .zero)
+    let iconView: CircleImageView = {
+        let view = CircleImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
         return view
@@ -24,7 +24,7 @@ class VerticalButtonView: UIControl {
         view.lineBreakMode = .byWordWrapping
         view.textAlignment = .center
         view.adjustsFontSizeToFitWidth = true
-        view.minimumScaleFactor = 0.5
+        view.minimumScaleFactor = 0.7
         return view
     }()
     
@@ -54,14 +54,14 @@ class VerticalButtonView: UIControl {
         self.addSubview(self.iconView)
         self.addSubview(self.nameView)
         NSLayoutConstraint.activate([
-            self.iconView.leftAnchor.constraint(equalTo: self.leftAnchor),
+            self.iconView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             self.iconView.topAnchor.constraint(equalTo: self.topAnchor),
-            self.iconView.rightAnchor.constraint(equalTo: self.rightAnchor),
-            self.iconView.heightAnchor.constraint(equalTo: self.iconView.widthAnchor, multiplier: 1),
+            self.iconView.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.68),
+            self.iconView.widthAnchor.constraint(equalTo: self.iconView.heightAnchor, multiplier: 1),
             self.nameView.leftAnchor.constraint(equalTo: self.leftAnchor),
             self.nameView.topAnchor.constraint(equalTo: self.iconView.bottomAnchor, constant: 10),
             self.nameView.rightAnchor.constraint(equalTo: self.rightAnchor),
-            self.nameView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+            self.nameView.bottomAnchor.constraint(lessThanOrEqualTo: self.bottomAnchor)
         ])
     }
     

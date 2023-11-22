@@ -46,12 +46,20 @@ class HistoryViewController: BaseViewController, UITableViewDelegate, UITableVie
         if #available(iOS 15.0, *) {
             self.tableView.sectionHeaderTopPadding = 0
         }
+        self.tableView.refreshControl = UIRefreshControl()
+        self.tableView.refreshControl!.tintColor = Theme.current.tintColor
+        self.tableView.refreshControl!.addTarget(self, action: #selector(reloadHistory), for: .valueChanged)
         self.tableView.delegate = self
         self.tableView.dataSource = self
         self.viewModel.didHistoryUpdate.subscribe { [weak self] _ in
+            self?.tableView.refreshControl?.endRefreshing()
             self?.tableView.reloadData()
         }.disposed(by: self.viewModel.disposeBag)
         
+        self.viewModel.getHistory()
+    }
+    
+    @objc func reloadHistory() {
         self.viewModel.getHistory()
     }
     

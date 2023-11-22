@@ -13,21 +13,21 @@ class CardTextFiled: UIView {
     let rootView: UIView = {
         let view = UIView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.borderWidth = 1.2
-        view.layer.borderColor = Theme.current.tintColor.cgColor
-        view.layer.cornerRadius = 14
+        view.layer.borderWidth = 1
+        view.layer.borderColor = Theme.current.borderColor.cgColor
+        view.layer.cornerRadius = 10
         view.layer.shadowColor = Theme.current.shadowColor.cgColor
         view.layer.shadowOpacity = 1
         view.layer.shadowRadius = 2
-        view.layer.shadowOffset = CGSize(width: 2, height: 4)
+        view.layer.shadowOffset = CGSize(width: 2, height: 2)
         view.setContentHuggingPriority(.defaultLow, for: .vertical)
-        view.backgroundColor = Theme.current.plainTableCellColor
+        view.backgroundColor = Theme.current.plainTableBackColor
         return view
     }()
     let textFieldTopLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 18)
+        view.font = UIFont.medium(size: 15)
         view.textColor = Theme.current.secondaryTextColor
         view.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return view
@@ -35,11 +35,11 @@ class CardTextFiled: UIView {
     let topLabel: PaddingLabel = {
         let view = PaddingLabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = Theme.current.plainTableCellColor
+        view.backgroundColor = Theme.current.plainTableBackColor
         view.textColor = Theme.current.tintColor
         view.layer.cornerRadius = 10
         view.clipsToBounds = true
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.medium(size: 15)
         view.leftInset = 8
         view.rightInset = 8
         view.adjustsFontSizeToFitWidth = true
@@ -55,7 +55,7 @@ class CardTextFiled: UIView {
     let bottomLabel: PaddingLabel = {
         let view = PaddingLabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.medium(size: 15)
         view.textColor = Theme.current.tintColor
         view.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return view
@@ -65,8 +65,11 @@ class CardTextFiled: UIView {
     init(textField: UITextField = UITextField(frame: .zero)) {
         self.textField = textField
         self.textField.translatesAutoresizingMaskIntoConstraints = false
-        self.textField.font = UIFont.bold(size: 16)
+        self.textField.font = UIFont.medium(size: 17)
         self.textField.textColor = Theme.current.primaryTextColor
+        self.textField.clipsToBounds = true
+        self.textField.borderStyle = .none
+        self.textField.backgroundColor = .clear
         super.init(frame: .zero)
         self.backgroundColor = .clear
         self.addSubview(self.rootView)

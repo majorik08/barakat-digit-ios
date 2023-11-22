@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-class MainEmptyView: UIView {
+class MainEmptyView: UIControl {
     
     let titleView: UILabel = {
         let view = UILabel(frame: .zero)

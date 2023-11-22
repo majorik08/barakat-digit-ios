@@ -7,8 +7,9 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
-class FirstLaunchViewController: BaseViewController {
+class FirstLaunchViewController: BaseViewController, StoriesViewDelegate {
     
     lazy var topViewMaxHeight: CGFloat = {
         return UIScreen.main.bounds.height * 0.4
@@ -44,6 +45,17 @@ class FirstLaunchViewController: BaseViewController {
         return view
     }()
     weak var coordinator: LoginCoordinator?
+    let bannerService: BannerService
+    let disposeBag = DisposeBag()
+    
+    init(bannerService: BannerService) {
+        self.bannerService = bannerService
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -69,8 +81,20 @@ class FirstLaunchViewController: BaseViewController {
             self.versionLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -16),
             self.versionLabel.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: 0),
         ])
+        self.topBar.storiesView.delegate = self
         self.transferButton.addTarget(self, action: #selector(self.openTransfer), for: .touchUpInside)
         self.loginButton.addTarget(self, action: #selector(self.openLogin), for: .touchUpInside)
+        self.bannerService.loadStories().observe(on: MainScheduler.instance).subscribe(onSuccess: { [weak self] stories in
+            self?.topBar.storiesView.configure(stories: stories)
+            var count: Int = 0
+            if stories.count > 0 {
+                let resutl: Double = Double(stories.count) / 4.3
+                count = Int(resutl.rounded(.up))
+            } else {
+                count = 1
+            }
+            self?.topBar.pageControl.numberOfPages = count
+        }).disposed(by: self.disposeBag)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -91,5 +115,20 @@ class FirstLaunchViewController: BaseViewController {
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.topBar.themeChanged(newTheme: newTheme)
         self.versionLabel.textColor = Theme.current.primaryTextColor
+    }
+    
+    func didTapStoriesItem(stories: [AppStructs.Stories], index: Int) {
+        self.coordinator?.presentStoriesPreView(stories: stories, handPickedStoryIndex: index)
+    }
+    
+    func didScrolledBar(scrollView: UIScrollView) {
+        let witdh = scrollView.frame.width - (scrollView.contentInset.left + scrollView.contentInset.right)
+        let index = scrollView.contentOffset.x / witdh
+        let roundedIndex = index.rounded(.up)
+        if self.topBar.pageControl.numberOfPages > Int(roundedIndex) {
+            self.topBar.pageControl.setPage(Int(roundedIndex))
+        } else {
+            self.topBar.pageControl.setPage(self.topBar.pageControl.numberOfPages - 1)
+        }
     }
 }

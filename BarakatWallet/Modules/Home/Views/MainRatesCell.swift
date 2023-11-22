@@ -26,6 +26,13 @@ class MainRatesCell: UICollectionViewCell {
         view.titleLabel?.font = UIFont.medium(size: 16)
         return view
     }()
+    let emptyView: MainEmptyView = {
+        let view = MainEmptyView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.titleView.text = "RATES_LOAD_ERROR_TRY".localized
+        view.isHidden = true
+        return view
+    }()
     let rootView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -37,10 +44,12 @@ class MainRatesCell: UICollectionViewCell {
         return view
     }()
     weak var delegate: HomeViewControllerItemDelegate? = nil
+    var rates: [AppStructs.CurrencyRate] = []
     
     override var isHighlighted: Bool {
         didSet {
             self.rootView.alpha = self.isHighlighted ? 0.5 : 1
+            self.emptyView.alpha = self.isHighlighted ? 0.5 : 1
         }
     }
     
@@ -50,6 +59,7 @@ class MainRatesCell: UICollectionViewCell {
         self.contentView.addSubview(self.titleView)
         self.contentView.addSubview(self.rootView)
         self.contentView.addSubview(self.allButton)
+        self.contentView.addSubview(self.emptyView)
         NSLayoutConstraint.activate([
             self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
             self.titleView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
@@ -58,12 +68,17 @@ class MainRatesCell: UICollectionViewCell {
             self.allButton.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
             self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
             self.allButton.heightAnchor.constraint(equalToConstant: 18),
+            self.emptyView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.emptyView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
+            self.emptyView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.emptyView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -4),
             self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
             self.rootView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
             self.rootView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
             self.rootView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -4),
         ])
         self.allButton.addTarget(self, action: #selector(self.allTapped), for: .touchUpInside)
+        self.emptyView.addTarget(self, action: #selector(self.reloadTapped), for: .touchUpInside)
     }
     
     required init?(coder: NSCoder) {
@@ -74,7 +89,13 @@ class MainRatesCell: UICollectionViewCell {
         self.delegate?.goToAllTapped(cell: self)
     }
     
-    func configure() {
+    @objc func reloadTapped() {
+        self.delegate?.reloadTapped(cell: self)
+    }
+    
+    func configure(rates: [AppStructs.CurrencyRate]) {
+        self.emptyView.isHidden = !rates.isEmpty
+        self.rates = rates
         self.titleView.textColor = Theme.current.primaryTextColor
         self.rootView.backgroundColor = Theme.current.plainTableCellColor
     }

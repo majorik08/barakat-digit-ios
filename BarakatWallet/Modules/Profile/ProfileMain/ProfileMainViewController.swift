@@ -59,7 +59,17 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
         self.topBar.statusView.addTarget(self, action: #selector(self.goIdentify), for: .touchUpInside)
         self.tableView.dataSource = self
         self.tableView.delegate = self
-        self.topBar.subTitleLabel.text = self.viewModel.clientInfo.wallet.formatedPrefix()
+        self.viewModel.didProfileUpdate.subscribe(onNext: { [weak self] _ in
+            self?.setInfo()
+        }).disposed(by: self.viewModel.disposeBag)
+        self.setInfo()
+    }
+    
+    func setInfo() {
+        self.topBar.subTitleLabel.text = self.viewModel.accountInfo.client.wallet.formatedPrefix()
+        self.topBar.statusView.configure(limits: self.viewModel.accountInfo.client.limit)
+        APIManager.instance.loadImage(into: self.topBar.avatarView, filePath: self.viewModel.accountInfo.client.avatar)
+        self.viewModel.loadIdentifyStatus()
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

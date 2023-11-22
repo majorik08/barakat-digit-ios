@@ -16,6 +16,9 @@ class HistoryViewModel {
     }
     
     let historyService: HistoryService
+    
+    var forCreditCard: AppStructs.CreditDebitCard? = nil
+    
     var historySections: [HistorySection] = []
     var selectedHistory: AppStructs.HistoryItem? = nil
     

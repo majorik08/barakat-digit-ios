@@ -6,18 +6,9 @@
 //
 
 import Foundation
+import RxSwift
 
 struct AppStructs {
-    
-    class AccountInfo: Codable {
-        var accounts: [Account]
-        var client: ClientInfo
-        
-        init(accounts: [Account], client: ClientInfo) {
-            self.accounts = accounts
-            self.client = client
-        }
-    }
     
     struct Device: Codable {
         let APIKey: String
@@ -28,6 +19,28 @@ struct AppStructs {
         let latitude: Double
         let longitude: Double
         let platform: String
+    }
+    
+    class AccountInfo {
+        
+        let didUpdateClient = PublishSubject<Void>()
+        let didUpdateAccounts = PublishSubject<Void>()
+        
+        var accounts: [Account] {
+            didSet {
+                self.didUpdateAccounts.onNext(())
+            }
+        }
+        var client: ClientInfo {
+            didSet {
+                self.didUpdateClient.onNext(())
+            }
+        }
+        
+        init(accounts: [Account], client: ClientInfo) {
+            self.accounts = accounts
+            self.client = client
+        }
     }
     
     class Account: Codable {
@@ -109,6 +122,14 @@ struct AppStructs {
         let number: String
     }
     
+    struct CreditDebitCardTypes: Codable {
+        let name: String
+    }
+    
+    struct CreditDebitCardItem: Codable {
+        let name: String
+    }
+    
     struct PaymentGroup: Codable {
         let id: Int
         let name: String
@@ -155,15 +176,60 @@ struct AppStructs {
         }
     }
     
+    struct Favourite: Codable {
+        
+    }
+    
     struct HistoryItem: Codable {
         var date: Date
     }
     
     struct Showcase: Codable {
+        let address: String
+        let cashBack: Int
+        var contacts: [Contact]
+        let description: String
+        let id: Int
+        let image: String
+        let lat: Double
+        let long: Double
+        let name: String
+        let payText: String
+        let validityDate: String
         
+        struct Contact: Codable {
+            let cashID: Int
+            let id: Int
+            let logo: String
+            let text: String
+            let type: String
+        }
     }
     
-    struct Favourite: Codable {
+    struct Stories: Codable {
+        let action: String
+        let button: String
+        let type: Int
+        let id: Int
+        let images: [Image]
         
+        struct Image: Codable {
+            let id: Int
+            let source: String
+            let storyID: Int
+        }
+    }
+    
+    struct Banner: Codable {
+        let id: Int
+        let image: String
+        let text: String
+        let title: String
+    }
+    
+    struct CurrencyRate: Codable {
+        let currencyOne: Currency
+        let currencyTwo: Currency
+        let rate: Double
     }
 }

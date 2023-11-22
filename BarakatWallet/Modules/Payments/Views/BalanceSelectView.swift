@@ -14,8 +14,8 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.primaryTextColor
-        view.font = UIFont.medium(size: 16)
-        view.text = "CARDS".localized
+        view.font = UIFont.regular(size: 16)
+        view.text = "OUT_ACCOUNT".localized
         return view
     }()
     let collectionView: UICollectionView = {
@@ -47,22 +47,22 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
         self.addSubview(self.collectionView)
         self.addSubview(self.controlView)
         NSLayoutConstraint.activate([
-            self.titleView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 0),
+            self.titleView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.titleView.topAnchor.constraint(equalTo: self.topAnchor, constant: 0),
-            self.titleView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: 0),
+            self.titleView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.titleView.heightAnchor.constraint(equalToConstant: 18),
             self.collectionView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 0),
             self.collectionView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
             self.collectionView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: 0),
-            self.controlView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 0),
+            self.controlView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.controlView.topAnchor.constraint(equalTo: self.collectionView.bottomAnchor, constant: 8),
-            self.controlView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: 0),
+            self.controlView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.controlView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -2),
             self.controlView.heightAnchor.constraint(equalToConstant: 12)
         ])
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
-        self.controlView.drawer = ExtendedDotDrawer(numberOfPages: 3, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
+        self.controlView.drawer = ExtendedDotDrawer(numberOfPages: 1, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
     }
     
     required init?(coder: NSCoder) {
@@ -70,6 +70,7 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
     }
     
     func configure(accounts: [AppStructs.Account]) {
+        self.controlView.drawer = ExtendedDotDrawer(numberOfPages: accounts.count, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
         self.accounts = accounts
         self.collectionView.reloadData()
     }
@@ -86,14 +87,37 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = self.frame.width
-        guard width > 0 else {
+        let height = self.frame.height
+        guard width > 0 && height > 0 else {
             return .init(width: 1, height: 1)
         }
-        return .init(width: width, height: width * 0.4)
+        return .init(width: width, height: height - 48)
     }
 }
 
 class BalanceCell: UICollectionViewCell {
+    
+    let balanceView: BalanceView = {
+        let view = BalanceView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = .clear
+        self.contentView.addSubview(self.balanceView)
+        NSLayoutConstraint.activate([
+            self.balanceView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
+            self.balanceView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 0),
+            self.balanceView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.balanceView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: 0),
+        ])
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     func configure(account: AppStructs.Account) {
         

@@ -59,6 +59,17 @@ class KeyPadView: UIView, UICollectionViewDelegate, UICollectionViewDataSource, 
         return self.numbers.count
     }
     
+    func updateHashButtonImage(image: UIImage?) {
+        self.hashButtonImage = image
+        guard let index = self.numbers.firstIndex(of: "<") else { return }
+        guard let cell = self.collection.cellForItem(at: IndexPath.init(item: index, section: 0)) as? CurrencyCell else { return }
+        if let image {
+            cell.iconView.image = image
+        } else {
+            cell.iconView.image = UIImage(name: .delete)
+        }
+    }
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cellId", for: indexPath) as! CurrencyCell
         let number = self.numbers[indexPath.item]
@@ -140,11 +151,11 @@ class CurrencyCell: UICollectionViewCell {
         return view
     }()
     
-//    override var isHighlighted: Bool {
-//        didSet {
-//            self.root.backgroundColor = isHighlighted ? Theme.current.keysHighlightColor : Theme.current.keyPadBackColor
-//        }
-//    }
+    override var isHighlighted: Bool {
+        didSet {
+            self.root.alpha = isHighlighted ? 0.5 : 1
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)

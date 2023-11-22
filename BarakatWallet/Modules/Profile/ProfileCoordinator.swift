@@ -13,15 +13,22 @@ class ProfileCoordinator: Coordinator {
     let nav: BaseNavigationController
     weak var parent: HomeCoordinator? = nil
     
-    let clientInfo: AppStructs.ClientInfo
+    let accountInfo: AppStructs.AccountInfo
     
-    init(nav: BaseNavigationController, clientInfo: AppStructs.ClientInfo) {
+    var identifyService: IdentifyService {
+        return ENVIRONMENT.isMock ? IdentifyServiceImpl() : IdentifyServiceImpl()
+    }
+    var authService: AccountService {
+        return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
+    }
+    
+    init(nav: BaseNavigationController, accountInfo: AppStructs.AccountInfo) {
         self.nav = nav
-        self.clientInfo = clientInfo
+        self.accountInfo = accountInfo
     }
     
     func start() {
-        let vc = ProfileMainViewController(viewModel: ProfileViewModel(clientInfo: self.clientInfo, profileService: ProfileServiceImpl(clientInfo: self.clientInfo)))
+        let vc = ProfileMainViewController(viewModel: ProfileViewModel(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
@@ -31,7 +38,7 @@ class ProfileCoordinator: Coordinator {
     }
     
     func navigateToEditProfile() {
-        let vc = ProfileEditViewController(viewModel: ProfileViewModel(clientInfo: self.clientInfo, profileService: ProfileServiceImpl(clientInfo: self.clientInfo)))
+        let vc = ProfileEditViewController(viewModel: ProfileViewModel(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
@@ -44,25 +51,25 @@ class ProfileCoordinator: Coordinator {
     }
     
     func navigateToSettings() {
-        let vc = ProfileSettingsViewController(viewModel: .init(clientInfo: self.clientInfo, profileService: ProfileServiceImpl(clientInfo: self.clientInfo)))
+        let vc = ProfileSettingsViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     
     func presentLogout() {
-        let vc = ProfileLogoutViewController(viewModel: .init(clientInfo: self.clientInfo, profileService: ProfileServiceImpl(clientInfo: self.clientInfo)))
+        let vc = ProfileLogoutViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.present(vc, animated: true)
     }
     
     func presentLanguage() {
-        let vc = LanguageViewController(viewModel: .init(clientInfo: self.clientInfo, profileService: ProfileServiceImpl(clientInfo: self.clientInfo)))
+        let vc = LanguageViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.present(vc, animated: true)
     }
     
     func presentTheme() {
-        let vc = ThemeViewController(viewModel: .init(clientInfo: self.clientInfo, profileService: ProfileServiceImpl(clientInfo: self.clientInfo)))
+        let vc = ThemeViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.present(vc, animated: true)
     }
@@ -82,10 +89,8 @@ class ProfileCoordinator: Coordinator {
     }
     
     func navigateToChangePasscode(account: CoreAccount) {
-        let vc = SetPinViewController(viewModel: SetPinViewModel(account: account, startFor: .change(old: account.pin ?? ""), checkComplition: { result in
-            if result {
-                self.nav.popViewController(animated: true)
-            }
+        let vc = PasscodeSetViewController(viewModel: .init(authService: self.authService, account: account, startFor: .change(old: account.pin ?? ""), checkComplition: { result in
+            self.nav.popViewController(animated: true)
         }))
         self.nav.pushViewController(vc, animated: true)
     }

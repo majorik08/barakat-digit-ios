@@ -143,6 +143,7 @@ class StatusView: UIControl {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.imageView.image = UIImage(name: .profile_add)
         view.tintColor = .white
+        view.isUserInteractionEnabled = false
         return view
     }()
     let titleLabel: UILabel = {
@@ -211,5 +212,16 @@ class StatusView: UIControl {
         self.iconView.startColor = Theme.current.mainGradientStartColor
         self.iconView.endColor = Theme.current.mainGradientEndColor
         self.titleLabel.textColor = Theme.current.primaryTextColor
+    }
+    
+    func configure(limits: AppStructs.ClientInfo.Limit) {
+        switch limits.identifyed {
+        case .noIdentified:
+            self.subTitleLabel.text = "ID_NOT_IDENTIFY".localized
+        case .onlineIdentified:
+            self.subTitleLabel.text = "IDENTIFY_ONLINE".localized
+        case .identified:
+            self.subTitleLabel.text = "IDENTIFIED".localized
+        }
     }
 }

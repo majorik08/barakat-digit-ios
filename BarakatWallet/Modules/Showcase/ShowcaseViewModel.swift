@@ -9,9 +9,9 @@ import Foundation
 
 class ShowcaseViewModel {
     
-    let showcaseService: ShowcaseService
+    let service: BannerService
     
-    init(showcaseService: ShowcaseService) {
-        self.showcaseService = showcaseService
+    init(service: BannerService) {
+        self.service = service
     }
 }

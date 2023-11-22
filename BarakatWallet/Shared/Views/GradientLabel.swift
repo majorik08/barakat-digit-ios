@@ -11,7 +11,7 @@ import UIKit
 class GradientLabel: UILabel {
     
     private var shadowLayer: CALayer?
-    var shadowEnabled: Bool = true
+    var shadowEnabled: Bool = false
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)

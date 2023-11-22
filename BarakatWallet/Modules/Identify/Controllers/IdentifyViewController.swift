@@ -7,8 +7,9 @@
 
 import Foundation
 import UIKit
+import MobileCoreServices
 
-class IdentifyViewController: BaseViewController {
+class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     private let scrollView: UIScrollView = {
         let view = UIScrollView(frame: .zero)
@@ -95,6 +96,7 @@ class IdentifyViewController: BaseViewController {
         return view
     }()
     
+    lazy var imagePickerController = UIImagePickerController()
     let viewModel: IdentifyViewModel
     weak var coordinator: IdentifyCoordinator?
     
@@ -171,6 +173,17 @@ class IdentifyViewController: BaseViewController {
         self.frontPick.addTarget(self, action: #selector(self.frontTapped(_:)), for: .touchUpInside)
         self.backPick.addTarget(self, action: #selector(self.frontTapped(_:)), for: .touchUpInside)
         self.selfiePick.addTarget(self, action: #selector(self.frontTapped(_:)), for: .touchUpInside)
+        self.nextButton.addTarget(self, action: #selector(self.sendTapped(_:)), for: .touchUpInside)
+        
+        self.viewModel.didSetFailed.subscribe { [weak self] error in
+            self?.hideProgressView()
+            self?.showErrorAlert(title: "error", message: error ?? "")
+            self?.checkSendStatus()
+        }.disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didSetSuccess.subscribe(onNext: { [weak self] _ in
+            self?.successProgress(text: "success")
+            self?.checkSendStatus()
+        }).disposed(by: self.viewModel.disposeBag)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -196,7 +209,88 @@ class IdentifyViewController: BaseViewController {
         self.infoView.themeChanged(newTheme: newTheme)
     }
     
+    @objc func sendTapped(_ sender: UIButton) {
+        if self.checkSendStatus() {
+            self.showProgressView()
+            self.viewModel.setIdentify()
+        }
+    }
+    
     @objc func frontTapped(_ sender: ImageControl) {
-        
+        if sender === self.frontPick {
+            self.imagePicker(type: .front, sender: sender)
+        } else if sender === self.backPick {
+            self.imagePicker(type: .back, sender: sender)
+        } else if sender === self.selfiePick {
+            self.imagePicker(type: .selfie, sender: sender)
+        }
+    }
+    
+    func imagePicker(type: IdentifyViewModel.PickerType, sender: ImageControl) {
+        self.viewModel.pickerType = type
+        self.imagePickerController.delegate = self
+        if #available(iOS 13.0, *) {
+            self.imagePickerController.overrideUserInterfaceStyle = Theme.current.dark ? .dark : .light
+        }
+        let mediaAlert = self.getActionSheet(popOver: sender, barButton: nil)
+        let cameraAction = UIAlertAction(title: "CAMERA".localized, style: .default) { (_) in
+            self.imagePickerController.allowsEditing = true
+            self.imagePickerController.sourceType = .camera
+            self.imagePickerController.mediaTypes = [kUTTypeImage as String]
+            self.imagePickerController.cameraCaptureMode = .photo
+            self.imagePickerController.videoQuality = .typeMedium
+            self.imagePickerController.showsCameraControls = true
+            self.present(self.imagePickerController, animated: true, completion: nil)
+        }
+        let photoAction = UIAlertAction(title: "PHOTOS".localized, style: .default) { (_) in
+            self.imagePickerController.allowsEditing = true
+            self.imagePickerController.sourceType = .photoLibrary
+            self.imagePickerController.mediaTypes = [kUTTypeImage as String]
+            self.present(self.imagePickerController, animated: true, completion: nil)
+        }
+        mediaAlert.addAction(cameraAction)
+        mediaAlert.addAction(photoAction)
+        mediaAlert.addAction(UIAlertAction(title: "CANCEL".localized, style: .cancel, handler: nil))
+        self.present(mediaAlert, animated: true, completion: nil)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true, completion: nil)
+        if let mediaType = info[UIImagePickerController.InfoKey.mediaType] as? String {
+            if mediaType == kUTTypeImage as String {
+                if let editedImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage ?? info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+                    let scaledImage = editedImage.scaleImage()
+                    let name = APIManager.instance.getNewFileName(type: .image, mimeType: "image/jpeg")
+                    let urlForLocalAvatar = APIManager.instance.getFileUrl(type: .image, name: name)
+                    APIManager.saveImageLocal(scaledImage: scaledImage, compress: true, url: urlForLocalAvatar)
+                    if APIManager.instance.fileExist(url: urlForLocalAvatar) {
+                        switch self.viewModel.pickerType {
+                        case .front:
+                            self.frontPick.photoView.image = scaledImage
+                        case .back:
+                            self.backPick.photoView.image = scaledImage
+                        case .selfie:
+                            self.selfiePick.photoView.image = scaledImage
+                        }
+                        self.viewModel.setPhoto(result: urlForLocalAvatar)
+                        self.checkSendStatus()
+                    }
+                }
+            }
+        }
+    }
+    
+    @discardableResult
+    func checkSendStatus() -> Bool {
+        if self.viewModel.frontUrl != nil && self.viewModel.backUrl != nil && self.viewModel.selfieUrl != nil {
+            self.nextButton.isEnabled = true
+            return true
+        }
+        self.nextButton.isEnabled = false
+        return false
     }
 }

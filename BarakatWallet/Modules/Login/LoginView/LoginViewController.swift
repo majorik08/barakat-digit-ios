@@ -197,6 +197,7 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate {
         } else {
             self.selectedCountry = CountryPicker.Country(countryName: "Tajikistan", countryCode: "TJ", countryPhoneCode: "+992", countryFullCode: "TJK")
         }
+        self.selectedCountry = CountryPicker.Country(countryName: "Tajikistan", countryCode: "TJ", countryPhoneCode: "+992", countryFullCode: "TJK")
         self.keyPadView.delegate = self
         self.backButton.rx.tap.subscribe { [weak self] _ in
             self?.coordinator?.navigateBack()

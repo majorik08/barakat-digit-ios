@@ -10,21 +10,76 @@ import RxSwift
 
 class PasscodeViewModel {
     
+    enum StartFor {
+        case setup
+        case change(old: String)
+        case check(pin: String)
+        
+        var passcode: String {
+            switch self {
+            case .setup: return ""
+            case .change(old: let old): return old
+            case .check(pin: let pin): return pin
+            }
+        }
+    }
+    enum SetupSteps {
+        case check
+        case first
+        case second(new: String)
+        var isFirst: Bool {
+            switch self {
+            case .first:return true
+            default: return false
+            }
+        }
+        var isCheck: Bool {
+            switch self {
+            case .check:return true
+            default: return false
+            }
+        }
+    }
+    var startFor: StartFor
+    var setupStep: SetupSteps
+    let passcodeMinLength: Int = 4
+    let passcodeMaxLength: Int = 8
+    let validDigitsSet: CharacterSet = {
+        return CharacterSet(charactersIn: "0".unicodeScalars.first! ... "9".unicodeScalars.first!)
+    }()
+    
     let disposeBag = DisposeBag()
     let account: CoreAccount
-    let passcodeService: PasscodeService
+    let authService: AccountService
     
     let didLogin = PublishSubject<AppStructs.AccountInfo>()
     let didLoginFailed = PublishSubject<String>()
     
-    init(account: CoreAccount, passcodeService: PasscodeService) {
-        self.passcodeService = passcodeService
+    var delegate: ((_ result: Bool) -> Void)?
+    
+    init(authService: AccountService, account: CoreAccount, startFor: StartFor, checkComplition: ((_ result: Bool) -> Void)? = nil) {
         self.account = account
+        self.authService = authService
+        self.startFor = startFor
+        self.delegate = checkComplition
+        switch startFor {
+        case .setup:
+            self.setupStep = .first
+        case .change(_):
+            self.setupStep = .check
+        case .check(_):
+            self.setupStep = .check
+        }
+    }
+    
+    func changePin(pin: String) {
+        self.account.pin = pin
+        CoreAccount.update(account: self.account)
     }
     
     func pinChechSuccess() {
-        self.passcodeService.getClientInfo().flatMap { info -> Single<AppStructs.AccountInfo> in
-            return self.passcodeService.getAccount().flatMap { account in
+        self.authService.getClientInfo().flatMap { info -> Single<AppStructs.AccountInfo> in
+            return self.authService.getAccount().flatMap { account in
                 let accountInfo = AppStructs.AccountInfo(accounts: account, client: info)
                 return .just(accountInfo)
             }
@@ -37,5 +92,9 @@ class PasscodeViewModel {
                 self.didLoginFailed.onNext(error.localizedDescription)
             }
         }.disposed(by: self.disposeBag)
+    }
+    
+    func updateLockState(state: LockState) {
+        CoreAccount.updateLockState(accountId: self.account.accountId, state: state)
     }
 }

@@ -161,10 +161,6 @@ open class BaseNavigationController: UINavigationController, UIEvents {
         }
     }
     
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-    }
-    
     public init(title: String? = nil, image: UIImage? = nil, tag: Int = 0, overrideInterfaceStyle: Bool = true) {
         self.overrideInterfaceStyle = overrideInterfaceStyle
         super.init(nibName: nil, bundle: nil)
@@ -178,10 +174,10 @@ open class BaseNavigationController: UINavigationController, UIEvents {
         self.navigationBar.tintColor = Theme.current.tintColor
         self.navigationBar.shadowImage = UIImage()
         self.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 17)]
+        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 18)]
         if #available(iOS 11.0, *) {
             self.navigationBar.prefersLargeTitles = true
-            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 34)]
+            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 34)]
         }
         self.navigationBar.prefersLargeTitles = false
         if #available(iOS 13.0, tvOS 13.0, *) {
@@ -190,8 +186,8 @@ open class BaseNavigationController: UINavigationController, UIEvents {
             }
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithOpaqueBackground()
-            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 17)]
-            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 34)]
+            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 18)]
+            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 34)]
             navBarAppearance.backgroundColor = Theme.current.navigationColor
             navBarAppearance.shadowColor = .clear
             navigationBar.standardAppearance = navBarAppearance
@@ -213,10 +209,10 @@ open class BaseNavigationController: UINavigationController, UIEvents {
         self.navigationBar.tintColor = Theme.current.tintColor
         self.navigationBar.shadowImage = UIImage()
         self.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 17)]
+        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 18)]
         if #available(iOS 11.0, *) {
             self.navigationBar.prefersLargeTitles = true
-            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 34)]
+            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 34)]
         }
         self.navigationBar.prefersLargeTitles = false
         if #available(iOS 13.0, tvOS 13.0, *) {
@@ -225,8 +221,8 @@ open class BaseNavigationController: UINavigationController, UIEvents {
             }
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithOpaqueBackground()
-            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 17)]
-            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 34)]
+            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 18)]
+            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 34)]
             navBarAppearance.backgroundColor = Theme.current.navigationColor
             navBarAppearance.shadowColor = .clear
             navigationBar.standardAppearance = navBarAppearance
@@ -246,8 +242,8 @@ open class BaseNavigationController: UINavigationController, UIEvents {
             }
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithTransparentBackground()
-            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 17)]
-            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 34)]
+            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 18)]
+            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 34)]
             navBarAppearance.backgroundColor = .clear
             navigationBar.standardAppearance = navBarAppearance
             navigationBar.scrollEdgeAppearance = navBarAppearance
@@ -264,9 +260,9 @@ open class BaseNavigationController: UINavigationController, UIEvents {
         self.navigationBar.tintColor = Theme.current.tintColor
         self.navigationBar.shadowImage = UIImage()
         self.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 17)]
+        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 18)]
         if #available(iOS 11.0, *) {
-            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 34)]
+            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : Theme.current.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 34)]
         }
         if #available(iOS 13.0, tvOS 13.0, *) {
             if self.overrideInterfaceStyle {
@@ -274,8 +270,8 @@ open class BaseNavigationController: UINavigationController, UIEvents {
             }
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithOpaqueBackground()
-            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 17)]
-            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.bold(size: 34)]
+            navBarAppearance.titleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 18)]
+            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: Theme.current.navigationTextColor, .font: UIFont.medium(size: 34)]
             navBarAppearance.backgroundColor = Theme.current.navigationColor
             navBarAppearance.shadowColor = .clear
             navigationBar.standardAppearance = navBarAppearance
@@ -295,9 +291,9 @@ open class BaseNavigationController: UINavigationController, UIEvents {
         self.navigationBar.tintColor = Theme.current.tintColor
         self.navigationBar.shadowImage = UIImage()
         self.navigationBar.setBackgroundImage(UIImage(), for: .default)
-        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : newTheme.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 17)]
+        self.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : newTheme.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 18)]
         if #available(iOS 11.0, *) {
-            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : newTheme.navigationTextColor, NSAttributedString.Key.font: UIFont.bold(size: 34)]
+            self.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : newTheme.navigationTextColor, NSAttributedString.Key.font: UIFont.medium(size: 34)]
         }
         if self.transparentNavigation {
             self.configForTransparent()
@@ -305,8 +301,8 @@ open class BaseNavigationController: UINavigationController, UIEvents {
             if #available(iOS 13.0, tvOS 13.0, *) {
                 let navBarAppearance = UINavigationBarAppearance()
                 navBarAppearance.configureWithOpaqueBackground()
-                navBarAppearance.titleTextAttributes = [.foregroundColor: newTheme.navigationTextColor, .font: UIFont.bold(size: 17)]
-                navBarAppearance.largeTitleTextAttributes = [.foregroundColor: newTheme.navigationTextColor, .font: UIFont.bold(size: 34)]
+                navBarAppearance.titleTextAttributes = [.foregroundColor: newTheme.navigationTextColor, .font: UIFont.medium(size: 18)]
+                navBarAppearance.largeTitleTextAttributes = [.foregroundColor: newTheme.navigationTextColor, .font: UIFont.medium(size: 34)]
                 navBarAppearance.backgroundColor = newTheme.navigationColor
                 navBarAppearance.shadowColor = .clear
                 navigationBar.standardAppearance = navBarAppearance

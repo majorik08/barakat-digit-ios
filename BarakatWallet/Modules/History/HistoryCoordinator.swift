@@ -36,6 +36,14 @@ class HistoryCoordinator: Coordinator {
         }
     }
     
+    func navigateToHistory(forCreditCard: AppStructs.CreditDebitCard?) {
+        let vm = HistoryViewModel(historyService: self.historyService)
+        vm.forCreditCard = forCreditCard
+        let vc = HistoryViewController(viewModel: vm)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
     func navigateToHistoryDetails(item: AppStructs.HistoryItem) {
         let viewModel = HistoryViewModel(historyService: self.historyService)
         viewModel.selectedHistory = item

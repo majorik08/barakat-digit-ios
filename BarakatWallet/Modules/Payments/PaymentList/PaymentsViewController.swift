@@ -77,8 +77,10 @@ class PaymentsViewController: BaseViewController, UITableViewDelegate, UITableVi
             self?.showErrorAlert(title: "ERROR".localized, message: message)
         }).disposed(by: self.viewModel.disposeBag)
         
-        self.tableView.refreshControl?.beginRefreshing()
-        self.viewModel.loadPayments()
+        if self.viewModel.paymentGroups.isEmpty {
+            self.tableView.refreshControl?.beginRefreshing()
+            self.viewModel.loadPayments()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -201,6 +203,8 @@ class PaymentsViewController: BaseViewController, UITableViewDelegate, UITableVi
             headerView.contentView.backgroundColor = Theme.current.plainTableCellColor
             headerView.backgroundView?.backgroundColor = .clear
             headerView.textLabel?.textColor = Theme.current.primaryTextColor
+            headerView.textLabel?.font = UIFont.medium(size: 16)
+            headerView.textLabel?.sizeToFit()
         }
     }
 }

@@ -85,6 +85,7 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
             self.controlView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -4),
             self.controlView.heightAnchor.constraint(equalToConstant: 12)
         ])
+        self.emptyView.addTarget(self, action: #selector(self.reloadTapped), for: .touchUpInside)
         self.allButton.addTarget(self, action: #selector(self.allTapped), for: .touchUpInside)
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
@@ -97,6 +98,10 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
     
     @objc func allTapped() {
         self.delegate?.goToAllTapped(cell: self)
+    }
+    
+    @objc func reloadTapped() {
+        self.delegate?.reloadTapped(cell: self)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -137,6 +142,21 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         return .init(width: itemWidth, height: height)
     }
     
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        //        let offSet = scrollView.contentOffset.x
+        //        let width = scrollView.frame.width
+        //        let horizontalCenter = width / 4
+        //        self.controlView.setPage(Int(offSet + horizontalCenter) / Int(width))
+        let witdh = scrollView.frame.width - (scrollView.contentInset.left + scrollView.contentInset.right)
+        let index = scrollView.contentOffset.x / witdh
+        let roundedIndex = index.rounded(.up)
+        if self.controlView.numberOfPages > Int(roundedIndex) {
+            self.controlView.setPage(Int(roundedIndex))
+        } else {
+            self.controlView.setPage(self.controlView.numberOfPages - 1)
+        }
+    }
+    
     override func prepareForReuse() {
         super.prepareForReuse()
         self.emptyView.isHidden = true
@@ -153,6 +173,15 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.services = services
         self.emptyView.isHidden = !services.isEmpty
         self.collectionView.reloadData()
+        
+        var count: Int = 0
+        if services.count > 0 {
+            let resutl: Double = Double(services.count) / 4
+            count = Int(resutl.rounded(.up))
+        } else {
+            count = 1
+        }
+        self.controlView.numberOfPages = count
     }
     
     func configure(transfers: [AppStructs.TransferTypes]) {
@@ -162,6 +191,16 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.transfers = transfers
         self.emptyView.isHidden = !transfers.isEmpty
         self.collectionView.reloadData()
+        
+        
+        var count: Int = 0
+        if transfers.count > 0 {
+            let resutl: Double = Double(transfers.count) / 4
+            count = Int(resutl.rounded(.up))
+        } else {
+            count = 1
+        }
+        self.controlView.numberOfPages = count
     }
 }
 

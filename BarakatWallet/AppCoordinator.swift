@@ -41,8 +41,8 @@ final class AppCoordinator: Coordinator {
     var loginService: LoginService {
         return ENVIRONMENT.isMock ? LoginServiceMockImpl() : LoginServiceImpl()
     }
-    var passcodeService: PasscodeService {
-        return ENVIRONMENT.isMock ? PasscodeServiceMockImpl() : PasscodeServiceImpl()
+    var authService: AccountService {
+        return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
     }
     
     func start() {
@@ -51,13 +51,12 @@ final class AppCoordinator: Coordinator {
             self.showLogin()
         } else {
             let account = accounts.first!
-            APIManager.instance.setToken(token: account.token)
-            self.showMain(account: account)
+            self.showPasscode(account: account)
         }
     }
     
     func showLogin() {
-        let login = LoginCoordinator(nav: FirstLaunchNavigation(nibName: nil, bundle: nil), loginService: self.loginService)
+        let login = LoginCoordinator(nav: FirstLaunchNavigation(overrideInterfaceStyle: false), loginService: self.loginService)
         login.parent = self
         login.start()
         self.window.rootViewController = login.nav
@@ -71,23 +70,17 @@ final class AppCoordinator: Coordinator {
         self.children.append(login)
     }
     
-    func showMain(account: CoreAccount) {
+    func showPasscode(account: CoreAccount) {
         APIManager.instance.setToken(token: account.token)
-        if let _ = account.pin {
-            let vc = PasscodeViewController(viewModel: PasscodeViewModel(account: account, passcodeService: self.passcodeService))
-            vc.coordinator = self
-            self.window.rootViewController = vc
-            self.window.makeKeyAndVisible()
-        } else {
-            let vc = SetPinViewController(viewModel: .init(account: account, startFor: .setup, checkComplition: { result in
-                self.showMain(account: account)
-            }))
-            self.window.rootViewController = vc
-            self.window.makeKeyAndVisible()
-        }
+        let coordinator = PasscodeCoordinator(nav: FirstLaunchNavigation(overrideInterfaceStyle: false), account: account, authService: self.authService)
+        coordinator.parent = self
+        coordinator.start()
+        self.children.append(coordinator)
+        self.window.rootViewController = coordinator.nav
+        self.window.makeKeyAndVisible()
     }
     
-    func authSuccess(accountInfo: AppStructs.AccountInfo) {
+    func showMain(accountInfo: AppStructs.AccountInfo) {
         let main = RootTabCoordinator(accountInfo: accountInfo)
         main.parent = self
         main.start()

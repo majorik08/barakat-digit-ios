@@ -8,6 +8,33 @@
 import Foundation
 import UIKit
 
+public class InnerImageView: UIView {
+    
+    let imageView: UIImageView = {
+        let view = UIImageView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.contentMode = .scaleAspectFit
+        view.backgroundColor = .clear
+        return view
+    }()
+    
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = .clear
+        self.addSubview(self.imageView)
+        NSLayoutConstraint.activate([
+            self.imageView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            self.imageView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            self.imageView.heightAnchor.constraint(equalToConstant: 100),
+            self.imageView.widthAnchor.constraint(equalToConstant: 100),
+        ])
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 public class GradientImageView: GradientView {
     
     let imageView: UIImageView = {

@@ -11,16 +11,13 @@ import UIKit
 class MainTopBarView: UIView {
     
     let headerView: HeaderView = {
-        let view = HeaderView(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .clear
-        return view
+        return HeaderView(frame: .zero)
     }()
     let accountInfoView: AccountInfoView = {
-        let view = AccountInfoView(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .clear
-        return view
+        return AccountInfoView()
+    }()
+    let storiesView: StoriesView = {
+        return StoriesView(frame: .zero)
     }()
     private var shadowView: UIView = {
         let view = UIView()
@@ -40,20 +37,23 @@ class MainTopBarView: UIView {
     }()
     private var shadowLayer: CALayer?
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    init() {
+        super.init(frame: .zero)
+        self.setup()
     }
     
     required init?(coder: NSCoder) {
-        super.init(coder: coder)
+        fatalError("init(coder:) has not been implemented")
     }
     
     func setup() {
+        self.translatesAutoresizingMaskIntoConstraints = false
         self.backgroundColor = .clear
         self.addSubview(self.cornerView)
         self.addSubview(self.shadowView)
         self.addSubview(self.headerView)
         self.addSubview(self.accountInfoView)
+        self.addSubview(self.storiesView)
         NSLayoutConstraint.activate([
             self.headerView.leftAnchor.constraint(equalTo: self.leftAnchor),
             self.headerView.topAnchor.constraint(equalTo: self.topAnchor, constant: UIApplication.statusBarHeight),
@@ -62,8 +62,16 @@ class MainTopBarView: UIView {
             self.accountInfoView.leftAnchor.constraint(equalTo: self.leftAnchor),
             self.accountInfoView.topAnchor.constraint(equalTo: self.headerView.bottomAnchor, constant: 0),
             self.accountInfoView.rightAnchor.constraint(equalTo: self.rightAnchor),
-            self.accountInfoView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 0)
+            self.accountInfoView.heightAnchor.constraint(equalToConstant: 92),
+            self.storiesView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 0),
+            self.storiesView.topAnchor.constraint(equalTo: self.accountInfoView.bottomAnchor, constant: 0),
+            self.storiesView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: 0),
+            self.storiesView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
         ])
+    }
+    
+    func configure(viewModel: HomeViewModel) {
+        self.headerView.avatarView.loadImage(filePath: viewModel.accountInfo.client.avatar)
     }
     
     func themeChanged(newTheme: Theme) {
@@ -72,6 +80,7 @@ class MainTopBarView: UIView {
         self.cornerView.endColor = Theme.current.mainGradientEndColor
         self.headerView.themeChanged(newTheme: newTheme)
         self.accountInfoView.themeChanged(newTheme: newTheme)
+        self.storiesView.themeChanged(newTheme: newTheme)
     }
     
     private func updateShadow() {

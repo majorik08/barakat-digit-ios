@@ -119,9 +119,9 @@ class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UI
         case 3:
             let cell = tableView.dequeueReusableCell(withIdentifier: "switch_cell", for: indexPath) as! SettingsSwitchCell
             cell.titleLabel.text = "SMS_SIGN_IN".localized
-            cell.switchView.setOn(self.viewModel.clientInfo.smsPush, animated: false)
+            cell.switchView.setOn(self.viewModel.accountInfo.client.smsPush, animated: false)
             cell.switchDelegate = { (state) -> Void in
-                
+                self.viewModel.setSettings(pushNotify: self.viewModel.accountInfo.client.pushNotify, smsPush: state)
             }
             return cell
         case 4:
@@ -137,7 +137,7 @@ class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UI
             cell.titleLabel.text = "USE_PUSH".localized
             cell.switchView.setOn(Constants.DeviceBio, animated: false)
             cell.switchDelegate = { (state) -> Void in
-                
+                self.viewModel.setSettings(pushNotify: state, smsPush: self.viewModel.accountInfo.client.smsPush)
             }
             return cell
         case 6:

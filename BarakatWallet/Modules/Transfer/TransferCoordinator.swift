@@ -38,13 +38,17 @@ class TransferCoordinator: Coordinator {
         return ENVIRONMENT.isMock ? LoginServiceMockImpl() : LoginServiceImpl()
     }
     
+    var bannerService: BannerService {
+        return ENVIRONMENT.isMock ? BannerServiceImpl() : BannerServiceMockImpl()
+    }
+    
     init(nav: BaseNavigationController) {
         self.nav = nav
         self.nav.navigationBar.isHidden = true
     }
     
     func start() {
-        let vc = TransferMainViewController(nibName: nil, bundle: nil)
+        let vc = TransferMainViewController(bannerService: self.bannerService)
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
@@ -63,6 +67,7 @@ class TransferCoordinator: Coordinator {
     
     func navigateToTransfer() {
         let vc = BeforeAuthRootViewController(overrideInterfaceStyle: true)
+        vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     

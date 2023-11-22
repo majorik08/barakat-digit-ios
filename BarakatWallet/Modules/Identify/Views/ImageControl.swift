@@ -21,17 +21,31 @@ class ImageControl: UIControl {
         view.isUserInteractionEnabled = false
         return view
     }()
+    let photoView: UIImageView = {
+        let view = UIImageView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.contentMode = .scaleAspectFill
+        view.isUserInteractionEnabled = false
+        view.clipsToBounds = true
+        view.layer.cornerRadius = 8
+        return view
+    }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.layer.cornerRadius = 8
         self.layer.masksToBounds = true
+        self.addSubview(self.photoView)
         self.addSubview(self.imageView)
         NSLayoutConstraint.activate([
             self.imageView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             self.imageView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
             self.imageView.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.25),
-            self.imageView.widthAnchor.constraint(equalTo: self.imageView.heightAnchor, multiplier: 1)
+            self.imageView.widthAnchor.constraint(equalTo: self.imageView.heightAnchor, multiplier: 1),
+            self.photoView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 4),
+            self.photoView.topAnchor.constraint(equalTo: self.topAnchor, constant: 4),
+            self.photoView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -4),
+            self.photoView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -4),
         ])
     }
     

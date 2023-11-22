@@ -116,7 +116,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    weak var coordinator: AppCoordinator?
+    weak var coordinator: PasscodeCoordinator?
     let hapticFeedback = HapticFeedback()
     let viewModel: PasscodeViewModel
     let waitInterval: Int32 = 60
@@ -132,12 +132,11 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             self.passcodeDotView.inputDotCount = text.count
         }
     }
+    var hashButtonImage: UIImage? = nil
     
     init(viewModel: PasscodeViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        self.modalTransitionStyle = .crossDissolve
-        self.modalPresentationStyle = .overFullScreen
     }
     
     required init?(coder: NSCoder) {
@@ -150,13 +149,13 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         var authWithBio: Bool = false
         if let a = LocalAuth.biometricAuthentication, Constants.DeviceBio {
             if a == .faceId {
-                self.keyPadView.hashButtonImage = UIImage(named: "face_icon")
+                self.hashButtonImage = UIImage(name: .face_icon)
             } else {
-                self.keyPadView.hashButtonImage = UIImage(named: "touch_icon")
+                self.hashButtonImage = UIImage(name: .touch_icon)
             }
+            self.keyPadView.hashButtonImage = self.hashButtonImage
             authWithBio = true
         }
-        self.keyPadView.hashButtonImage = UIImage(named: "face_icon")
         self.keyPadView.starButtonText = "ENTER_PIN_HINT".localized
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.view.addSubview(self.avatarView)
@@ -202,9 +201,14 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         }
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.isHidden = true
+    }
+    
     func keyTapped(digit: String) {
         if digit == "." {
-            // reset pin
+            self.coordinator?.navigateToResetPasscode()
         } else if digit == "<" {
             if self.dialedNumbersDisplayString.isEmpty {
                 self.auth()
@@ -235,6 +239,11 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
                     }
                 }
             }
+        }
+        if self.dialedNumbersDisplayString.isEmpty {
+            self.keyPadView.updateHashButtonImage(image: UIImage(name: .face_icon))
+        } else {
+            self.keyPadView.updateHashButtonImage(image: nil)
         }
     }
     
@@ -280,7 +289,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         let uptime = self.getDeviceUptimeSeconds(&bootTimestamp)
         let timestamp = MonotonicTimestamp(bootTimestamp: bootTimestamp, uptime: Int32(uptime))
         self.viewModel.account.lockState.applicationActivityTimestamp = timestamp
-        self.viewModel.account.update()
+        self.viewModel.updateLockState(state: self.viewModel.account.lockState)
         self.showProgressView()
         self.dialedNumbersDisplayString = ""
         self.passcodeDotView.inputDotCount = 0
@@ -295,7 +304,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         let timestamp = MonotonicTimestamp(bootTimestamp: bootTimestamp, uptime: Int32(uptime))
         unlockAttemts.timestamp = timestamp
         self.viewModel.account.lockState.unlockAttemts = unlockAttemts
-        self.viewModel.account.update()
+        self.viewModel.updateLockState(state: self.viewModel.account.lockState)
         self.updateInvalidAttempts()
     }
     

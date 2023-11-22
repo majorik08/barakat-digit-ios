@@ -115,16 +115,82 @@ struct AppMethods {
                 self.params = params
             }
             public struct Params: Codable {
-                var avatar: String?
-                var birthDate: String?
-                var email: String?
-                var firstName: String?
-                var gender: String?
-                var inn: String?
-                var lastName: String?
-                var midName: String?
-                var pushNotify: Bool?
-                var smsPush: Bool?
+                var birthDate: String
+                var email: String
+                var firstName: String
+                var gender: String
+                var lastName: String
+                var midName: String
+            }
+        }
+        struct AvatarSet: EndpointRequestType {
+            static var method: HTTPMethod = .put
+            static var url: String = "clients/client/avatar"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                var avatar: String
+            }
+        }
+        struct SettingsSet: EndpointRequestType {
+            static var method: HTTPMethod = .put
+            static var url: String = "clients/client/settings"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                var pushNotify: Bool
+                var smsPush: Bool
+            }
+        }
+        
+        struct IdentifyGet: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            static var url: String = "clients/client/identification"
+            public static var result: [IdentifyResult].Type = [IdentifyResult].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+            public struct IdentifyResult: Codable {
+                let front: String
+                let rear: String
+                let selfie: String
+                let status: Int
+                
+                var idStatus: Status {
+                    return .init(rawValue: self.status) ?? .notidentified
+                }
+                enum Status: Int {
+                case notidentified = 0
+                case inReview = 1
+                case success = 2
+                case rejected = 3
+                }
+            }
+        }
+        struct IdentifySet: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            static var url: String = "clients/client/identification"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let front: String
+                let rear: String
+                let selfie: String
+                let status: Int
             }
         }
     }
@@ -144,6 +210,42 @@ struct AppMethods {
                 let groups: [AppStructs.PaymentGroup]
                 let transfers: [AppStructs.TransferTypes]
             }
+        }
+    }
+    
+    struct App {
+        struct GetBanners: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            static var url: String = "banners/banners"
+            public static var result: [[AppStructs.Banner]].Type = [[AppStructs.Banner]].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {}
+        }
+        struct GetCashbeks: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            static var url: String = "banners/cash_back"
+            public static var result: [[AppStructs.Showcase]].Type = [[AppStructs.Showcase]].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {}
+        }
+        struct GetStories: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            static var url: String = "banners/stories"
+            public static var result: [[AppStructs.Stories]].Type = [[AppStructs.Stories]].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {}
         }
     }
 }

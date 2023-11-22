@@ -23,13 +23,13 @@ class PayWithNumberCell: UICollectionViewCell {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.layer.cornerRadius = 8
         view.layer.borderWidth = 2
-        view.layer.borderColor = Theme.current.secondTintColor.cgColor
+        view.layer.borderColor = Theme.current.borderColor.cgColor
         return view
     }()
     let iconView: UIImageView = {
         let view = UIImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.tintColor = Theme.current.secondTintColor
+        view.tintColor = Theme.current.borderColor
         view.contentMode = .scaleAspectFit
         view.image = UIImage(name: .add_number)
         return view

@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class TransferMainViewController: BaseViewController {
     
@@ -15,13 +16,8 @@ class TransferMainViewController: BaseViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    let topHelp: TransferMainHelpView = {
-        return TransferMainHelpView(frame: .zero)
-    }()
-    let pageControl: AdvancedPageControlView = {
-        let view = AdvancedPageControlView(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
+    let topHelp: BannerView = {
+        return BannerView(frame: .zero)
     }()
     let transferDirrectionLabel: UILabel = {
         let view = UILabel(frame: .zero)
@@ -81,12 +77,23 @@ class TransferMainViewController: BaseViewController {
     }()
     weak var coordinator: TransferCoordinator?
     
+    let bannerService: BannerService
+    let disposeBag = DisposeBag()
+    
+    init(bannerService: BannerService) {
+        self.bannerService = bannerService
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.view.addSubview(self.topBar)
         self.view.addSubview(self.topHelp)
-        self.view.addSubview(self.pageControl)
         self.view.addSubview(self.transferDirrectionLabel)
         self.view.addSubview(self.transferNumberView)
         self.view.addSubview(self.transferCardView)
@@ -99,16 +106,12 @@ class TransferMainViewController: BaseViewController {
             self.topBar.topAnchor.constraint(equalTo: self.view.topAnchor),
             self.topBar.rightAnchor.constraint(equalTo: self.view.rightAnchor),
             self.topBar.heightAnchor.constraint(equalToConstant: 160),
-            self.topHelp.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
+            self.topHelp.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 0),
             self.topHelp.topAnchor.constraint(equalTo: self.topBar.centerYAnchor, constant: 30),
-            self.topHelp.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
-            self.topHelp.heightAnchor.constraint(equalToConstant: 108),
-            self.pageControl.topAnchor.constraint(equalTo: self.topHelp.bottomAnchor, constant: 10),
-            self.pageControl.centerXAnchor.constraint(equalTo: self.view.centerXAnchor, constant: 0),
-            self.pageControl.heightAnchor.constraint(equalToConstant: 12),
-            self.pageControl.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.6),
+            self.topHelp.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: 0),
+            self.topHelp.heightAnchor.constraint(equalToConstant: 108 + 22),
             self.transferDirrectionLabel.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.transferDirrectionLabel.topAnchor.constraint(equalTo: self.pageControl.bottomAnchor, constant: 20),
+            self.transferDirrectionLabel.topAnchor.constraint(equalTo: self.topHelp.bottomAnchor, constant: 20),
             self.transferDirrectionLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
             self.transferNumberView.topAnchor.constraint(equalTo: self.transferDirrectionLabel.bottomAnchor, constant: 20),
             self.transferNumberView.rightAnchor.constraint(equalTo: self.view.centerXAnchor, constant: -30),
@@ -135,10 +138,12 @@ class TransferMainViewController: BaseViewController {
         self.topBar.backButton.addTarget(self, action: #selector(self.goBack), for: .touchUpInside)
         self.topBar.titleLabel.text = "MONEY_TRANSERS".localized
         self.topBar.subTitleLabel.text = ""
-        self.pageControl.drawer = ExtendedDotDrawer(numberOfPages: 3, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
         self.loginButton.addTarget(self, action: #selector(self.goLogin), for: .touchUpInside)
         self.transferNumberView.addTarget(self, action: #selector(self.byNumber), for: .touchUpInside)
         self.transferCardView.addTarget(self, action: #selector(self.byCard), for: .touchUpInside)
+        self.bannerService.loadBannerList().observe(on: MainScheduler.instance).subscribe(onSuccess: { [weak self] banners in
+            self?.topHelp.configure(banners: banners)
+        }).disposed(by: self.disposeBag)
     }
     
     @objc func goBack() {

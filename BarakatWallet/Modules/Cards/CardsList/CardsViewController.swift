@@ -8,8 +8,8 @@
 import Foundation
 import UIKit
 
-class CardsViewController: BaseViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
- 
+class CardsViewController: BaseViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, CardTypesCellDelegate {
+  
     let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -39,9 +39,10 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationItem.title = "CARDS".localized
+        self.navigationItem.title = "MY_CARDS".localized
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.view.addSubview(self.collectionView)
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(name: .hide_eyes), style: .plain, target: self, action: #selector(self.showHideCardTapped))
         NSLayoutConstraint.activate([
             self.collectionView.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 0),
             self.collectionView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor, constant: 0),
@@ -55,15 +56,45 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
         self.collectionView.dataSource = self
     }
     
+    override func themeChanged(newTheme: Theme) {
+        super.themeChanged(newTheme: newTheme)
+        self.view.backgroundColor = Theme.current.plainTableBackColor
+        self.collectionView.reloadData()
+    }
+    
+    @objc func showHideCardTapped() {
+        self.viewModel.showCardInfo = !self.viewModel.showCardInfo
+        self.collectionView.reloadData()
+    }
+    
+    func cardTypeTapped(item: AppStructs.CreditDebitCardTypes) {
+        self.coordinator?.navigateToReleaseCardView()
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        collectionView.deselectItem(at: indexPath, animated: true)
+        if indexPath.section == 1 {
+            let card = self.viewModel.userCards[indexPath.item]
+            self.coordinator?.navigateToCardView(userCards: self.viewModel.userCards, selectedCard: card)
+        } else if indexPath.section == 2 {
+            if indexPath.item == 0 {
+                self.coordinator?.navigateToAddCardView()
+            } else if indexPath.item == 1 {
+                self.coordinator?.navigateToReleaseCardView()
+            }
+        }
+    }
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if indexPath.section == 0 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_types_cell", for: indexPath) as! CardTypesCell
+            cell.delegate = self
             cell.configure(items: self.viewModel.availableCardTypes)
             return cell
         } else if indexPath.section == 1 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_item_cell", for: indexPath) as! CardItemCell
             let card = self.viewModel.userCards[indexPath.item]
-            cell.configure(card: card)
+            cell.configure(card: card, show: self.viewModel.showCardInfo)
             return cell
         } else if indexPath.section == 2 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_action_cell", for: indexPath) as! CardActionCell
@@ -95,17 +126,20 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         //  the size of credit cards is 85.60 × 53.98 mm ratio is 1.5858
         if indexPath.section == 0 {
-            let width = ((self.view.frame.width - 16) / 2.5) + 16
+            let topBottomPadding: CGFloat = 20
+            let aspect: CGFloat = 2.36
+            let spacing: Int = Int(10 * aspect)
+            let width = (collectionView.frame.width - Theme.current.mainPaddings - CGFloat(spacing)) / aspect
             let height = width / 1.78
-            return .init(width: collectionView.frame.width, height: height + 20)
+            return .init(width: collectionView.frame.width, height: height + topBottomPadding)
         } else if indexPath.section == 1 {
-            let width = collectionView.frame.width - 32
+            let width = collectionView.frame.width - (Theme.current.mainPaddings * 2)
             let height = width / 1.68
             return .init(width: collectionView.frame.width, height: height + 20)
         } else if indexPath.section == 2 {
-            let width = (self.view.frame.width - 16) / 2
-            let height = width / 1.78
-            return .init(width: width, height: height + 20)
+            let width = (collectionView.frame.width - Theme.current.mainPaddings) / 2
+            let height = width / 1.88
+            return .init(width: width, height: height)
         }
         return .zero
     }

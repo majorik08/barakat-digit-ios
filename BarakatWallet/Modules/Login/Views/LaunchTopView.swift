@@ -102,7 +102,7 @@ class LaunchTopView: UIView {
             self.pageControl.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 0.6),
             self.pageControl.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -16),
         ])
-        self.pageControl.drawer = ExtendedDotDrawer(numberOfPages: 3, space: 8, indicatorColor: .white, dotsColor: .white, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
+        self.pageControl.drawer = ExtendedDotDrawer(numberOfPages: 1, space: 8, indicatorColor: .white, dotsColor: .white, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
     }
     
     func themeChanged(newTheme: Theme) {

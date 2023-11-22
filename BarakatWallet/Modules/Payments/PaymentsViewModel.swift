@@ -40,4 +40,8 @@ class PaymentsViewModel {
             }
         }.disposed(by: self.disposeBag)
     }
+    
+    var sumParam: AppStructs.PaymentGroup.ServiceItem.Params {
+        return .init(id: -999, name: "SUMMA".localized, coment: "SUMMA_HINT".localized, keyboard: 0, mask: "", maxLen: 10, minLen: 1, param: 0, prefix: "")
+    }
 }

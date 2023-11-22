@@ -36,8 +36,16 @@ final class CoreAccount: Codable {
         return true
     }
     
-    public func update() {
-        Self.update(account: self)
+    public static func updateLockState(accountId: String, state: LockState) {
+        guard let account = self.accounts().first(where: { $0.accountId == accountId }) else { return }
+        account.lockState = state
+        self.update(account: account)
+    }
+    
+    public static func updateToken(oldToken: String, newToken: String) {
+        guard let account = self.accounts().first(where: { $0.token == oldToken }) else { return }
+        account.token = newToken
+        self.update(account: account)
     }
     
     public static func update(account: CoreAccount) {
