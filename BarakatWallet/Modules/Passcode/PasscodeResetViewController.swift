@@ -34,6 +34,7 @@ class PasscodeResetViewController: BaseViewController {
         let view = BaseButtonView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setTitleColor(.white, for: .normal)
+        view.titleLabel?.font = UIFont.medium(size: 17)
         view.radius = 14
         view.setTitle("SEND_SMS".localized, for: .normal)
         return view
@@ -53,6 +54,7 @@ class PasscodeResetViewController: BaseViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setTitleColor(.white, for: .normal)
         view.radius = 14
+        view.titleLabel?.font = UIFont.medium(size: 17)
         view.setTitle("MAKE_CALL".localized, for: .normal)
         return view
     }()
@@ -128,7 +130,7 @@ class PasscodeResetViewController: BaseViewController {
         self.buttonsStackView.addArrangedSubview(self.getButton(type: .telegram))
         self.buttonsStackView.addArrangedSubview(self.getButton(type: .linkedin))
         self.callButton.addTarget(self, action: #selector(self.makeCall(_:)), for: .touchUpInside)
-        self.callButton.addTarget(self, action: #selector(self.sendRecoverySms(_:)), for: .touchUpInside)
+        self.smsButton.addTarget(self, action: #selector(self.sendRecoverySms(_:)), for: .touchUpInside)
     }
     
     enum SocialNets: Int { case facebook = 1, instagram = 2, telegram = 3, linkedin = 4 }

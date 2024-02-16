@@ -7,8 +7,10 @@
 
 import Foundation
 import UIKit
+import RxSwift
+import Toast
 
-class CardViewController: BaseViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class CardViewController: BaseViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, CardItemCellDelegate {
   
     private let scrollView: UIScrollView = {
         let view = UIScrollView(frame: .zero)
@@ -57,8 +59,8 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
         view.layer.borderColor = Theme.current.borderColor.withAlphaComponent(0.8).cgColor
         view.layer.borderWidth = 1
         view.isLayoutMarginsRelativeArrangement = true
-        view.directionalLayoutMargins = .init(top: 10, leading: 16, bottom: 10, trailing: 16)
-        view.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
+        view.directionalLayoutMargins = .init(top: 14, leading: 16, bottom: 14, trailing: 16)
+        view.layoutMargins = UIEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
         return view
     }()
     private let actionsStackView: UIStackView = {
@@ -66,7 +68,7 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
         view.axis = .vertical
         view.distribution = .fillEqually
         view.alignment = .fill
-        view.spacing = 16
+        view.spacing = 10
         view.translatesAutoresizingMaskIntoConstraints = false
         view.layer.cornerRadius = 10
         view.clipsToBounds = true
@@ -128,7 +130,7 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
             self.buttonsStackView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.buttonsStackView.topAnchor.constraint(equalTo: self.controlView.bottomAnchor, constant: 20),
             self.buttonsStackView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.buttonsStackView.heightAnchor.constraint(equalToConstant: 84),
+            self.buttonsStackView.heightAnchor.constraint(equalToConstant: 92),
             self.actionsStackView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.actionsStackView.topAnchor.constraint(equalTo: self.buttonsStackView.bottomAnchor, constant: 20),
             self.actionsStackView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
@@ -156,8 +158,9 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_item_cell", for: indexPath) as! CardItemCell
+        cell.delegate = self
         let card = self.viewModel.userCards[indexPath.item]
-        cell.configure(card: card, show: self.viewModel.showCardInfo, selectedColor: self.selectedColor)
+        cell.configure(card: card, show: self.viewModel.showCardInfo, showCopy: true, selectedColor: self.selectedColor)
         return cell
     }
     
@@ -190,17 +193,41 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
     func configure() {
         self.controlView.numberOfPages = self.viewModel.userCards.count
         
+        if let index = self.viewModel.userCards.firstIndex(where: { $0.id == self.selectedCard.id }) {
+            self.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: true)
+        }
+        
         self.buttonsStackView.addArrangedSubview(self.getActions(action: .pay))
         self.buttonsStackView.addArrangedSubview(self.getActions(action: .topup))
         self.buttonsStackView.addArrangedSubview(self.getActions(action: .transfer))
         self.buttonsStackView.addArrangedSubview(self.getActions(action: .history))
         
         self.actionsStackView.addArrangedSubview(self.getOption(option: .title))
-        self.actionsStackView.addArrangedSubview(self.getOption(option: .changePin))
         self.actionsStackView.addArrangedSubview(self.getOption(option: .payPin))
         self.actionsStackView.addArrangedSubview(self.getOption(option: .payInternet))
         self.actionsStackView.addArrangedSubview(self.getOption(option: .block))
+        self.actionsStackView.addArrangedSubview(self.getOption(option: .changePin))
+        self.actionsStackView.addArrangedSubview(self.getOption(option: .remove))
         self.actionsStackView.addArrangedSubview(self.getOption(option: .changeColor))
+    }
+    
+    func copyInfo(cell: CardItemCell, number: Bool, date: Bool, cvv: Bool) {
+        guard let cell = self.collectionView.indexPath(for: cell) else { return }
+        if cell.item < self.viewModel.userCards.count {
+            let card = self.viewModel.userCards[cell.item]
+            if number {
+                UIPasteboard.general.string = card.pan
+            } else if date {
+                UIPasteboard.general.string = "\(card.validMonth)/\(card.validYear)"
+            } else if cvv {
+                UIPasteboard.general.string = card.cvv
+            }
+            let toast = Toast.default(
+                image: UIImage(name: .copy_value),
+                title: "CARD_INFO_COPY".localized
+            )
+            toast.show(haptic: .success)
+        }
     }
     
     enum CardAction: Int {
@@ -244,7 +271,7 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
     }
     
     enum CardOption: Int {
-        case title = 0, changePin = 1, payPin = 2, payInternet = 3, block = 4, changeColor = 5
+        case title = 0, changePin = 1, payPin = 2, payInternet = 3, block = 4, changeColor = 5, remove = 6
     }
     
     func getOption(option: CardOption) -> UIView {
@@ -264,12 +291,20 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
             view.translatesAutoresizingMaskIntoConstraints = false
             view.addTarget(self, action: #selector(self.optionTapped(_:)), for: .touchUpInside)
             return view
+        case .remove:
+            let view = DisclosureOptionView(frame: .zero)
+            view.titleView.text = "REMOVE_CARD".localized
+            view.tag = option.rawValue
+            view.translatesAutoresizingMaskIntoConstraints = false
+            view.addTarget(self, action: #selector(self.optionTapped(_:)), for: .touchUpInside)
+            return view
         case .payPin:
             let view = SwitchOptionView(frame: .zero)
             view.titleView.text = "CARD_PAY_PIN".localized
             view.tag = option.rawValue
             view.translatesAutoresizingMaskIntoConstraints = false
             view.addTarget(self, action: #selector(self.optionTapped(_:)), for: .valueChanged)
+            view.switchView.isOn = self.selectedCard.PINOnPay
             return view
         case .payInternet:
             let view = SwitchOptionView(frame: .zero)
@@ -277,6 +312,7 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
             view.tag = option.rawValue
             view.translatesAutoresizingMaskIntoConstraints = false
             view.addTarget(self, action: #selector(self.optionTapped(_:)), for: .valueChanged)
+            view.switchView.isOn = self.selectedCard.internetPay
             return view
         case .block:
             let view = SwitchOptionView(frame: .zero)
@@ -284,6 +320,7 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
             view.tag = option.rawValue
             view.translatesAutoresizingMaskIntoConstraints = false
             view.addTarget(self, action: #selector(self.optionTapped(_:)), for: .valueChanged)
+            view.switchView.isOn = self.selectedCard.block
             return view
         case .changeColor:
             let view = ColorOptionView(frame: .zero)
@@ -291,6 +328,7 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
             view.tag = option.rawValue
             view.translatesAutoresizingMaskIntoConstraints = false
             view.addTarget(self, action: #selector(self.optionTapped(_:)), for: .valueChanged)
+            view.setCurrentColor(color: self.selectedCard.colorID - 1)
             return view
         }
     }
@@ -299,15 +337,60 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
         guard let action = CardOption(rawValue: sender.tag) else { return }
         switch action {
         case .title:break
-        case .changePin:break
-        case .payPin:break
-        case .payInternet:break
-        case .block:break
+        case .remove:
+            let vc = ConfirmViewController(title: "REMOVE_CARD".localized, subTitle: "REMOVE_CARD_INFO".localized, image: nil) { result in
+                if result {
+                    self.removeCard()
+                }
+            }
+            self.present(vc, animated: true)
+        case .changePin:
+            self.coordinator?.navigateToPinChange(card: self.selectedCard)
+        case .payPin:
+            guard let switchView = sender as? SwitchOptionView else { return }
+            self.makeOp(PINOnPay: switchView.switchView.isOn, block: nil, colorID: nil, internetPay: nil, newPin: nil, changeView: switchView.switchView)
+        case .payInternet:
+            guard let switchView = sender as? SwitchOptionView else { return }
+            self.makeOp(PINOnPay: nil, block: nil, colorID: nil, internetPay: switchView.switchView.isOn, newPin: nil, changeView: switchView.switchView)
+        case .block:
+            guard let switchView = sender as? SwitchOptionView else { return }
+            self.makeOp(PINOnPay: nil, block: switchView.switchView.isOn, colorID: nil, internetPay: nil, newPin: nil, changeView: switchView.switchView)
         case .changeColor:
             guard let view = sender as? ColorOptionView else { return }
-            let color = view.colors[view.selectedColor]
+            let color = Constants.cardColors[view.selectedColor]
             self.selectedColor = color
             self.collectionView.reloadData()
+            self.makeOp(PINOnPay: nil, block: nil, colorID: view.selectedColor + 1, internetPay: nil, newPin: nil, changeView: nil)
         }
+    }
+    
+    private func makeOp(PINOnPay: Bool?, block: Bool?, colorID: Int?, internetPay: Bool?, newPin: String?, changeView: UISwitch?) {
+        self.showProgressView()
+        self.viewModel.cardService.updateUserCard(PINOnPay: PINOnPay, block: block, colorID: colorID, id: self.selectedCard.id, internetPay: internetPay, newPin: newPin)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] _ in
+                guard let self = self else { return }
+                self.successProgress(text: "OPERATION_SUCCESS".localized)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let v = changeView {
+                    v.isOn = !v.isOn
+                }
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    private func removeCard() {
+        self.showProgressView()
+        self.viewModel.cardService.removeUserCard(id: self.selectedCard.id)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] _ in
+                guard let self = self else { return }
+                self.successProgress(text: "DELETE_SUCCESS".localized)
+                self.coordinator?.navigateBack()
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+            }.disposed(by: self.viewModel.disposeBag)
     }
 }

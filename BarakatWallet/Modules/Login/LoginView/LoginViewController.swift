@@ -8,9 +8,8 @@
 import Foundation
 import UIKit
 import PhoneNumberKit
-import RxCocoa
 
-class LoginViewController: BaseViewController, KeyPadViewDelegate {
+class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPickerDelegate {
     
     let backButton: UIButton = {
         let view = UIButton(frame: .zero)
@@ -19,9 +18,10 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate {
         view.tintColor = Theme.current.primaryTextColor
         return view
     }()
-    let label: GradientLabel = {
-        let view = GradientLabel(frame: .zero)
+    let label: UILabel = {
+        let view = UILabel(frame: .zero)
         view.font = UIFont.bold(size: 22)
+        view.textColor = Theme.current.tintColor
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "YOUR_PHONE_NUMBER".localized
         return view
@@ -34,9 +34,12 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate {
         view.text = "PHONE_NUMBER".localized
         return view
     }()
-    let countyView: UIView = {
-        let view = UIView(frame: .zero)
+    let countyView: UIBaseView = {
+        let view = UIBaseView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .clear
+        view.highlightColor = Theme.current.plainSelectedCellBackground
+        view.isUserInteractionEnabled = true
         return view
     }()
     let numberView: UIView = {
@@ -197,6 +200,9 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate {
         } else {
             self.selectedCountry = CountryPicker.Country(countryName: "Tajikistan", countryCode: "TJ", countryPhoneCode: "+992", countryFullCode: "TJK")
         }
+        self.countyView.addTapGestureRecognizerr {
+            self.coordinator?.navigateToSelectCountry(delegate: self)
+        }
         self.selectedCountry = CountryPicker.Country(countryName: "Tajikistan", countryCode: "TJ", countryPhoneCode: "+992", countryFullCode: "TJK")
         self.keyPadView.delegate = self
         self.backButton.rx.tap.subscribe { [weak self] _ in
@@ -229,9 +235,8 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let c = UIColor(red: 0.2, green: 0.333, blue: 0.914, alpha: 1)
-        self.countyView.roundCorners(corners: [.topLeft, .bottomLeft], radius: 8, thickness: 1.8, color: c)
-        self.numberView.roundCorners(corners: [.topRight, .bottomRight], radius: 8, thickness: 1.8, color: c)
+        self.countyView.roundCorners(corners: [.topLeft, .bottomLeft], radius: 8, thickness: 1.8, color: Theme.current.borderColor)
+        self.numberView.roundCorners(corners: [.topRight, .bottomRight], radius: 8, thickness: 1.8, color: Theme.current.borderColor)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -246,5 +251,9 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate {
             self.phoneNumberField.insertText(digit)
         }
         self.phoneNumberField.text = self.phoneNumberField.text
+    }
+    
+    func onSelected(type: CountryPicker.Country) {
+        self.selectedCountry = type
     }
 }

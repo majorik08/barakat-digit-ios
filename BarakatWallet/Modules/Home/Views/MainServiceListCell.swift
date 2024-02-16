@@ -21,7 +21,7 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         view.backgroundColor = .clear
         view.showsVerticalScrollIndicator = false
         view.showsHorizontalScrollIndicator = false
-        view.contentInset = .init(top: 0, left: 11, bottom: 0, right: 11)
+        view.contentInset = .init(top: 0, left: Theme.current.mainPaddings - 5, bottom: 0, right: Theme.current.mainPaddings - 5)
         return view
     }()
     let titleView: UILabel = {
@@ -54,7 +54,7 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
     }()
     weak var delegate: HomeViewControllerItemDelegate? = nil
     var services: [AppStructs.PaymentGroup]? = nil
-    var transfers: [AppStructs.TransferTypes]? = nil
+    var transfers: [AppStructs.PaymentGroup.ServiceItem]? = nil
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -65,23 +65,23 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.contentView.addSubview(self.collectionView)
         self.contentView.addSubview(self.controlView)
         NSLayoutConstraint.activate([
-            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.titleView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
             self.titleView.rightAnchor.constraint(lessThanOrEqualTo: self.allButton.leftAnchor, constant: -10),
             self.titleView.heightAnchor.constraint(equalToConstant: 18),
             self.allButton.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
-            self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.allButton.heightAnchor.constraint(equalToConstant: 18),
-            self.emptyView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.emptyView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.emptyView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
-            self.emptyView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.emptyView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.emptyView.bottomAnchor.constraint(equalTo: self.controlView.topAnchor, constant: -8),
             self.collectionView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 0),
             self.collectionView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
             self.collectionView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: 0),
-            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.controlView.topAnchor.constraint(equalTo: self.collectionView.bottomAnchor, constant: 8),
-            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.controlView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -4),
             self.controlView.heightAnchor.constraint(equalToConstant: 12)
         ])
@@ -137,7 +137,8 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         guard width > 0 else {
             return .init(width: 1, height: 1)
         }
-        let itemWidth = ((width - 22) / 4)
+        let insets = 2 * (Theme.current.mainPaddings - 5)
+        let itemWidth = ((width - insets) / 4)
         let height = (itemWidth - 10) - 2
         return .init(width: itemWidth, height: height)
     }
@@ -184,7 +185,7 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.controlView.numberOfPages = count
     }
     
-    func configure(transfers: [AppStructs.TransferTypes]) {
+    func configure(transfers: [AppStructs.PaymentGroup.ServiceItem]) {
         self.emptyView.backgroundColor = Theme.current.plainTableCellColor
         self.titleView.textColor = Theme.current.primaryTextColor
         self.titleView.text = "PAY_SENDERS".localized
@@ -216,21 +217,25 @@ class MainServiceCell: UICollectionViewCell {
         view.backgroundColor = Theme.current.plainTableCellColor
         return view
     }()
-    let iconView: CircleImageView = {
-        let view = CircleImageView(frame: .zero)
+    let iconContainer: CircleView = {
+        let view = CircleView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = Theme.current.plainTableBackColor
         view.layer.borderWidth = 0.5
+        view.clipsToBounds = true
         view.layer.borderColor = Theme.current.secondTintColor.cgColor
+        return view
+    }()
+    let iconView: UIImageView = {
+        let view = UIImageView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.image = UIImage(name: .wallet_inset).tintedWithLinearGradientColors()
         return view
     }()
     let titleView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.primaryTextColor
-        view.text = "Service name"
         view.font = UIFont.medium(size: 12)
         view.numberOfLines = 0
         return view
@@ -245,21 +250,26 @@ class MainServiceCell: UICollectionViewCell {
         super.init(frame: frame)
         self.backgroundColor = .clear
         self.contentView.addSubview(self.rootView)
-        self.rootView.addSubview(self.iconView)
+        self.rootView.addSubview(self.iconContainer)
         self.rootView.addSubview(self.titleView)
+        self.iconContainer.addSubview(self.iconView)
         NSLayoutConstraint.activate([
             self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 5),
             self.rootView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 0),
             self.rootView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -5),
             self.rootView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: 0),
-            self.iconView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 8),
-            self.iconView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 8),
-            self.iconView.heightAnchor.constraint(equalTo: self.rootView.heightAnchor, multiplier: 0.45),
-            self.iconView.widthAnchor.constraint(equalTo: self.iconView.heightAnchor, multiplier: 1),
+            self.iconContainer.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 8),
+            self.iconContainer.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 8),
+            self.iconContainer.heightAnchor.constraint(equalTo: self.rootView.heightAnchor, multiplier: 0.45),
+            self.iconContainer.widthAnchor.constraint(equalTo: self.iconContainer.heightAnchor, multiplier: 1),
             self.titleView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 8),
-            self.titleView.topAnchor.constraint(equalTo: self.iconView.bottomAnchor, constant: 4),
-            self.titleView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -8),
-            self.titleView.bottomAnchor.constraint(lessThanOrEqualTo: self.rootView.bottomAnchor, constant: -8),
+            self.titleView.topAnchor.constraint(equalTo: self.iconContainer.bottomAnchor, constant: 2),
+            self.titleView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -4),
+            self.titleView.bottomAnchor.constraint(lessThanOrEqualTo: self.rootView.bottomAnchor, constant: -6),
+            self.iconView.leftAnchor.constraint(equalTo: self.iconContainer.leftAnchor, constant: 8),
+            self.iconView.topAnchor.constraint(equalTo: self.iconContainer.topAnchor, constant: 8),
+            self.iconView.rightAnchor.constraint(equalTo: self.iconContainer.rightAnchor, constant: -8),
+            self.iconView.bottomAnchor.constraint(equalTo: self.iconContainer.bottomAnchor, constant: -8)
         ])
     }
     
@@ -267,25 +277,29 @@ class MainServiceCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.iconView.image = nil
+        self.titleView.text = nil
+    }
+    
     func configure(service: AppStructs.PaymentGroup) {
         self.rootView.backgroundColor = Theme.current.plainTableCellColor
         self.rootView.layer.borderColor = Theme.current.secondTintColor.withAlphaComponent(0.3).cgColor
-        self.iconView.backgroundColor = Theme.current.plainTableBackColor
-        self.iconView.layer.borderColor = Theme.current.secondTintColor.cgColor
+        self.iconContainer.backgroundColor = Theme.current.plainTableBackColor
+        self.iconContainer.layer.borderColor = Theme.current.borderColor.cgColor
         self.titleView.textColor = Theme.current.primaryTextColor
-        
-        self.iconView.image = UIImage(name: .wallet_inset).tintedWithLinearGradientColors()
         self.titleView.text = service.name
+        self.iconView.loadImage(filePath: Theme.current.dark ? service.darkImage : service.image)
     }
     
-    func configure(transfer: AppStructs.TransferTypes) {
+    func configure(transfer: AppStructs.PaymentGroup.ServiceItem) {
         self.rootView.backgroundColor = Theme.current.plainTableCellColor
         self.rootView.layer.borderColor = Theme.current.secondTintColor.withAlphaComponent(0.3).cgColor
-        self.iconView.backgroundColor = Theme.current.plainTableBackColor
-        self.iconView.layer.borderColor = Theme.current.secondTintColor.cgColor
+        self.iconContainer.backgroundColor = Theme.current.plainTableBackColor
+        self.iconContainer.layer.borderColor = Theme.current.borderColor.cgColor
         self.titleView.textColor = Theme.current.primaryTextColor
-        
-        self.iconView.image = UIImage(name: .wallet_inset).tintedWithLinearGradientColors()
         self.titleView.text = transfer.name
+        self.iconView.loadImage(filePath: Theme.current.dark ? transfer.darkImage : transfer.image)
     }
 }

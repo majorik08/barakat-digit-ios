@@ -8,10 +8,12 @@
 import Foundation
 import UIKit
 import PhoneNumberKit
+import ContactsUI
+import RxSwift
 
-class TransferReceiverViewController: BaseViewController, UITabBarControllerDelegate, UITextFieldDelegate {
+class TransferReceiverViewController: BaseViewController, UITabBarControllerDelegate, UITextFieldDelegate, CNContactPickerDelegate, PaymentServiceSelectViewDelegate {
     
-    let topBar: TransferTopView = {
+    private let topBar: TransferTopView = {
         let view = TransferTopView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backButton.tintColor = .white
@@ -19,7 +21,22 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.subTitleLabel.text = ""
         return view
     }()
-    let cardNumerField: CardTextFiled = {
+    private let scrollView: UIScrollView = {
+        let view = UIScrollView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.alwaysBounceVertical = true
+        view.keyboardDismissMode = .interactive
+        view.showsVerticalScrollIndicator = false
+        view.backgroundColor = .clear
+        return view
+    }()
+    private let rootView: UIView = {
+        let view = UIView(frame: .zero)
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    private let cardNumerField: CardTextFiled = {
         let view = CardTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "CARD_NUMBER_RECEIVER".localized
@@ -31,7 +48,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.textField.returnKeyType = .done
         return view
     }()
-    let numberView: CardTextFiled = {
+    private let numberView: CardTextFiled = {
         let view = PhoneNumberTextField(withPhoneNumberKit: Constants.phoneNumberKit)
         let filedView = CardTextFiled(textField: view)
         filedView.topLabel.text = "PHONE_NUMBER_RECEIVER".localized
@@ -39,14 +56,21 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         filedView.rightImage.image = UIImage(name: .add_number)
         view.withFlag = false
         view.withPrefix = true
-        view.withExamplePlaceholder = true
+        view.withExamplePlaceholder = false
         view.leftViewMode = .always
         view.keyboardType = UIKeyboardType.phonePad
         view.borderStyle = .none
         view.attributedPlaceholder = NSAttributedString(string: "+992 918 00 00 00", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
         return filedView
     }()
-    let bottomAuthLabel: UILabel = {
+    let selectorView: PaymentServiceSelectView = {
+        let view = PaymentServiceSelectView(frame: .zero)
+        view.controlView.isHidden = true
+        view.titleView.isHidden = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    private let bottomAuthLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 16)
@@ -56,7 +80,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.textAlignment = .center
         return view
     }()
-    let bottomAuthHintLabel: UILabel = {
+    private let bottomAuthHintLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 14)
@@ -66,7 +90,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.textAlignment = .center
         return view
     }()
-    let nextButton: BaseButtonView = {
+    private let nextButton: BaseButtonView = {
         let view = BaseButtonView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setTitleColor(.white, for: .normal)
@@ -75,23 +99,24 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.isEnabled = false
         return view
     }()
+    private var nextButtonBottom: NSLayoutConstraint!
     private var previousTextFieldContent: String?
     private var previousSelection: UITextRange?
     weak var delegate: TransferSumViewControllerDelegate?
     weak var coordinator: TransferCoordinator?
     var pickMode: Bool = false
     var type: TransferType
-    var sender: TransferIdentifier
     var cards: [CardTypes] = {
-        return [.AmericanExpress, .DinersClub, .MasterCard, .Viza, .UnionPay]
+        return [.AmericanExpress, .DinersClub, .MasterCard, .Viza, .UnionPay, .kortimilli]
     }()
+    let viewModel: TransferViewModel
     
-    init(type: TransferType, sender: TransferIdentifier, delegate: TransferSumViewControllerDelegate?) {
+    init(viewModel: TransferViewModel, type: TransferType, delegate: TransferSumViewControllerDelegate?) {
         self.type = type
-        self.sender = sender
+        self.viewModel = viewModel
         self.delegate = delegate
         super.init(nibName: nil, bundle: nil)
-        self.hidesBottomBarWhenPushed = true
+        self.hidesBottomBarWhenPushed = false
     }
     
     required init?(coder: NSCoder) {
@@ -102,51 +127,102 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         super.viewDidLoad()
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.view.addSubview(self.topBar)
-        self.view.addSubview(self.nextButton)
-        let enterView: UIView
-        switch self.type {
-        case .byCard:
-            enterView = self.cardNumerField
-            self.view.addSubview(self.cardNumerField)
-            self.topBar.subTitleLabel.text = "TRANSFER_BY_CARD_INFO".localized
-            self.bottomAuthLabel.isHidden = false
-            self.bottomAuthHintLabel.isHidden = false
-        case .byNumber:
-            enterView = self.numberView
-            self.view.addSubview(self.numberView)
-            self.topBar.subTitleLabel.text = "TRANSFER_BY_NUMBER_INFO".localized
-            self.bottomAuthLabel.isHidden = true
-            self.bottomAuthHintLabel.isHidden = true
-        }
-        self.view.addSubview(self.bottomAuthLabel)
-        self.view.addSubview(self.bottomAuthHintLabel)
+        self.view.addSubview(self.scrollView)
+        self.scrollView.addSubview(self.rootView)
+        self.rootView.addSubview(self.nextButton)
+        let rootHeight = self.rootView.heightAnchor.constraint(equalTo: self.scrollView.heightAnchor)
+        rootHeight.priority = UILayoutPriority(rawValue: 250)
+        self.nextButtonBottom = self.nextButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -20)
         NSLayoutConstraint.activate([
             self.topBar.leftAnchor.constraint(equalTo: self.view.leftAnchor),
             self.topBar.topAnchor.constraint(equalTo: self.view.topAnchor),
             self.topBar.rightAnchor.constraint(equalTo: self.view.rightAnchor),
             self.topBar.heightAnchor.constraint(equalToConstant: 160),
-            enterView.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            enterView.topAnchor.constraint(equalTo: self.topBar.bottomAnchor, constant: 30),
-            enterView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
-            enterView.heightAnchor.constraint(equalToConstant: 74),
-            
-            self.bottomAuthLabel.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.bottomAuthLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
-            self.bottomAuthHintLabel.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.bottomAuthHintLabel.topAnchor.constraint(equalTo: self.bottomAuthLabel.bottomAnchor, constant: 10),
-            self.bottomAuthHintLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
-            self.bottomAuthHintLabel.bottomAnchor.constraint(equalTo: self.nextButton.topAnchor, constant: -30),
-            self.nextButton.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.nextButton.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
-            self.nextButton.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
-            self.nextButton.heightAnchor.constraint(equalToConstant: 56),
+            self.scrollView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            self.scrollView.topAnchor.constraint(equalTo: self.topBar.bottomAnchor),
+            self.scrollView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            self.scrollView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor),
+            self.rootView.leftAnchor.constraint(equalTo: self.scrollView.leftAnchor),
+            self.rootView.topAnchor.constraint(equalTo: self.scrollView.topAnchor),
+            self.rootView.rightAnchor.constraint(equalTo: self.scrollView.rightAnchor),
+            self.rootView.bottomAnchor.constraint(equalTo: self.scrollView.bottomAnchor),
+            rootView.widthAnchor.constraint(equalTo: self.scrollView.widthAnchor),
+            rootHeight,
         ])
+        switch self.type {
+        case .byCard:
+            self.rootView.addSubview(self.cardNumerField)
+            self.rootView.addSubview(self.numberView)
+            self.rootView.addSubview(self.bottomAuthLabel)
+            self.rootView.addSubview(self.bottomAuthHintLabel)
+            self.topBar.subTitleLabel.text = "TRANSFER_BY_CARD_INFO".localized
+            self.bottomAuthLabel.isHidden = false
+            self.bottomAuthHintLabel.isHidden = false
+            NSLayoutConstraint.activate([
+                self.cardNumerField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.cardNumerField.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 30),
+                self.cardNumerField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.cardNumerField.heightAnchor.constraint(equalToConstant: 74),
+                self.numberView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.numberView.topAnchor.constraint(equalTo: self.cardNumerField.bottomAnchor, constant: 20),
+                self.numberView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.numberView.heightAnchor.constraint(equalToConstant: 74),
+                self.bottomAuthLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.bottomAuthLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.bottomAuthHintLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.bottomAuthHintLabel.topAnchor.constraint(equalTo: self.bottomAuthLabel.bottomAnchor, constant: 10),
+                self.bottomAuthHintLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.bottomAuthHintLabel.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -(30 + 40 + Theme.current.mainButtonHeight)),
+                self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.numberView.bottomAnchor, constant: 20),
+                self.nextButtonBottom,
+                self.nextButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight)
+            ])
+        case .byNumber:
+            self.rootView.addSubview(self.numberView)
+            self.rootView.addSubview(self.selectorView)
+            self.topBar.subTitleLabel.text = "TRANSFER_BY_NUMBER_INFO".localized
+            self.bottomAuthLabel.isHidden = true
+            self.bottomAuthHintLabel.isHidden = true
+            NSLayoutConstraint.activate([
+                self.numberView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.numberView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 30),
+                self.numberView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.numberView.heightAnchor.constraint(equalToConstant: 74),
+                self.selectorView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 0),
+                self.selectorView.topAnchor.constraint(equalTo: self.numberView.bottomAnchor, constant: 10),
+                self.selectorView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: 0),
+                self.selectorView.heightAnchor.constraint(equalToConstant: 140),
+                self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.selectorView.bottomAnchor, constant: 20),
+                self.nextButtonBottom,
+                self.nextButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight)
+            ])
+            let validNumber = self.numberView.textField.rx.text.orEmpty
+            validNumber
+                .debounce(RxTimeInterval.milliseconds(300), scheduler: MainScheduler.instance)
+                .distinctUntilChanged()
+                .filter({ $0.count >= 6 })
+                .flatMap { str in
+                    self.selectorView.configure(services: [])
+                    return self.viewModel.loadNumberServices(number: str.digits)
+                }
+                .subscribe { [weak self] services in
+                    self?.selectorView.configure(services: services)
+                    self?.checkFields()
+                } onError: { _ in
+                    
+                }.disposed(by: self.viewModel.disposeBag)
+        }
+        self.selectorView.delegate = self
         self.cardNumerField.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
         self.cardNumerField.textField.delegate = self
         self.numberView.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
         self.numberView.textField.delegate = self
-        self.view.isUserInteractionEnabled = true
-        self.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.hideKeyboard)))
+        self.numberView.rightImage.isUserInteractionEnabled = true
+        self.numberView.rightImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.contactPick)))
         self.topBar.backButton.addTarget(self, action: #selector(self.goBack), for: .touchUpInside)
         self.nextButton.addTarget(self, action: #selector(self.goToSum), for: .touchUpInside)
     }
@@ -156,16 +232,90 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         self.topBar.themeChanged(newTheme: newTheme)
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        switch self.type {
+        case .byNumber:
+            self.numberView.textField.becomeFirstResponder()
+        case .byCard:
+            self.cardNumerField.textField.becomeFirstResponder()
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc func keyboardWillShow(_ notification: Notification) {
+        var visibleHeight: CGFloat = 0
+        if let userInfo = notification.userInfo {
+            if let windowFrame = UIApplication.shared.keyWindow?.frame,
+                let keyboardRect = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+                visibleHeight = windowFrame.intersection(keyboardRect).height
+            }
+        }
+        self.nextButtonBottom.constant = -(visibleHeight - (self.tabBarController?.tabBar.frame.height ?? 0) + 6)
+    }
+     
+    @objc func keyboardWillHide(_ notification: Notification) {
+        self.nextButtonBottom.constant = -20
+    }
+    
+    @objc func contactPick() {
+        let vc = CNContactPickerViewController(nibName: nil, bundle: nil)
+        vc.predicateForSelectionOfProperty = NSPredicate(format: "key == 'phoneNumbers'")
+        vc.delegate = self
+        self.present(vc, animated: true)
+    }
+    
+    func contactPicker(_ picker: CNContactPickerViewController, didSelect contactProperty: CNContactProperty) {
+        guard let item = contactProperty.value as? CNPhoneNumber else { return }
+        self.numberView.textField.text = item.stringValue
+        self.numberView.textFieldTopLabel.text = "\(contactProperty.contact.givenName) \(contactProperty.contact.familyName)"
+        if self.checkFields() {
+            self.view.endEditing(true)
+        }
+    }
+    
+    func serviceSelected() {
+        if self.checkFields() {
+            self.view.endEditing(true)
+        }
+    }
+    
     @objc func goBack() {
         self.coordinator?.navigateBack()
     }
     
     @objc func goToSum() {
+        let receiver: TransferIdentifier
+        switch self.type {
+        case .byNumber:
+            guard let service = self.selectorView.selectedService else { return }
+            receiver = .number(number: self.numberView.textField.text ?? "", service: service.service, info: service.accountInfo)
+        case .byCard:
+            receiver = .card(number: self.cardNumerField.textField.text ?? "", phoneNumber: self.numberView.textField.text ?? "")
+        }
+        self.view.endEditing(true)
         if let delegate = self.delegate {
-            delegate.receiverPicked(receiver: .card(number: "3422342342"))
+            delegate.receiverPicked(receiver: receiver)
             self.coordinator?.navigateBack()
         } else {
-            self.coordinator?.navigateToEnterSum(type: self.type, sender: self.sender, receiver: .card(number: "dasdasdasd"))
+            self.showProgressView()
+            self.viewModel.service.loadTransferData()
+                .observe(on: MainScheduler.instance)
+                .subscribe { [weak self] result in
+                    guard let self = self else { return }
+                    self.hideProgressView()
+                    self.coordinator?.navigateToEnterSum(type: self.type, receiver: receiver, transferData: result)
+                } onFailure: { [weak self] error in
+                    guard let self = self else { return }
+                    self.hideProgressView()
+                    self.showServerErrorAlert()
+                }.disposed(by: self.viewModel.disposeBag)
         }
     }
     
@@ -188,6 +338,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         return false
     }
     
+    @discardableResult
     func checkFields() -> Bool {
         switch self.type {
         case .byCard:
@@ -195,8 +346,16 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 self.nextButton.isEnabled = false
                 return false
             }
+            guard let cardNumber = self.numberView.textField.text?.digits, cardNumber.count >= 8 else {
+                self.nextButton.isEnabled = false
+                return false
+            }
         case .byNumber:
             guard let cardNumber = self.numberView.textField.text?.digits, cardNumber.count >= 8 else {
+                self.nextButton.isEnabled = false
+                return false
+            }
+            guard let _ = self.selectorView.selectedService else {
                 self.nextButton.isEnabled = false
                 return false
             }
@@ -215,22 +374,24 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
             if let text = textField.text {
                 cardNumberWithoutSpaces = self.removeNonDigits(string: text, andPreserveCursorPosition: &targetCursorPosition)
             }
-            if cardNumberWithoutSpaces.count > 13 {
-                if cardNumberWithoutSpaces.count > 16 {
-                    textField.text = self.previousTextFieldContent
-                    textField.selectedTextRange = self.previousSelection
-                    if self.checkFields() {
-                        self.cardNumerField.textField.resignFirstResponder()
-                    }
-                    return
+            if cardNumberWithoutSpaces.count > 16 {
+                textField.text = self.previousTextFieldContent
+                textField.selectedTextRange = self.previousSelection
+                if self.checkFields() {
+                    self.cardNumerField.textField.resignFirstResponder()
+                } else {
+                    self.numberView.textField.becomeFirstResponder()
                 }
+                return
             }
+            self.checkFields()
             let cardNumberWithSpaces = self.insertCreditCardSpaces(cardNumberWithoutSpaces, preserveCursorPosition: &targetCursorPosition)
             textField.text = cardNumberWithSpaces
             if let targetPosition = textField.position(from: textField.beginningOfDocument, offset: targetCursorPosition) {
                 textField.selectedTextRange = textField.textRange(from: targetPosition, to: targetPosition)
             }
         } else if textField == self.numberView.textField {
+            self.numberView.textFieldTopLabel.text = nil
             if self.checkFields() {
                 if let s = textField as? PhoneNumberTextField, s.isValidNumber {
                     self.numberView.textField.resignFirstResponder()
@@ -260,11 +421,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 card = cardItem
             }
         }
-        if let card = card {
-            self.cardNumerField.rightImage.image = card.image
-        } else {
-            self.cardNumerField.rightImage.image = nil
-        }
+        self.cardNumerField.rightImage.image = card?.image
         let is464 = card == .DinersClub
         let is456 = card == .AmericanExpress
         let is4444 = !(is464 || is456)

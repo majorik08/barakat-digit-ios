@@ -15,6 +15,7 @@ class HomeViewModel {
     let paymentsService: PaymentsService
     let bannerService: BannerService
     let ratesService: RatesService
+    let cardService: CardService
     
     let didLoadAccountInfo = PublishSubject<Void>()
     let didLoadServices = PublishSubject<Void>()
@@ -26,20 +27,37 @@ class HomeViewModel {
     
     let didLoadError = PublishSubject<String>()
     
-    var serviceGroups: [AppStructs.PaymentGroup] = []
-    var transfers: [AppStructs.TransferTypes] = []
+    var serviceGroups: [AppStructs.PaymentGroup] {
+        return self.accountInfo.paymentGroups
+    }
+    var transfers: [AppStructs.PaymentGroup.ServiceItem] {
+        return self.accountInfo.transferTypes
+    }
+    var cardList: [AppStructs.CreditDebitCard] {
+        return self.accountInfo.cards
+    }
+    var favoritesList: [AppStructs.Favourite] {
+        return self.accountInfo.favorites
+    }
+    
     var showcaseList: [AppStructs.Showcase] = []
     var storiesList: [AppStructs.Stories] = []
-    var favoritesList: [AppStructs.Favourite] = []
-    var cardList: [AppStructs.CreditDebitCard] = []
     var ratesList: [AppStructs.CurrencyRate] = []
-    
-    init(accountService: AccountService, paymentsService: PaymentsService, bannerService: BannerService, ratesService: RatesService, accountInfo: AppStructs.AccountInfo) {
+   
+    init(accountService: AccountService, paymentsService: PaymentsService, bannerService: BannerService, ratesService: RatesService, accountInfo: AppStructs.AccountInfo, cardService: CardService) {
         self.paymentsService = paymentsService
         self.bannerService = bannerService
         self.ratesService = ratesService
         self.accountInfo = accountInfo
         self.accountService = accountService
+        self.cardService = cardService
+        self.accountInfo.didUpdateFavorites.subscribe { _ in
+            self.didLoadFavorites.onNext(())
+        }.disposed(by: self.disposeBag)
+    }
+    
+    func getService(serviceID: Int) -> AppStructs.PaymentGroup.ServiceItem? {
+        return self.serviceGroups.first(where: { $0.services.contains(where: { $0.id == serviceID }) })?.services.first(where: { $0.id == serviceID })
     }
     
     func loadAccountInfo() {
@@ -65,8 +83,6 @@ class HomeViewModel {
         self.paymentsService.loadPayments()
             .observe(on: MainScheduler.instance)
             .subscribe { result in
-                self.serviceGroups = result.groups
-                self.transfers = result.transfers
                 self.didLoadServices.onNext(())
         } onFailure: { error in
             if let error = error as? NetworkError {
@@ -80,9 +96,20 @@ class HomeViewModel {
     func loadFavorites() {
         self.paymentsService.loadFavorites()
             .observe(on: MainScheduler.instance)
-            .subscribe { items in
-                self.favoritesList = items
-                self.didLoadFavorites.onNext(())
+            .subscribe { _ in
+        } onFailure: { error in
+            if let error = error as? NetworkError {
+                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
+            } else {
+                self.didLoadError.onNext(error.localizedDescription)
+            }
+        }.disposed(by: self.disposeBag)
+    }
+    
+    func deleteFavorite(id: Int) {
+        self.paymentsService.removeFavorite(id: id)
+            .observe(on: MainScheduler.instance)
+            .subscribe { _ in
         } onFailure: { error in
             if let error = error as? NetworkError {
                 self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
@@ -93,7 +120,7 @@ class HomeViewModel {
     }
     
     func loadShowcaseList() {
-        self.bannerService.loadShowcaseList()
+        self.bannerService.loadShowcaseList(limit: 10, offset: 0)
             .observe(on: MainScheduler.instance)
             .subscribe { cashbeks in
             self.showcaseList = cashbeks
@@ -123,10 +150,17 @@ class HomeViewModel {
     }
     
     func loadCardList() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.cardList = [.init(number: "1111"), .init(number: "2222")]
+        self.cardService.getUserCards()
+            .observe(on: MainScheduler.instance)
+            .subscribe { cards in
             self.didLoadCards.onNext(())
-        }
+        } onFailure: { error in
+            if let error = error as? NetworkError {
+                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
+            } else {
+                self.didLoadError.onNext(error.localizedDescription)
+            }
+        }.disposed(by: self.disposeBag)
     }
     
     func loadRates() {

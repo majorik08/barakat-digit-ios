@@ -13,8 +13,7 @@ public class StoriesItem: Equatable {
         return lhs.id == rhs.id
     }
     
-    let action: String
-    let button: String
+    
     let type: Int
     let id: Int
     var snaps: [SnapItem]
@@ -23,31 +22,31 @@ public class StoriesItem: Equatable {
     var isCompletelyVisible = false
     var isCancelledAbruptly = false
     
-    init(action: String, button: String, type: Int, id: Int, snaps: [SnapItem]) {
-        self.action = action
-        self.button = button
+    init(type: Int, id: Int, snaps: [SnapItem]) {
         self.type = type
         self.id = id
         self.snaps = snaps
     }
     
     init(stories: AppStructs.Stories) {
-        self.action = stories.action
-        self.button = stories.button
         self.type = stories.type
         self.id = stories.id
-        self.snaps = stories.images.map({ SnapItem(id: $0.id, source: $0.source, storyID: $0.storyID) })
+        self.snaps = stories.images.map({ SnapItem(id: $0.id, source: $0.source, storyID: $0.storyID, action: $0.action, button: $0.button) })
     }
     
     public class SnapItem {
         let id: Int
         let source: String
         let storyID: Int
+        let action: String?
+        let button: String?
         
-        init(id: Int, source: String, storyID: Int) {
+        init(id: Int, source: String, storyID: Int, action: String?, button: String?) {
             self.id = id
             self.source = source
             self.storyID = storyID
+            self.action = action
+            self.button = button
         }
     }
 }

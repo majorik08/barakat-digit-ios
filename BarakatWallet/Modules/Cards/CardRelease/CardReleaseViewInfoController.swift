@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class CardReleaseViewInfoController: BaseViewController {
     
@@ -40,10 +41,16 @@ class CardReleaseViewInfoController: BaseViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    private let cardView: CardView = {
-        let view = CardView(frame: .zero)
+    let cardView: GradientImageView = {
+        let view = GradientImageView(insets: .zero)
+        view.circleImage = false
+        view.imageView.contentMode = .scaleAspectFill
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.setColors()
+        view.backgroundColor = Theme.current.plainTableCellColor
+        view.clipsToBounds = true
+        view.layer.cornerRadius = 10
+        view.layer.borderColor = Theme.current.secondTintColor.withAlphaComponent(0.3).cgColor
+        view.layer.borderWidth = 0.5
         return view
     }()
     private let infoLabel: UILabel = {
@@ -88,9 +95,9 @@ class CardReleaseViewInfoController: BaseViewController {
     
     weak var coordinator: CardsCoordinator? = nil
     let viewModel: CardsViewModel
-    let cardItem: AppStructs.CreditDebitCardItem
+    let cardItem: AppStructs.CreditDebitCardTypes
     
-    init(viewModel: CardsViewModel, cardItem: AppStructs.CreditDebitCardItem) {
+    init(viewModel: CardsViewModel, cardItem: AppStructs.CreditDebitCardTypes) {
         self.viewModel = viewModel
         self.cardItem = cardItem
         super.init(nibName: nil, bundle: nil)
@@ -154,13 +161,47 @@ class CardReleaseViewInfoController: BaseViewController {
             self.nextButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight),
         ])
         self.backButton.addTarget(self, action: #selector(self.goBack), for: .touchUpInside)
-        self.stackView.addArrangedSubview(CardFeatureView(text: "Получение переводов из РФ"))
-        self.stackView.addArrangedSubview(CardFeatureView(text: "Обналичивание 0% во всех банкоматах РТ"))
-        self.stackView.addArrangedSubview(CardFeatureView(text: "Бесплатное обслуживание в течении всего срока"))
+        self.nextButton.addTarget(self, action: #selector(self.goOrder), for: .touchUpInside)
+        self.infoLabel.text = self.cardItem.cardCategory.name
+        self.nameLabel.text = self.cardItem.name
+        if self.cardItem.image.isEmpty {
+            if self.cardItem.cardCategory.colorID == 0 {
+                self.cardView.endColor = Constants.cardColors[0].end
+                self.cardView.startColor = Constants.cardColors[0].start
+            } else if self.cardItem.cardCategory.colorID == 1 {
+                self.cardView.endColor = Constants.cardColors[1].end
+                self.cardView.startColor = Constants.cardColors[1].start
+            } else {
+                self.cardView.endColor = Constants.cardColors[2].end
+                self.cardView.startColor = Constants.cardColors[2].start
+            }
+            self.cardView.imageView.image = nil
+        } else {
+            self.cardView.endColor = .clear
+            self.cardView.startColor = .clear
+            self.cardView.imageView.loadImage(filePath: self.cardItem.image)
+        }
+        for item in self.cardItem.details {
+            self.stackView.addArrangedSubview(CardFeatureView(text: item.text))
+        }
     }
     
     @objc func goBack() {
         self.coordinator?.navigateBack()
+    }
+    
+    @objc func goOrder() {
+        self.showProgressView()
+        self.viewModel.cardService.getRegions()
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] regions in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.coordinator?.navigateToOrderCard(cardItem: self.cardItem, regions: regions)
+            } onFailure: { [weak self] error in
+                self?.hideProgressView()
+                self?.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
     }
     
     override func viewWillAppear(_ animated: Bool) {

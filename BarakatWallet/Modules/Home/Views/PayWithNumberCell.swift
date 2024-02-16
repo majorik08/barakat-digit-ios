@@ -58,13 +58,13 @@ class PayWithNumberCell: UICollectionViewCell {
         self.searchView.addSubview(self.labelView)
         self.searchView.addSubview(self.iconView)
         NSLayoutConstraint.activate([
-            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.titleView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
-            self.titleView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.titleView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.titleView.heightAnchor.constraint(equalToConstant: 18),
-            self.searchView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.searchView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.searchView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
-            self.searchView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.searchView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.searchView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -8),
             self.labelView.leftAnchor.constraint(equalTo: self.searchView.leftAnchor, constant: 10),
             self.labelView.topAnchor.constraint(equalTo: self.searchView.topAnchor, constant: 8),
@@ -83,7 +83,7 @@ class PayWithNumberCell: UICollectionViewCell {
     
     func configure() {
         self.titleView.textColor = Theme.current.primaryTextColor
-        self.iconView.tintColor = Theme.current.secondTintColor
+        self.iconView.tintColor = Theme.current.borderColor
         self.labelView.textColor = Theme.current.secondaryTextColor
     }
 }

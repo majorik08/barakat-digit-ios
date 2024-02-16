@@ -99,6 +99,7 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
         view.setTitleColor(.white, for: .normal)
         view.radius = 14
         view.setTitle("SAVE".localized, for: .normal)
+        view.titleLabel?.font = UIFont.medium(size: 17)
         view.isEnabled = false
         return view
     }()
@@ -155,37 +156,37 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
             self.topBar.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 0),
             self.topBar.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 20),
             self.topBar.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: 0),
-            self.firstNameField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
+            self.firstNameField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.firstNameField.topAnchor.constraint(equalTo: self.topBar.bottomAnchor, constant: 10),
-            self.firstNameField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -20),
+            self.firstNameField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.firstNameField.heightAnchor.constraint(equalToConstant: 72),
-            self.lastNameField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
+            self.lastNameField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.lastNameField.topAnchor.constraint(equalTo: self.firstNameField.bottomAnchor, constant: 16),
-            self.lastNameField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -20),
+            self.lastNameField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.lastNameField.heightAnchor.constraint(equalToConstant: 72),
-            self.surNameField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
+            self.surNameField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.surNameField.topAnchor.constraint(equalTo: self.lastNameField.bottomAnchor, constant: 16),
-            self.surNameField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -20),
+            self.surNameField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.surNameField.heightAnchor.constraint(equalToConstant: 72),
-            self.docBirthdayField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
+            self.docBirthdayField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.docBirthdayField.topAnchor.constraint(equalTo: self.surNameField.bottomAnchor, constant: 16),
-            self.docBirthdayField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -20),
+            self.docBirthdayField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.docBirthdayField.heightAnchor.constraint(equalToConstant: 72),
-            self.emailField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
+            self.emailField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.emailField.topAnchor.constraint(equalTo: self.docBirthdayField.bottomAnchor, constant: 16),
-            self.emailField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -20),
+            self.emailField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.emailField.heightAnchor.constraint(equalToConstant: 72),
-            self.maleButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
+            self.maleButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.maleButton.topAnchor.constraint(equalTo: self.emailField.bottomAnchor, constant: 16),
-            self.maleButton.rightAnchor.constraint(equalTo: self.rootView.centerXAnchor, constant: -20),
+            self.maleButton.rightAnchor.constraint(equalTo: self.rootView.centerXAnchor, constant: -Theme.current.mainPaddings),
             self.maleButton.heightAnchor.constraint(equalToConstant: 22),
-            self.femaleButton.leftAnchor.constraint(equalTo: self.rootView.centerXAnchor, constant: 20),
+            self.femaleButton.leftAnchor.constraint(equalTo: self.rootView.centerXAnchor, constant: Theme.current.mainPaddings),
             self.femaleButton.topAnchor.constraint(equalTo: self.emailField.bottomAnchor, constant: 16),
-            self.femaleButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -20),
+            self.femaleButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.femaleButton.heightAnchor.constraint(equalToConstant: 22),
-            self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.maleButton.bottomAnchor, constant: 20),
-            self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
+            self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.nextButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -30),
             self.nextButton.heightAnchor.constraint(equalToConstant: 56),
         ])
@@ -246,10 +247,8 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
         let validEmail = self.emailField.fieldView.rx.text.orEmpty.map({ $0 == "" || self.isValid($0) }).share(replay: 1)
         let birthdate = self.docBirthdayField.fieldView.rx.text.orEmpty.map({ $0 == "" || self.isValidDate($0) }).share(replay: 1)
         if self.viewModel.accountInfo.client.limit.identifyed == .noIdentified {
-            
             let enableButton = Observable.combineLatest(validEmail, birthdate) { $0 && $1 }.share(replay: 1)
             enableButton.bind(to: self.nextButton.rx.isEnabled).disposed(by: self.viewModel.disposeBag)
-            
         } else {
             let enableButton = Observable.combineLatest(validEmail, birthdate) { $0 && $1 }.share(replay: 1)
             enableButton.bind(to: self.viewModel.isSendActive).disposed(by: self.viewModel.disposeBag)
@@ -263,7 +262,18 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
     }
     
     @objc func goIdentify() {
-        self.coordinator?.navigateToIdentify()
+        switch self.viewModel.accountInfo.client.limit.identifyed {
+        case .noIdentified:
+            self.showProgressView()
+            self.viewModel.identifyService.getIdentify().subscribe { [weak self] result in
+                self?.hideProgressView()
+                self?.coordinator?.navigateToIdentify(identify: result)
+            } onFailure: { [weak self] _ in
+                self?.hideProgressView()
+            }.disposed(by: self.viewModel.disposeBag)
+        case .identified, .onlineIdentified:
+            self.coordinator?.navigateToIdentify(identify: nil)
+        }
     }
     
     @objc func maleFemaleChanged(_ sender: UIButton) {

@@ -130,9 +130,9 @@ class TransferAccountsViewController: BaseViewController {
     }
     
     func configure() {
-        self.sumFieldView.configure(param: self.viewModel.sumParam)
-        self.topupBalanceView.configure(accounts: self.viewModel.accountInfo.accounts)
-        self.payBalanceView.configure(accounts: self.viewModel.accountInfo.accounts)
+        self.sumFieldView.configure(param: self.viewModel.sumParam, validate: false)
+        self.topupBalanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
+        self.payBalanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
     }
     
     @objc func makePayment() {

@@ -76,18 +76,26 @@ class AboutViewController: BaseViewController {
             self.rootView.bottomAnchor.constraint(equalTo: self.scrollView.bottomAnchor),
             rootView.widthAnchor.constraint(equalTo: self.scrollView.widthAnchor),
             rootHeight,
-            self.textLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.textLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.textLabel.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 20),
-            self.textLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
-            lineView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
+            self.textLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            lineView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             lineView.topAnchor.constraint(equalTo: self.textLabel.bottomAnchor, constant: 20),
-            lineView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -20),
+            lineView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             lineView.heightAnchor.constraint(equalToConstant: 1),
-            self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: lineView.bottomAnchor, constant: 20),
-            self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
+            self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.nextButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -50),
             self.nextButton.heightAnchor.constraint(equalToConstant: 56),
         ])
+        self.nextButton.addTarget(self, action: #selector(self.shareApp), for: .touchUpInside)
+    }
+    
+    @objc func shareApp() {
+        let activity: UIActivityViewController
+        activity = UIActivityViewController(activityItems: ["INVITE".localizedFormat(arguments: Constants.AppName, Constants.AppUrl)], applicationActivities: nil)
+        activity.popoverPresentationController?.sourceView = self.nextButton
+        self.present(activity, animated: true, completion: nil)
     }
 }

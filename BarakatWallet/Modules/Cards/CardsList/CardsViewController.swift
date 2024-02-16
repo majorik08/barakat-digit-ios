@@ -7,9 +7,10 @@
 
 import Foundation
 import UIKit
+import Toast
 
-class CardsViewController: BaseViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, CardTypesCellDelegate {
-  
+class CardsViewController: BaseViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, CardTypesCellDelegate, CardItemCellDelegate {
+
     let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -54,6 +55,28 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
         self.collectionView.contentInsetAdjustmentBehavior = .never
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
+        self.collectionView.refreshControl = UIRefreshControl()
+        self.collectionView.refreshControl?.tintColor = Theme.current.tintColor
+        self.collectionView.refreshControl!.addTarget(self, action: #selector(reloadMainView), for: .valueChanged)
+        self.viewModel.didLoadError.subscribe(onNext: { [weak self] message in
+            self?.collectionView.refreshControl?.endRefreshing()
+            self?.showErrorAlert(title: "ERROR".localized, message: message)
+        }).disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadCards.subscribe { [weak self] _ in
+            self?.collectionView.refreshControl?.endRefreshing()
+            self?.collectionView.reloadData()
+        }.disposed(by: self.viewModel.disposeBag)
+        self.viewModel.didLoadCategories.subscribe { [weak self] _ in
+            self?.collectionView.refreshControl?.endRefreshing()
+            self?.collectionView.reloadData()
+        }.disposed(by: self.viewModel.disposeBag)
+        self.viewModel.loadCardList()
+        self.viewModel.loadCardCategories()
+    }
+    
+    @objc func reloadMainView() {
+        self.viewModel.loadCardList()
+        self.viewModel.loadCardCategories()
     }
     
     override func themeChanged(newTheme: Theme) {
@@ -64,11 +87,33 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
     
     @objc func showHideCardTapped() {
         self.viewModel.showCardInfo = !self.viewModel.showCardInfo
-        self.collectionView.reloadData()
+        for cardItem in self.viewModel.userCards.enumerated() {
+            guard let cell = self.collectionView.cellForItem(at: .init(item: cardItem.offset, section: 1)) as? CardItemCell else { continue }
+            cell.configure(card: cardItem.element, show: self.viewModel.showCardInfo, showCopy: true)
+        }
     }
     
-    func cardTypeTapped(item: AppStructs.CreditDebitCardTypes) {
-        self.coordinator?.navigateToReleaseCardView()
+    func copyInfo(cell: CardItemCell, number: Bool, date: Bool, cvv: Bool) {
+        guard let cell = self.collectionView.indexPath(for: cell) else { return }
+        if cell.item < self.viewModel.userCards.count {
+            let card = self.viewModel.userCards[cell.item]
+            if number {
+                UIPasteboard.general.string = card.pan
+            } else if date {
+                UIPasteboard.general.string = "\(card.validMonth)/\(card.validYear)"
+            } else if cvv {
+                UIPasteboard.general.string = card.cvv
+            }
+            let toast = Toast.default(
+                image: UIImage(name: .copy_value),
+                title: "CARD_INFO_COPY".localized
+            )
+            toast.show(haptic: .success)
+        }
+    }
+    
+    func cardTypeTapped(item: AppStructs.CreditDebitCardCategory) {
+        self.coordinator?.navigateToReleaseCardView(categoryId: item.id)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -80,7 +125,7 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
             if indexPath.item == 0 {
                 self.coordinator?.navigateToAddCardView()
             } else if indexPath.item == 1 {
-                self.coordinator?.navigateToReleaseCardView()
+                self.coordinator?.navigateToReleaseCardView(categoryId: nil)
             }
         }
     }
@@ -89,12 +134,13 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
         if indexPath.section == 0 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_types_cell", for: indexPath) as! CardTypesCell
             cell.delegate = self
-            cell.configure(items: self.viewModel.availableCardTypes)
+            cell.configure(items: self.viewModel.availableCardCategories)
             return cell
         } else if indexPath.section == 1 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_item_cell", for: indexPath) as! CardItemCell
+            cell.delegate = self
             let card = self.viewModel.userCards[indexPath.item]
-            cell.configure(card: card, show: self.viewModel.showCardInfo)
+            cell.configure(card: card, show: self.viewModel.showCardInfo, showCopy: true)
             return cell
         } else if indexPath.section == 2 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "card_action_cell", for: indexPath) as! CardActionCell

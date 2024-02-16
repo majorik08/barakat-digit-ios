@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum Currency: String, CustomStringConvertible, Codable, CurrencyType {
+public enum CurrencyEnum: String, CustomStringConvertible, Codable, CurrencyType {
     
     public var name: String {
         switch self {

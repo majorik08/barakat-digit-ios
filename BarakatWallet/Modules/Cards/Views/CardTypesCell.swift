@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 protocol CardTypesCellDelegate: AnyObject {
-    func cardTypeTapped(item: AppStructs.CreditDebitCardTypes)
+    func cardTypeTapped(item: AppStructs.CreditDebitCardCategory)
 }
 
 class CardTypesCell: UICollectionViewCell, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -28,7 +28,7 @@ class CardTypesCell: UICollectionViewCell, UICollectionViewDelegate, UICollectio
         view.contentInset = .init(top: 0, left: Theme.current.mainPaddings, bottom: 0, right: Theme.current.mainPaddings)
         return view
     }()
-    var items: [AppStructs.CreditDebitCardTypes] = []
+    var items: [AppStructs.CreditDebitCardCategory] = []
     weak var delegate: CardTypesCellDelegate? = nil
     
     override init(frame: CGRect) {
@@ -55,7 +55,7 @@ class CardTypesCell: UICollectionViewCell, UICollectionViewDelegate, UICollectio
         self.collectionView.reloadData()
     }
     
-    func configure(items: [AppStructs.CreditDebitCardTypes]) {
+    func configure(items: [AppStructs.CreditDebitCardCategory]) {
         self.items = items
         self.collectionView.reloadData()
     }
@@ -148,9 +148,17 @@ class CardTypeItemCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(item: AppStructs.CreditDebitCardTypes) {
-        self.rootView.backgroundColor = Theme.current.plainTableCellColor
+    func configure(item: AppStructs.CreditDebitCardCategory) {
         self.titleView.textColor = Theme.current.primaryTextColor
-        self.titleView.text = item.name
+        self.titleView.text = item.name.uppercased()
+        if item.color.name == "green" {
+            self.rootView.backgroundColor = UIColor(red: 115/255, green: 175/255, blue: 1/255, alpha: 1)
+        } else if item.color.name == "blue" {
+            self.rootView.backgroundColor = UIColor(red: 51/255, green: 147/255, blue: 215/255, alpha: 1)
+        } else if item.color.name == "yellow" {
+            self.rootView.backgroundColor = UIColor(red: 250/255, green: 210/255, blue: 78/255, alpha: 1)
+        } else {
+            self.rootView.backgroundColor = Theme.current.plainTableCellColor
+        }
     }
 }

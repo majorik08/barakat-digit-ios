@@ -26,7 +26,7 @@ class EditTopBar: UIView {
         view.imageView?.contentMode = .scaleAspectFit
         view.imageView?.tintColor = Theme.current.primaryTextColor
         view.setTitleColor(Theme.current.primaryTextColor, for: .normal)
-        view.titleLabel?.font = UIFont.bold(size: 16)
+        view.titleLabel?.font = UIFont.medium(size: 16)
         view.imageEdgeInsets = .init(top: 0, left: 0, bottom: 0, right: 10)
         return view
     }()
@@ -49,17 +49,17 @@ class EditTopBar: UIView {
         self.addSubview(self.buttonView)
         self.addSubview(self.statusView)
         NSLayoutConstraint.activate([
-            self.avatarView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 30),
+            self.avatarView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.avatarView.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
             self.avatarView.heightAnchor.constraint(equalToConstant: 74),
             self.avatarView.widthAnchor.constraint(equalToConstant: 74),
             self.buttonView.leftAnchor.constraint(equalTo: self.avatarView.rightAnchor, constant: 30),
-            self.buttonView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -30),
+            self.buttonView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.buttonView.heightAnchor.constraint(equalToConstant: 40),
             self.buttonView.centerYAnchor.constraint(equalTo: self.avatarView.centerYAnchor),
-            self.statusView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 20),
+            self.statusView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.statusView.topAnchor.constraint(equalTo: self.avatarView.bottomAnchor, constant: 20),
-            self.statusView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -20),
+            self.statusView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.statusView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
             self.statusView.heightAnchor.constraint(equalToConstant: 64)
         ])

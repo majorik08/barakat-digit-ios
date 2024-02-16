@@ -18,9 +18,10 @@ class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
         view.tintColor = Theme.current.primaryTextColor
         return view
     }()
-    let label: GradientLabel = {
-        let view = GradientLabel(frame: .zero)
+    let label: UILabel = {
+        let view = UILabel(frame: .zero)
         view.font = UIFont.bold(size: 22)
+        view.textColor = Theme.current.tintColor
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "ENTER_CODE".localized
         return view
@@ -192,8 +193,7 @@ class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let c = UIColor(red: 0.2, green: 0.333, blue: 0.914, alpha: 1)
-        self.numberView.roundCorners(corners: [.allCorners], radius: 8, thickness: 1.8, color: c)
+        self.numberView.roundCorners(corners: [.allCorners], radius: 8, thickness: 1.8, color: Theme.current.borderColor)
     }
     
     func keyTapped(digit: String) {

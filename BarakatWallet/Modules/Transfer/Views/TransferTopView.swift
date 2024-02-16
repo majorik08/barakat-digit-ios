@@ -98,9 +98,9 @@ class TransferTopView: UIView {
         let shadowPath0 = UIBezierPath(roundedRect: self.shadowView.bounds, cornerRadius: 14)
         self.shadowLayer!.shadowPath = shadowPath0.cgPath
         self.shadowLayer!.shadowColor = Theme.current.shadowColor.cgColor
-        self.shadowLayer!.shadowOpacity = 1
-        self.shadowLayer!.shadowRadius = 28
-        self.shadowLayer!.shadowOffset = CGSize(width: 0, height: 5)
+        self.shadowLayer!.shadowOpacity = 0.6
+        self.shadowLayer!.shadowRadius = 8
+        self.shadowLayer!.shadowOffset = CGSize(width: 0, height: 2)
         self.shadowLayer!.bounds = self.shadowView.bounds
         self.shadowLayer!.position = self.shadowView.center
     }

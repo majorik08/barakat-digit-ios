@@ -16,11 +16,11 @@ class PaymentServiceCell: UITableViewCell {
         view.backgroundColor = Theme.current.plainTableBackColor
         return view
     }()
-    let iconView: UIImageView = {
-        let view = UIImageView(frame: .zero)
+    let iconView: CircleImageView = {
+        let view = CircleImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.image = UIImage(name: .profile_add)
-        view.contentMode = .scaleAspectFit
+        view.contentMode = .scaleAspectFill
+        view.clipsToBounds = true
         return view
     }()
     let titleView: UILabel = {
@@ -73,10 +73,18 @@ class PaymentServiceCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(service: AppStructs.PaymentGroup.ServiceItem) {
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.titleView.text = nil
+        self.iconView.image = nil
+    }
+    
+    func configure(item: PaymentSearchItem) {
         self.rootView.backgroundColor = Theme.current.plainTableBackColor
         self.titleView.textColor = Theme.current.primaryTextColor
-        
-        self.titleView.text = service.name
+        if let service = item as? AppStructs.PaymentGroup.ServiceItem {
+            self.titleView.text = service.name
+            self.iconView.loadImage(filePath: Theme.current.dark ? service.darkListImage : service.listImage)
+        }
     }
 }

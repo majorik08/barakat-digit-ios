@@ -60,8 +60,8 @@ class TransferMainViewController: BaseViewController {
     let bottomAuthHintLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 16)
-        view.textColor = Theme.current.primaryTextColor
+        view.font = UIFont.regular(size: 14)
+        view.textColor = Theme.current.secondaryTextColor
         view.text = "AUTH_TITLE_HELP".localized
         view.numberOfLines = 0
         view.textAlignment = .center
@@ -77,12 +77,13 @@ class TransferMainViewController: BaseViewController {
     }()
     weak var coordinator: TransferCoordinator?
     
-    let bannerService: BannerService
+    let viewModel: TransferViewModel
     let disposeBag = DisposeBag()
     
-    init(bannerService: BannerService) {
-        self.bannerService = bannerService
+    init(viewModel: TransferViewModel) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        self.hidesBottomBarWhenPushed = false
     }
     
     required init?(coder: NSCoder) {
@@ -141,7 +142,7 @@ class TransferMainViewController: BaseViewController {
         self.loginButton.addTarget(self, action: #selector(self.goLogin), for: .touchUpInside)
         self.transferNumberView.addTarget(self, action: #selector(self.byNumber), for: .touchUpInside)
         self.transferCardView.addTarget(self, action: #selector(self.byCard), for: .touchUpInside)
-        self.bannerService.loadBannerList().observe(on: MainScheduler.instance).subscribe(onSuccess: { [weak self] banners in
+        self.viewModel.bannerService.loadBannerList().observe(on: MainScheduler.instance).subscribe(onSuccess: { [weak self] banners in
             self?.topHelp.configure(banners: banners)
         }).disposed(by: self.disposeBag)
     }
@@ -155,11 +156,11 @@ class TransferMainViewController: BaseViewController {
     }
     
     @objc func byNumber() {
-        self.coordinator?.navigateToPickSender(type: .byNumber, delegate: nil)
+        self.coordinator?.navigateToPickReceiver(type: .byNumber, delegate: nil)
     }
     
     @objc func byCard() {
-        self.coordinator?.navigateToPickSender(type: .byCard, delegate: nil)
+        self.coordinator?.navigateToPickReceiver(type: .byCard, delegate: nil)
     }
     
     override func viewDidAppear(_ animated: Bool) {

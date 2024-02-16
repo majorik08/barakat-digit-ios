@@ -21,7 +21,7 @@ class MainCardListCell: UICollectionViewCell, UICollectionViewDelegate, UICollec
         view.backgroundColor = .clear
         view.showsVerticalScrollIndicator = false
         view.showsHorizontalScrollIndicator = false
-        view.contentInset = .init(top: 0, left: 11, bottom: 0, right: 11)
+        view.contentInset = .init(top: 0, left: Theme.current.mainPaddings - 5, bottom: 0, right: Theme.current.mainPaddings - 5)
         return view
     }()
     let titleView: UILabel = {
@@ -47,16 +47,16 @@ class MainCardListCell: UICollectionViewCell, UICollectionViewDelegate, UICollec
         self.contentView.addSubview(self.collectionView)
         self.contentView.addSubview(self.controlView)
         NSLayoutConstraint.activate([
-            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.titleView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 0),
-            self.titleView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.titleView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.titleView.heightAnchor.constraint(equalToConstant: 18),
             self.collectionView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 0),
             self.collectionView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
             self.collectionView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: 0),
-            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.controlView.topAnchor.constraint(equalTo: self.collectionView.bottomAnchor, constant: 8),
-            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.controlView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -2),
             self.controlView.heightAnchor.constraint(equalToConstant: 12)
         ])
@@ -114,7 +114,8 @@ class MainCardListCell: UICollectionViewCell, UICollectionViewDelegate, UICollec
         guard width > 0 else {
             return .init(width: 1, height: 1)
         }
-        let itemWidth = ((width - 22) / 2.5)
+        let insets = 2 * (Theme.current.mainPaddings - 5)
+        let itemWidth = ((width - insets) / 2.5)
         let height = (itemWidth - 10) * 0.63
         return .init(width: itemWidth, height: height)
     }
@@ -236,27 +237,38 @@ class MainCardCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.cardNumberView.text = nil
+        self.cardBalanceView.text = nil
+        self.cardTypeIconView.image = nil
+    }
     
     func configure(card: AppStructs.CreditDebitCard?) {
-        if let _ = card {
+        if let card = card {
+            self.rootView.endColor = Theme.current.cardGradientEndColor
+            self.rootView.startColor = Theme.current.cardGradientStartColor
+            self.rootView.backgroundColor = .clear
             self.cardNumberView.isHidden = false
             self.cardBalanceView.isHidden = false
             self.cardTypeIconView.isHidden = false
             self.addCardLabel.isHidden = true
-            self.cardTypeIconView.image = UIImage(name: .card_visa)
-            self.cardBalanceView.text = "7777 c."
-            self.cardNumberView.text = "•• 4242"
-            self.rootView.endColor = Theme.current.cardGradientEndColor
-            self.rootView.startColor = Theme.current.cardGradientStartColor
-            self.rootView.backgroundColor = .clear
+            self.cardTypeIconView.loadImage(filePath: card.logo)
+            if card.showBalance {
+                self.cardBalanceView.text = card.balance.balanceText
+            } else {
+                self.cardBalanceView.text = nil
+            }
+            let last4 = String(card.pan.suffix(4))
+            self.cardNumberView.text = "•• \(last4)"
         } else {
+            self.rootView.endColor = .clear
+            self.rootView.startColor = .clear
+            self.rootView.backgroundColor = Theme.current.plainTableCellColor
             self.cardNumberView.isHidden = true
             self.cardBalanceView.isHidden = true
             self.cardTypeIconView.isHidden = true
             self.addCardLabel.isHidden = false
-            self.rootView.endColor = .clear
-            self.rootView.startColor = .clear
-            self.rootView.backgroundColor = Theme.current.plainTableCellColor
         }
     }
 }

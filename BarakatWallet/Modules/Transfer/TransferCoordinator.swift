@@ -14,12 +14,44 @@ enum TransferType {
 }
 
 enum TransferIdentifier {
-    case card(number: String)
-    case number(number: String)
+    case card(number: String, phoneNumber: String)
+    case number(number: String, service: AppStructs.PaymentGroup.ServiceItem, info: String)
+    
+    var account: String {
+        switch self {
+        case .card(let number,_):
+            return number
+        case .number(let number, _, _):
+            return number
+        }
+    }
+    var accountType: AppStructs.AccountType {
+        switch self {
+        case .card(_,_):
+            return .card
+        case .number(_, _, _):
+            return .wallet
+        }
+    }
+    var phoneNumber: String {
+        switch self {
+        case .card(_, phoneNumber: let phoneNumber):
+            return phoneNumber
+        case .number(number: let number, _, _):
+            return number
+        }
+    }
+    var serviceId: Int {
+        switch self {
+        case .card(_,_):
+            return AppStructs.TransferType.transferToCard.rawValue
+        case .number(_, service: let service, _):
+            return service.id
+        }
+    }
 }
 
 protocol TransferSumViewControllerDelegate: AnyObject {
-    func senderPicked(sender: TransferIdentifier)
     func receiverPicked(receiver: TransferIdentifier)
 }
 
@@ -28,18 +60,21 @@ protocol TransferCoordinatorDelegate: AnyObject {
 }
 
 class TransferCoordinator: Coordinator {
-    
+  
     var children: [Coordinator] = []
     let nav: BaseNavigationController
+    lazy var root = BeforeAuthRootViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), coordinator: self)
     
     weak var delegate: TransferCoordinatorDelegate?
     
     var loginService: LoginService {
         return ENVIRONMENT.isMock ? LoginServiceMockImpl() : LoginServiceImpl()
     }
-    
     var bannerService: BannerService {
-        return ENVIRONMENT.isMock ? BannerServiceImpl() : BannerServiceMockImpl()
+        return ENVIRONMENT.isMock ? BannerServiceMockImpl() : BannerServiceImpl()
+    }
+    var transferService: TransferService {
+        return TransferServiceImpl()
     }
     
     init(nav: BaseNavigationController) {
@@ -48,17 +83,15 @@ class TransferCoordinator: Coordinator {
     }
     
     func start() {
-        let vc = TransferMainViewController(bannerService: self.bannerService)
-        vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        self.nav.pushViewController(self.root, animated: true)
     }
     
     func navigateBack() {
-        self.nav.popViewController(animated: true)
+        self.root.mainNavigation.popViewController(animated: true)
     }
     
     func navigateToMain() {
-        self.nav.popToRootViewController(animated: true)
+        self.root.mainNavigation.popToRootViewController(animated: true)
     }
     
     func navigateToLogin() {
@@ -66,38 +99,30 @@ class TransferCoordinator: Coordinator {
     }
     
     func navigateToTransfer() {
-        let vc = BeforeAuthRootViewController(overrideInterfaceStyle: true)
-        vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        self.nav.pushViewController(self.root, animated: true)
     }
     
-    func navigateToPickSender(type: TransferType, delegate: TransferSumViewControllerDelegate?) {
-        let vc = TransferSenderViewController(type: type, delegate: delegate)
+    func navigateToPickReceiver(type: TransferType, delegate: TransferSumViewControllerDelegate?) {
+        let vc = TransferReceiverViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), type: type, delegate: delegate)
         vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        self.root.mainNavigation.pushViewController(vc, animated: true)
     }
     
-    func navigateToPickReceiver(type: TransferType, sender: TransferIdentifier, delegate: TransferSumViewControllerDelegate?) {
-        let vc = TransferReceiverViewController(type: type, sender: sender, delegate: delegate)
+    func navigateToEnterSum(type: TransferType, receiver: TransferIdentifier, transferData: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult) {
+        let vc = TransferSumViewController(type: type, receiver: receiver, transferData: transferData)
         vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        self.root.mainNavigation.pushViewController(vc, animated: true)
     }
     
-    func navigateToEnterSum(type: TransferType, sender: TransferIdentifier, receiver: TransferIdentifier) {
-        let vc = TransferSumViewController(type: type, sender: sender, receiver: receiver)
+    func navigateToPickSender(type: TransferType, receiver: TransferIdentifier, commision: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult.Commissions, plusAmount: Int, minusAmount: Int, commisionAmout: Int) {
+        let vc = TransferSenderViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), type: type, receiver: receiver, commision: commision, plusAmount: plusAmount, minusAmount: minusAmount, commisionAmout: commisionAmout)
         vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        self.root.mainNavigation.pushViewController(vc, animated: true)
     }
     
-    func presentConfirm(type: TransferType, sender: TransferIdentifier, receiver: TransferIdentifier, amount: Double, currency: Currency) {
-        let vc = TransferConfirmViewController(type: type, sender: sender, receiver: receiver, amount: amount, currency: currency)
+    func navigateToResult(result: Bool) {
+        let vc = TransferResultViewController(result: result)
         vc.coordinator = self
-        self.nav.present(vc, animated: true)
-    }
-    
-    func presentResult(type: TransferType, sender: TransferIdentifier, receiver: TransferIdentifier, amount: Double, currency: Currency, result: Bool) {
-        let vc = TransferResultViewController(type: type, sender: sender, receiver: receiver, amount: amount, currency: currency, result: result)
-        vc.coordinator = self
-        self.nav.present(vc, animated: true)
+        self.root.mainNavigation.pushViewController(vc, animated: true)
     }
 }

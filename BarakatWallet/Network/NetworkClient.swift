@@ -25,21 +25,7 @@ class APIManager {
     public static let decodeError = NetworkError(message: "decodeError", error: "-1112")
     public static let networkError = NetworkError(message: "networkError", error: "-1113")
     public static let uploadError = NetworkError(message: "uploadError", error: "-1114")
-    
-    enum ServerErrors: String, Codable {
-    case expiredToken = "0x000"
-    case registrationData = "0x001"
-    case ConfirmData = "1x001"
-    case ConfirmDeviceNotFound = "1x002"
-    case ConfirmInvalidCode = "1x003"
-    case ConfirmWentWrong = "1x004"
-    case ConfirmDeviceBlocked = "1x005"
-    case PinCodeDeviceNotFound = "2x002"
-    case UpdateDeviceData = "3x001"
-    case UpdateDeviceInternal = "3x002"
-    case ResourceNotFound = "4x001"
-    case tokenRefreshTimeExpired = "0x900"
-    }
+    public static let downloadError = NetworkError(message: "downloadError", error: "-1115")
     
     static let instance = APIManager()
     
@@ -195,12 +181,13 @@ class APIManager {
     //public typealias ClosureCallback = ((Task) -> Void)
     //public typealias ImageCallback = ((Task?, KFCrossPlatformImage?) -> Void)
     
-    func loadImage(into: ImageSet, filePath: String) {
+    func loadImage(into: ImageSet?, filePath: String, completion: ((_ result: UIImage?) -> Void)? = nil) {
         guard !filePath.isEmpty else { return }
         self.queue.async(flags: .barrier) {
             let hash = String(filePath.djb2hash)
             if let image = UIImage(contentsOfFile: self.getFileUrl(type: .image, name: hash).path) {
-                into.setImage(image: image)
+                into?.setImage(image: image)
+                completion?(image)
             } else {
                 let localUrl = self.getFileUrl(type: .image, name: hash)
                 let url = "\(Constants.ApiUrl)/\(filePath)"
@@ -212,11 +199,13 @@ class APIManager {
                     switch response.result {
                     case .success(_):
                         let image = UIImage(contentsOfFile: localUrl.path)
-                        into.setImage(image: image)
+                        into?.setImage(image: image)
+                        completion?(image)
                     case .failure(let error):
                         Logger.log(error: error)
                         debugPrint(error)
-                        into.loadFailed()
+                        into?.loadFailed()
+                        completion?(nil)
                     }
                 }
             }
@@ -234,8 +223,8 @@ class APIManager {
             case .success(let data):
                 do {
                     let dec = JSONDecoder()
-                    let result = try dec.decode([UploadResult].self, from: data)
-                    completion(result.first?.message)
+                    let result = try dec.decode(UploadResult.self, from: data)
+                    completion(result.message)
                 } catch {
                     debugPrint(error)
                     Logger.log(tag: "Task", message: "upload response \(String(describing: String(data: data, encoding: .utf8)))")

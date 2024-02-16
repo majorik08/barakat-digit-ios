@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 protocol CardReleaseTypeCellDelegate: AnyObject {
-    func didSelectCardType(item: AppStructs.CreditDebitCardTypes)
+    func didSelectCardType(item: AppStructs.CreditDebitCardCategory)
 }
 
 class CardReleaseTypeCell: UICollectionViewCell, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -28,8 +28,9 @@ class CardReleaseTypeCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         view.contentInset = .init(top: 10, left: Theme.current.mainPaddings, bottom: 10, right: Theme.current.mainPaddings)
         return view
     }()
-    var items: [AppStructs.CreditDebitCardTypes] = []
+    var items: [AppStructs.CreditDebitCardCategory] = []
     weak var delegate: CardReleaseTypeCellDelegate? = nil
+    var categoryId: Int? = nil
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -55,7 +56,7 @@ class CardReleaseTypeCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.collectionView.reloadData()
     }
     
-    func configure(items: [AppStructs.CreditDebitCardTypes]) {
+    func configure(items: [AppStructs.CreditDebitCardCategory]) {
         self.items = items
         self.collectionView.reloadData()
     }
@@ -74,6 +75,9 @@ class CardReleaseTypeCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! CardReleaseTypeItemCell
         let item = self.items[indexPath.item]
         cell.configure(item: item)
+        if item.id == self.categoryId {
+            cell.rootView.backgroundColor = Theme.current.tintColor
+        }
         return cell
     }
     
@@ -81,26 +85,27 @@ class CardReleaseTypeCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         let topBottomPadding: CGFloat = 20
         let height = collectionView.frame.height - topBottomPadding
         let item = self.items[indexPath.item].name as NSString
-        return CGSize(width: item.size(withAttributes: [NSAttributedString.Key.font : UIFont.medium(size: 10)]).width + 32 + 10, height: height)
+        return CGSize(width: item.size(withAttributes: [NSAttributedString.Key.font : UIFont.regular(size: 13)]).width + 32 + 10, height: height)
     }
 }
 
 class CardReleaseTypeItemCell: UICollectionViewCell {
-    
-    let rootView: GradientView = {
-        let view = GradientView()
+
+    let rootView: UIView = {
+        let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 16
+        view.layer.cornerRadius = 10
         view.clipsToBounds = true
-        view.startColor = Theme.current.mainGradientStartColor
-        view.endColor = Theme.current.mainGradientEndColor
+        view.backgroundColor = Theme.current.plainTableCellColor
+        view.layer.borderColor = Theme.current.borderColor.cgColor
+        view.layer.borderWidth = 1
         return view
     }()
     let titleView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.whiteColor
-        view.font = UIFont.medium(size: 10)
+        view.font = UIFont.regular(size: 13)
         view.numberOfLines = 1
         view.textAlignment = .center
         return view
@@ -133,10 +138,9 @@ class CardReleaseTypeItemCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(item: AppStructs.CreditDebitCardTypes) {
-        self.rootView.startColor = Theme.current.mainGradientStartColor
-        self.rootView.endColor = Theme.current.mainGradientEndColor
-        self.titleView.textColor = Theme.current.whiteColor
+    func configure(item: AppStructs.CreditDebitCardCategory) {
+        self.rootView.backgroundColor = Theme.current.plainTableCellColor
+        self.titleView.textColor = Theme.current.primaryTextColor
         self.titleView.text = item.name
     }
 }

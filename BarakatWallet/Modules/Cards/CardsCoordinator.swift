@@ -19,7 +19,10 @@ class CardsCoordinator: Coordinator {
     let accountInfo: AppStructs.AccountInfo
     
     var cardService: CardService {
-        return ENVIRONMENT.isMock ? CardServiceImpl(clientInfo: self.accountInfo.client) : CardServiceImpl(clientInfo: self.accountInfo.client)
+        return CardServiceImpl(accountInfo: self.accountInfo)
+    }
+    var paymentsService: PaymentsService {
+        return ENVIRONMENT.isMock ? PaymentsServiceMockImpl(accountInfo: self.accountInfo) : PaymentsServiceImpl(accountInfo: self.accountInfo)
     }
     
     init(nav: BaseNavigationController, accountInfo: AppStructs.AccountInfo) {
@@ -30,7 +33,7 @@ class CardsCoordinator: Coordinator {
     func start() {
         if !self.started {
             self.started = true
-            let vc = CardsViewController(viewModel: .init(cardService: CardServiceImpl(clientInfo: self.accountInfo.client)))
+            let vc = CardsViewController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo))
             vc.coordinator = self
             self.nav.pushViewController(vc, animated: true)
         }
@@ -40,28 +43,51 @@ class CardsCoordinator: Coordinator {
         self.nav.popViewController(animated: true)
     }
     
+    func navigateToRoot() {
+        self.nav.popToRootViewController(animated: true)
+    }
+    
     func navigateToCardView(userCards: [AppStructs.CreditDebitCard], selectedCard: AppStructs.CreditDebitCard) {
-        let viewModel = CardsViewModel(cardService: self.cardService)
-        viewModel.userCards = userCards
+        let viewModel = CardsViewModel(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo)
         let vc = CardViewController(viewModel: viewModel, selectedCard: selectedCard)
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     
+    func navigateToPinChange(card: AppStructs.CreditDebitCard) {
+        let viewModel = CardsViewModel(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo)
+        let vc = CardPinViewController(viewModel: viewModel, card: card)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
     func navigateToAddCardView() {
-        let vc = CardAddViewController(viewModel: .init(cardService: self.cardService))
+        let vc = CardAddViewController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     
-    func navigateToReleaseCardView() {
-        let vc = CardReleaseViewController(viewModel: .init(cardService: self.cardService))
+    func navigateToReleaseCardView(categoryId: Int?) {
+        let vc = CardReleaseViewController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo), categoryId: categoryId)
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     
-    func navigateToReleaseCardItem(cardItem: AppStructs.CreditDebitCardItem) {
-        let vc = CardReleaseViewInfoController(viewModel: .init(cardService: self.cardService), cardItem: cardItem)
+    func navigateToReleaseCardItem(cardItem: AppStructs.CreditDebitCardTypes) {
+        let vc = CardReleaseViewInfoController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo), cardItem: cardItem)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToOrderCard(cardItem: AppStructs.CreditDebitCardTypes, regions: [AppStructs.Region]) {
+        let vc = CardOrderViewController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo), cardItem: cardItem, regions: regions)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToPaymentCard(cardItem: AppStructs.CreditDebitCardTypes, holderMidname: String, holderName: String, holderSurname: String,
+                               phoneNumber: String, receivingType: AppMethods.Card.OrderBankCard.Params.ReceivingType, region: AppStructs.Region, pointId: Int?) {
+        let vc = CardPaymentViewController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo), cardItem: cardItem, holderMidname: holderMidname, holderName: holderName, holderSurname: holderSurname, phoneNumber: phoneNumber, receivingType: receivingType, region: region, pointId: pointId)
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }

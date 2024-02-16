@@ -85,11 +85,21 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     }()
     let label: UILabel = {
         let view = UILabel(frame: .zero)
-        view.font = UIFont.bold(size: 20)
+        view.font = UIFont.medium(size: 20)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.textAlignment = .center
+        view.numberOfLines = 0
+        view.lineBreakMode = .byWordWrapping
+        view.textColor = Theme.current.primaryTextColor
+        return view
+    }()
+    let codeHintLabel: UILabel = {
+        let view = UILabel(frame: .zero)
+        view.font = UIFont.bold(size: 16)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "ENTER_PIN".localized
         view.textAlignment = .center
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = Theme.current.secondaryTextColor
         return view
     }()
     let passcodeDotView: PasswordDotView = {
@@ -121,6 +131,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     let viewModel: PasscodeViewModel
     let waitInterval: Int32 = 60
     var newBioData: Data? = nil
+    var authWithBio: Bool = false
     var timer: Timer? = nil
     var hiddenDigits = ["*", "#"]
     let validDigitsSet: CharacterSet = {
@@ -146,7 +157,6 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = Theme.current.plainTableBackColor
-        var authWithBio: Bool = false
         if let a = LocalAuth.biometricAuthentication, Constants.DeviceBio {
             if a == .faceId {
                 self.hashButtonImage = UIImage(name: .face_icon)
@@ -154,12 +164,13 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
                 self.hashButtonImage = UIImage(name: .touch_icon)
             }
             self.keyPadView.hashButtonImage = self.hashButtonImage
-            authWithBio = true
+            self.authWithBio = true
         }
         self.keyPadView.starButtonText = "ENTER_PIN_HINT".localized
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.view.addSubview(self.avatarView)
         self.view.addSubview(self.label)
+        self.view.addSubview(self.codeHintLabel)
         self.view.addSubview(self.passcodeDotView)
         self.view.addSubview(self.timerHint)
         self.view.addSubview(self.keyPadView)
@@ -168,16 +179,19 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             self.avatarView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: UIApplication.statusBarHeight + 44 + 50),
             self.avatarView.heightAnchor.constraint(equalToConstant: 80),
             self.avatarView.widthAnchor.constraint(equalToConstant: 80),
-            self.label.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 27),
+            self.label.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: Theme.current.mainPaddings),
             self.label.topAnchor.constraint(equalTo: self.avatarView.bottomAnchor, constant: 30),
-            self.label.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -27),
-            self.passcodeDotView.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 27),
-            self.passcodeDotView.topAnchor.constraint(equalTo: self.label.bottomAnchor, constant: 40),
-            self.passcodeDotView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -27),
+            self.label.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.codeHintLabel.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: Theme.current.mainPaddings),
+            self.codeHintLabel.topAnchor.constraint(equalTo: self.label.bottomAnchor, constant: 10),
+            self.codeHintLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.passcodeDotView.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: Theme.current.mainPaddings),
+            self.passcodeDotView.topAnchor.constraint(equalTo: self.codeHintLabel.bottomAnchor, constant: 40),
+            self.passcodeDotView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Theme.current.mainPaddings),
             self.passcodeDotView.heightAnchor.constraint(equalToConstant: 20),
-            self.timerHint.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 27),
+            self.timerHint.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: Theme.current.mainPaddings),
             self.timerHint.topAnchor.constraint(equalTo: self.passcodeDotView.bottomAnchor, constant: 20),
-            self.timerHint.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -27),
+            self.timerHint.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Theme.current.mainPaddings),
             self.keyPadView.topAnchor.constraint(greaterThanOrEqualTo: self.timerHint.bottomAnchor, constant: 20),
             self.keyPadView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor, constant: 0),
             self.keyPadView.heightAnchor.constraint(equalTo: self.keyPadView.widthAnchor, multiplier: 0.9),
@@ -188,7 +202,9 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         self.passcodeDotView.inputDotCount = 0
         self.keyPadView.delegate = self
         self.updateInvalidAttempts()
+        self.setGreetingsText()
         self.viewModel.didLogin.subscribe(onNext: { [weak self] info in
+            Constants.Username = info.client.firstName
             self?.hideProgressView()
             self?.coordinator?.authSuccess(accountInfo: info)
         }).disposed(by: self.viewModel.disposeBag)
@@ -196,8 +212,27 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             self?.hideProgressView()
             self?.showErrorAlert(title: "ERROR".localized, message: message)
         }).disposed(by: self.viewModel.disposeBag)
-        if authWithBio {
+        if self.authWithBio {
             self.auth()
+        }
+    }
+    
+    private func setGreetingsText() {
+        var text: String
+        let hour = Calendar.current.component(.hour, from: Date())
+        if hour >= 5 && hour < 10 {
+            text = "GRITTINGS_MORNING".localized
+        } else if hour >= 10 && hour < 18 {
+            text = "GRITTINGS_AFTERNOON".localized
+        } else if hour >= 18 && hour < 22 {
+            text = "GRITTINGS_EVENING".localized
+        } else {
+            text = "GRITTINGS_NIGHT".localized
+        }
+        if let userName = Constants.Username {
+            self.label.text = "\(text), \(userName)!"
+        } else {
+            self.label.text = text
         }
     }
     
@@ -207,13 +242,15 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     }
     
     func keyTapped(digit: String) {
+        self.hapticFeedback.tap()
         if digit == "." {
             self.coordinator?.navigateToResetPasscode()
         } else if digit == "<" {
             if self.dialedNumbersDisplayString.isEmpty {
-                self.auth()
+                if self.authWithBio {
+                    self.auth()
+                }
             } else {
-                self.hapticFeedback.tap()
                 self.dialedNumbersDisplayString = String(self.dialedNumbersDisplayString.dropLast())
             }
             self.passcodeDotView.inputDotCount = self.dialedNumbersDisplayString.count
@@ -240,7 +277,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
                 }
             }
         }
-        if self.dialedNumbersDisplayString.isEmpty {
+        if self.dialedNumbersDisplayString.isEmpty && self.authWithBio {
             self.keyPadView.updateHashButtonImage(image: UIImage(name: .face_icon))
         } else {
             self.keyPadView.updateHashButtonImage(image: nil)
@@ -293,6 +330,11 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         self.showProgressView()
         self.dialedNumbersDisplayString = ""
         self.passcodeDotView.inputDotCount = 0
+        if self.authWithBio {
+            self.keyPadView.updateHashButtonImage(image: UIImage(name: .face_icon))
+        } else {
+            self.keyPadView.updateHashButtonImage(image: nil)
+        }
         self.viewModel.pinChechSuccess()
     }
     
@@ -347,6 +389,11 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
                 self.hapticFeedback.error()
                 self.dialedNumbersDisplayString = ""
                 self.passcodeDotView.inputDotCount = 0
+                if self.authWithBio {
+                    self.keyPadView.updateHashButtonImage(image: UIImage(name: .face_icon))
+                } else {
+                    self.keyPadView.updateHashButtonImage(image: nil)
+                }
             }
         }
     }

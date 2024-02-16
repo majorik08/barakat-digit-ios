@@ -15,7 +15,7 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
     let loginService: LoginService
     
     var bannerService: BannerService {
-        return ENVIRONMENT.isMock ? BannerServiceImpl() : BannerServiceMockImpl()
+        return ENVIRONMENT.isMock ? BannerServiceMockImpl() : BannerServiceImpl()
     }
     
     weak var parent: AppCoordinator? = nil
@@ -47,10 +47,17 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
         self.nav.pushViewController(vc, animated: true)
     }
     
+    func navigateToSelectCountry(delegate: CountryPickerDelegate) {
+        let vc = CountryPickerViewController(transparentChange: false)
+        vc.delegate = delegate
+        vc.hidesBottomBarWhenPushed = true
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
     func navigateToTransfer() {
         let transfer = TransferCoordinator(nav: self.nav)
         transfer.delegate = self
-        transfer.start()
+        transfer.navigateToTransfer()
         self.nav.delegate = self
         self.children.append(transfer)
     }

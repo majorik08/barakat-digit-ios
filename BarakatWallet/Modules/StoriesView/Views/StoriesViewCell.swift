@@ -28,6 +28,14 @@ class StoriesViewCell: UICollectionViewCell, UIScrollViewDelegate, UIGestureReco
         v.translatesAutoresizingMaskIntoConstraints = false
         return v
     }()
+    private lazy var button: BaseButtonView = {
+        let view = BaseButtonView(frame: .zero)
+        view.radius = 14
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.setTitleColor(.white, for: .normal)
+        view.isHidden = true
+        return view
+    }()
     private lazy var longPress_gesture: UILongPressGestureRecognizer = {
         let lp = UILongPressGestureRecognizer.init(target: self, action: #selector(didLongPress(_:)))
         lp.minimumPressDuration = 0.2
@@ -64,6 +72,12 @@ class StoriesViewCell: UICollectionViewCell, UIScrollViewDelegate, UIGestureReco
                             let snapView = createSnapView()
                             self.startRequest(snapView: snapView, with: snap.source)
                         }
+                        if let b = snap.button {
+                            self.button.isHidden = false
+                            self.button.setTitle(b, for: .normal)
+                        } else {
+                            self.button.isHidden = true
+                        }
                     }
                 }
             case .backward:
@@ -71,6 +85,12 @@ class StoriesViewCell: UICollectionViewCell, UIScrollViewDelegate, UIGestureReco
                     if let snap = self.story?.snaps[self.snapIndex] {
                         if let snapView = self.getSnapview() {
                             self.startRequest(snapView: snapView, with: snap.source)
+                        }
+                        if let b = snap.button {
+                            self.button.isHidden = false
+                            self.button.setTitle(b, for: .normal)
+                        } else {
+                            self.button.isHidden = true
                         }
                     }
                 }
@@ -92,14 +112,17 @@ class StoriesViewCell: UICollectionViewCell, UIScrollViewDelegate, UIGestureReco
         super.init(frame: frame)
         self.contentView.clipsToBounds = true
         self.contentView.layer.cornerRadius = 14
+        self.backgroundColor = .black
+        self.contentView.backgroundColor = .black
         self.scrollview.frame = self.bounds
         self.scrollview.delegate = self
         self.scrollview.isPagingEnabled = true
-        self.scrollview.backgroundColor = .lightGray
+        self.scrollview.backgroundColor = .black
         self.scrollview.addGestureRecognizer(self.longPress_gesture)
         self.scrollview.addGestureRecognizer(self.tap_gesture)
         self.contentView.addSubview(self.scrollview)
         self.contentView.addSubview(self.storyHeaderView)
+        self.contentView.addSubview(self.button)
         NSLayoutConstraint.activate([
             self.scrollview.leftAnchor.constraint(equalTo: self.contentView.leftAnchor),
             self.scrollview.topAnchor.constraint(equalTo: self.contentView.topAnchor),
@@ -110,8 +133,21 @@ class StoriesViewCell: UICollectionViewCell, UIScrollViewDelegate, UIGestureReco
             self.storyHeaderView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor),
             self.storyHeaderView.topAnchor.constraint(equalTo: self.contentView.topAnchor),
             self.storyHeaderView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor),
-            self.storyHeaderView.heightAnchor.constraint(equalToConstant: 80)
+            self.storyHeaderView.heightAnchor.constraint(equalToConstant: 80),
+            self.button.centerXAnchor.constraint(equalTo: self.contentView.centerXAnchor),
+            self.button.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -20),
+            self.button.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight),
+            self.button.widthAnchor.constraint(equalTo: self.contentView.widthAnchor, multiplier: 0.7),
         ])
+        self.button.addTarget(self, action: #selector(self.actionTapped), for: .touchUpInside)
+    }
+    
+    @objc func actionTapped() {
+        if self.snapIndex < self.story?.snaps.count ?? 0 {
+            if let snap = self.story?.snaps[self.snapIndex], let action = snap.action, let url = URL(string: action) {
+                UIApplication.shared.open(url)
+            }
+        }
     }
     
     override func prepareForReuse() {
@@ -153,7 +189,9 @@ class StoriesViewCell: UICollectionViewCell, UIScrollViewDelegate, UIGestureReco
     
     private func createSnapView() -> UIImageView {
         let snapView = UIImageView()
+        snapView.backgroundColor = .black
         snapView.translatesAutoresizingMaskIntoConstraints = false
+        snapView.contentMode = .scaleAspectFill
         snapView.tag = self.snapIndex + self.snapViewTagIndicator
         /**
          Delete if there is any snapview/videoview already present in that frame location. Because of snap delete functionality, snapview/videoview can occupy different frames(created in 2nd position(frame), when 1st postion snap gets deleted, it will move to first position) which leads to weird issues.

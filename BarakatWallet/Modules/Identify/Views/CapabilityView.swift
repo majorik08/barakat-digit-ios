@@ -19,8 +19,9 @@ class CapabilityView: UIView {
     let titleView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.medium(size: 18)
+        view.font = UIFont.regular(size: 16)
         view.textColor = Theme.current.primaryTextColor
+        view.numberOfLines = 0
         return view
     }()
     
@@ -42,5 +43,15 @@ class CapabilityView: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func setStatus(active: Bool) {
+        if active {
+            self.imageView.image = UIImage(name: .checked)
+            self.tintColor = Theme.current.tintColor
+        } else {
+            self.imageView.image = UIImage(name: .check_x)
+            self.tintColor = .systemRed
+        }
     }
 }

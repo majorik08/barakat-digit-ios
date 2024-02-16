@@ -55,13 +55,10 @@ class PasscodeViewModel {
     let didLogin = PublishSubject<AppStructs.AccountInfo>()
     let didLoginFailed = PublishSubject<String>()
     
-    var delegate: ((_ result: Bool) -> Void)?
-    
-    init(authService: AccountService, account: CoreAccount, startFor: StartFor, checkComplition: ((_ result: Bool) -> Void)? = nil) {
+    init(authService: AccountService, account: CoreAccount, startFor: StartFor) {
         self.account = account
         self.authService = authService
         self.startFor = startFor
-        self.delegate = checkComplition
         switch startFor {
         case .setup:
             self.setupStep = .first

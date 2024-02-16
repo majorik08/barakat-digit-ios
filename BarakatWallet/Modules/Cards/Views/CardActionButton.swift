@@ -11,7 +11,7 @@ import UIKit
 class CardActionButton: UIControl {
     
     let iconView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .zero)
         view.circleImage = false
         view.imageView.contentMode = .scaleAspectFit
         view.imageView.tintColor = Theme.current.whiteColor

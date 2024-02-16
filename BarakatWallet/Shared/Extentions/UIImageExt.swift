@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import QRCode
 
 internal extension UIImage {
     
@@ -23,6 +24,7 @@ internal extension UIImage {
         case wallet_icon
         case wallet_inset
         case main_logo
+        case main_logo_in
         case search
         case add_number
         case app_logo
@@ -37,13 +39,17 @@ internal extension UIImage {
         case camera_flash
         case camera_pick
         case arrow_right
+        case copy_value
         
         case close_x
         case transfer_help
         case transfer_card
         case transfer_number
         
-        case status_id
+        case status_one
+        case status_two
+        case status_three
+        
         case plus_inset
         case repeat_icon
         case fav_icon
@@ -78,6 +84,8 @@ internal extension UIImage {
         case logout
         case doc
         case hide_eyes
+        case download
+        case qr_button
         
         case profile_add
         case profile_chat
@@ -93,6 +101,13 @@ internal extension UIImage {
         case instagram_icon
         case linkedin_icon
         case telegram_icon
+        
+        case checkmark
+        case arrow_up
+        
+        case flag_eu
+        case flag_ru
+        case flag_usa
     }
     
     convenience init(name: ImageName) {
@@ -103,6 +118,41 @@ internal extension UIImage {
 
 
 extension UIImage {
+    
+    static func generateAppQRCode(from string: String) -> UIImage? {
+        let doc = QRCode.Document(message: QRCode.Message.Phone(string))
+        doc.errorCorrection = .high
+        doc.design.style.backgroundFractionalCornerRadius = 1
+        doc.design.style.background = QRCode.FillStyle.Solid(UIColor.white.cgColor)
+        doc.design.shape.eye = QRCode.EyeShape.Leaf()
+        doc.design.style.eye = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
+        doc.design.shape.pupil = QRCode.PupilShape.Leaf()
+        doc.design.style.pupil = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
+        doc.design.shape.onPixels = QRCode.PixelShape.Vertical(insetFraction: 0.1, cornerRadiusFraction: 0.75)
+        doc.design.style.onPixels = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
+        doc.logoTemplate = QRCode.LogoTemplate (
+            image: UIImage(name: .main_logo_in).cgImage!,
+            path: CGPath(rect: CGRect(x: 0.35, y: 0.35, width: 0.30, height: 0.30), transform: nil),
+            inset: 3
+        )
+        let generated = doc.cgImage(CGSize(width: 600, height: 600))
+        if let g = generated {
+            return UIImage(cgImage: g)
+        }
+        return nil
+    }
+    
+    static func generateQRCode(from string: String) -> UIImage? {
+        let data = string.data(using: String.Encoding.ascii)
+        if let filter = CIFilter(name: "CIQRCodeGenerator") {
+            filter.setValue(data, forKey: "inputMessage")
+            let transform = CGAffineTransform(scaleX: 12, y: 12)
+            if let output = filter.outputImage?.transformed(by: transform) {
+                return UIImage(ciImage: output)
+            }
+        }
+        return nil
+    }
 
     func tintedWithLinearGradientColors() -> UIImage {
         UIGraphicsBeginImageContextWithOptions(self.size, false, self.scale);
@@ -113,7 +163,7 @@ extension UIImage {
         context.scaleBy(x: 1, y: -1)
         context.setBlendMode(.normal)
         let rect = CGRect.init(x: 0, y: 0, width: size.width, height: size.height)
-        let colorsArr: [CGColor] = [Theme.current.mainGradientStartColor.cgColor, Theme.current.mainGradientEndColor.cgColor]
+        let colorsArr: [CGColor] = [Theme.light(globalColor: Constants.LighGlobalColor).mainGradientStartColor.cgColor, Theme.light(globalColor: Constants.LighGlobalColor).mainGradientEndColor.cgColor]
         let colors = colorsArr as CFArray
         let space = CGColorSpaceCreateDeviceRGB()
         let gradient = CGGradient(colorsSpace: space, colors: colors, locations: nil)

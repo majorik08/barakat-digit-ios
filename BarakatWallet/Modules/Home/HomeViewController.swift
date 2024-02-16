@@ -13,9 +13,10 @@ protocol HomeViewControllerItemDelegate: AnyObject {
     func reloadTapped(cell: UICollectionViewCell)
     func cardTapped(card: AppStructs.CreditDebitCard?)
     func serviceGroupTapped(group: AppStructs.PaymentGroup)
-    func transferTapped(transfer: AppStructs.TransferTypes)
+    func transferTapped(transfer: AppStructs.PaymentGroup.ServiceItem)
     func showcaseTapped(showcase: AppStructs.Showcase)
-    func favouriteTapped(favouite: AppStructs.Favourite?)
+    func favouriteTapped(favouite: (AppStructs.Favourite, AppStructs.PaymentGroup.ServiceItem)?)
+    func favouriteDelete(favouite: AppStructs.Favourite)
 }
 
 class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, HomeViewControllerItemDelegate, StoriesViewDelegate {
@@ -38,11 +39,12 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         return view
     }()
     lazy var topViewMinHeight: CGFloat = {
-        let topBar: CGFloat = 224 - 78
+        let topBar: CGFloat = 146
         return UIApplication.statusBarHeight + topBar
     }()
     lazy var topViewMaxHeight: CGFloat = {
-        let topBar: CGFloat = 224
+        let width = (UIScreen.main.bounds.width - (2 * Theme.current.mainPaddings)) / 4
+        let topBar: CGFloat = 146 + width
         return UIApplication.statusBarHeight + topBar
     }()
     private var heightAnchor: NSLayoutConstraint!
@@ -86,6 +88,9 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.topBar.headerView.avatarView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.profileTapped)))
         self.topBar.headerView.menuView.addTarget(self, action: #selector(self.profileTapped), for: .touchUpInside)
         self.topBar.headerView.notifyView.addTarget(self, action: #selector(self.notifyTapped), for: .touchUpInside)
+        self.topBar.headerView.searchView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.searchBarTapped)))
+        self.topBar.accountInfoView.hideButton.addTarget(self, action: #selector(self.hideShowBalance), for: .touchUpInside)
+        self.topBar.accountInfoView.plusButton.addTarget(self, action: #selector(self.plusButtonTapped), for: .touchUpInside)
         self.collectionView.refreshControl = UIRefreshControl()
         self.collectionView.refreshControl?.tintColor = Theme.current.tintColor
         self.collectionView.refreshControl!.addTarget(self, action: #selector(reloadMainView), for: .valueChanged)
@@ -96,6 +101,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
             self?.showErrorAlert(title: "ERROR".localized, message: message)
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLoadServices.subscribe(onNext: { [weak self] _ in
+            self?.viewModel.loadFavorites()
             self?.collectionView.reloadSections(IndexSet([2,3]))
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLoadStories.subscribe { [weak self] _ in
@@ -104,6 +110,8 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.viewModel.didLoadShowcase.subscribe { [weak self] _ in
             self?.collectionView.reloadSections(IndexSet([4]))
         }.disposed(by: self.viewModel.disposeBag)
+        
+        
         self.viewModel.didLoadFavorites.subscribe { [weak self] _ in
             self?.collectionView.reloadSections(IndexSet([5]))
         }.disposed(by: self.viewModel.disposeBag)
@@ -120,8 +128,20 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.viewModel.loadStoriesList()
         self.viewModel.loadCardList()
         self.viewModel.loadShowcaseList()
-        self.viewModel.loadFavorites()
         self.viewModel.loadRates()
+    }
+    
+    @objc func hideShowBalance() {
+        Constants.HideBalanceInMain = !Constants.HideBalanceInMain
+        self.topBar.configure(viewModel: self.viewModel)
+    }
+    
+    @objc func plusButtonTapped() {
+        
+    }
+    
+    @objc func searchBarTapped() {
+        self.coordinator?.navigateToSearchView(paymentGroups: self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers)
     }
     
     @objc func reloadMainView() {
@@ -166,9 +186,9 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
     func goToAllTapped(cell: UICollectionViewCell) {
         guard let indexPath = self.collectionView.indexPath(for: cell) else { return }
         if indexPath.section == 2 {
-            self.coordinator?.navigateToPayments(fromTransfers: false, paymentGroups: self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers)
+            self.coordinator?.navigateToPayments(fromTransfers: false, paymentGroups: self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers, addFavoriteMode: false)
         } else if indexPath.section == 3 {
-            self.coordinator?.navigateToPayments(fromTransfers: true, paymentGroups: self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers)
+            self.coordinator?.navigateToPayments(fromTransfers: true, paymentGroups: self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers, addFavoriteMode: false)
         } else if indexPath.section == 4 {
             self.coordinator?.navigateToShowcaseList()
         } else if indexPath.section == 5 {
@@ -197,20 +217,24 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.coordinator?.navigateToServicesList(selectedGroup: group)
     }
     
-    func transferTapped(transfer: AppStructs.TransferTypes) {
-        self.coordinator?.navigateToTransferView(transfer: transfer)
+    func transferTapped(transfer: AppStructs.PaymentGroup.ServiceItem) {
+        self.coordinator?.navigateToPaymentView(service: transfer, merchant: nil, transferParam: nil)
     }
     
     func showcaseTapped(showcase: AppStructs.Showcase) {
         self.coordinator?.navigateToShowcaseView(showcase: showcase)
     }
     
-    func favouriteTapped(favouite: AppStructs.Favourite?) {
+    func favouriteTapped(favouite: (AppStructs.Favourite, AppStructs.PaymentGroup.ServiceItem)?) {
         if let favouite {
-            self.coordinator?.navigateToServiceByFavourite(favourite: favouite)
+            self.coordinator?.navigateToServiceByFavourite(favourite: favouite.0, service: favouite.1)
         } else {
-            //add fav
+            self.coordinator?.navigateToPayments(fromTransfers: false, paymentGroups:  self.viewModel.serviceGroups, transferTypes: self.viewModel.transfers, addFavoriteMode: true)
         }
+    }
+    
+    func favouriteDelete(favouite: AppStructs.Favourite) {
+        self.viewModel.deleteFavorite(id: favouite.id)
     }
     
     func cardTapped(card: AppStructs.CreditDebitCard?) {
@@ -253,7 +277,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         } else if indexPath.section == 5 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "favourite_list_cell", for: indexPath) as! MainFavouriteListCell
             cell.delegate = self
-            cell.configure(items: self.viewModel.favoritesList)
+            cell.configure(items: self.viewModel.favoritesList, viewModel: self.viewModel)
             return cell
         } else if indexPath.section == 6 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "rates_cell", for: indexPath) as! MainRatesCell
@@ -288,27 +312,28 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let insets = 2 * (Theme.current.mainPaddings - 5)
         if indexPath.section == 0 {
             // the size of credit cards is 85.60 × 53.98 mm ratio is 1.5858
-            let itemWidth = (self.view.frame.width - 22) / 2.5
+            let itemWidth = (self.view.frame.width - insets) / 2.5
             let height = (itemWidth - 10) * 0.63
             return .init(width: collectionView.frame.width, height: height + 48)
         } else if indexPath.section == 1 {
             return .init(width: collectionView.frame.width, height: 80)
         } else if indexPath.section == 2 || indexPath.section == 3 {
-            let itemWidth = ((self.view.frame.width - 22) / 4)
+            let itemWidth = ((self.view.frame.width - insets) / 4)
             let height = (itemWidth - 10) - 2
             return .init(width: collectionView.frame.width, height: height + 54)
         } else if indexPath.section == 4 {
-            let itemWidth = ((self.view.frame.width - 22) / 2.6)
+            let itemWidth = ((self.view.frame.width - insets) / 2.6)
             let height = (itemWidth - 10) * 0.6
             return .init(width: collectionView.frame.width, height: height + 54)
         } else if indexPath.section == 5 {
-            let itemWidth = ((self.view.frame.width - 22) / 4)
+            let itemWidth = ((self.view.frame.width - insets) / 4)
             let height = (itemWidth - 10) - 2
             return .init(width: collectionView.frame.width, height: height + 54)
         } else if indexPath.section == 6 {
-            return .init(width: collectionView.frame.width, height: collectionView.frame.width * 0.5)
+            return .init(width: collectionView.frame.width, height: collectionView.frame.width * 0.4)
         }
         return .zero
     }

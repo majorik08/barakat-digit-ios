@@ -27,9 +27,11 @@ class IdentifyViewModel {
     let didSetFailed = PublishSubject<String?>()
     
     var pickerType: PickerType = .front
+    let accountInfo: AppStructs.AccountInfo
     
-    init(service: IdentifyService) {
+    init(service: IdentifyService, accountInfo: AppStructs.AccountInfo) {
         self.service = service
+        self.accountInfo = accountInfo
     }
     
     func setPhoto(result: URL?) {

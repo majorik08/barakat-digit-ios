@@ -54,6 +54,33 @@ struct Constants {
         }
     }
     
+    static var Username: String? {
+        get {
+            return SharedDefaults.string(forKey: "username")
+        }
+        set {
+            SharedDefaults.setValue(newValue, forKey: "username")
+        }
+    }
+    
+    static var HideBalanceInMain: Bool {
+        get {
+            return SharedDefaults.bool(forKey: "HideBalanceInMain")
+        }
+        set {
+            SharedDefaults.set(newValue, forKey: "HideBalanceInMain")
+        }
+    }
+    
+    static var ShowCardInfo: Bool {
+        get {
+            return SharedDefaults.bool(forKey: "ShowCardInfo")
+        }
+        set {
+            SharedDefaults.set(newValue, forKey: "ShowCardInfo")
+        }
+    }
+    
     var baseUrl = "https://payment.sharq.tj/mobile/swagger/index.html#/"
     
     static let keychain: KeychainSwift = {
@@ -62,7 +89,7 @@ struct Constants {
     }()
     
     static var AppGroupId: String {
-        return "group.com.kmi.BarakatWallet"
+        return "group.tj.barakat.digit"
     }
     
     static var SharedDefaults: UserDefaults {
@@ -70,7 +97,7 @@ struct Constants {
     }
     
     static var AppName: String {
-        return "Barakat Mobi"
+        return "Barakat Digit"
     }
     
     static var Theme: String {
@@ -90,6 +117,12 @@ struct Constants {
             SharedDefaults.setValue(newValue, forKey: "language")
         }
     }
+    
+    static var cardColors: [(start: UIColor, end: UIColor)] = [
+        (start: UIColor(red: 0.20, green: 0.24, blue: 0.92, alpha: 1.00), end: UIColor(red: 0.20, green: 0.70, blue: 0.92, alpha: 1.00)),
+        (start: UIColor(red: 0.20, green: 0.92, blue: 0.32, alpha: 1.00), end: UIColor(red: 0.73, green: 0.92, blue: 0.20, alpha: 1.00)),
+        (start: UIColor(red: 0.92, green: 0.20, blue: 0.20, alpha: 1.00), end: UIColor(red: 0.92, green: 0.59, blue: 0.20, alpha: 1.00))
+    ]
     
     static var DeviceId: String {
         return UIDevice.current.identifierForVendor!.uuidString
@@ -116,15 +149,19 @@ struct Constants {
     }
     
     static var PrivacyUrl: String {
-        return "https://birdcoin.ru/app_privacy"
+        return "https://google.ru/app_privacy"
     }
     
     static var AppRateUrl: String {
-        return "https://itunes.apple.com/app/id6469633721?action=write-review"
+        return "https://itunes.apple.com/app/id6476505592?action=write-review"
     }
     
     static var AppStoreUrl: String {
-        return "https://itunes.apple.com/app/id6469633721"
+        return "https://itunes.apple.com/app/id6476505592"
+    }
+    
+    static var AppUrl: String {
+        return "https://google.tj/"
     }
     
     static var FacebookUrl: String {

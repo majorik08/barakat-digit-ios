@@ -57,6 +57,10 @@ public extension UIDevice {
             case "iPhone14,8":                                    return "iPhone 14 Plus"
             case "iPhone15,2":                                    return "iPhone 14 Pro"
             case "iPhone15,3":                                    return "iPhone 14 Pro Max"
+            case "iPhone15,4":                                    return "iPhone 15"
+            case "iPhone15,5":                                    return "iPhone 15 Plus"
+            case "iPhone16,1":                                    return "iPhone 15 Pro"
+            case "iPhone16,2":                                    return "iPhone 15 Pro Max"
             case "iPhone8,4":                                     return "iPhone SE"
             case "iPhone12,8":                                    return "iPhone SE (2nd generation)"
             case "iPhone14,6":                                    return "iPhone SE (3rd generation)"
@@ -68,6 +72,7 @@ public extension UIDevice {
             case "iPad7,11", "iPad7,12":                          return "iPad (7th generation)"
             case "iPad11,6", "iPad11,7":                          return "iPad (8th generation)"
             case "iPad12,1", "iPad12,2":                          return "iPad (9th generation)"
+            case "iPad13,18", "iPad13,19":                        return "iPad (10th generation)"
             case "iPad4,1", "iPad4,2", "iPad4,3":                 return "iPad Air"
             case "iPad5,3", "iPad5,4":                            return "iPad Air 2"
             case "iPad11,3", "iPad11,4":                          return "iPad Air (3rd generation)"
@@ -84,11 +89,13 @@ public extension UIDevice {
             case "iPad8,1", "iPad8,2", "iPad8,3", "iPad8,4":      return "iPad Pro (11-inch) (1st generation)"
             case "iPad8,9", "iPad8,10":                           return "iPad Pro (11-inch) (2nd generation)"
             case "iPad13,4", "iPad13,5", "iPad13,6", "iPad13,7":  return "iPad Pro (11-inch) (3rd generation)"
+            case "iPad14,3", "iPad14,4":                          return "iPad Pro (11-inch) (4th generation)"
             case "iPad6,7", "iPad6,8":                            return "iPad Pro (12.9-inch) (1st generation)"
             case "iPad7,1", "iPad7,2":                            return "iPad Pro (12.9-inch) (2nd generation)"
             case "iPad8,5", "iPad8,6", "iPad8,7", "iPad8,8":      return "iPad Pro (12.9-inch) (3rd generation)"
             case "iPad8,11", "iPad8,12":                          return "iPad Pro (12.9-inch) (4th generation)"
             case "iPad13,8", "iPad13,9", "iPad13,10", "iPad13,11":return "iPad Pro (12.9-inch) (5th generation)"
+            case "iPad14,5", "iPad14,6":                          return "iPad Pro (12.9-inch) (6th generation)"
             case "AppleTV5,3":                                    return "Apple TV"
             case "AppleTV6,2":                                    return "Apple TV 4K"
             case "AudioAccessory1,1":                             return "HomePod"
@@ -146,5 +153,93 @@ extension UIDevice {
         default:
             return .unknown
         }
+    }
+}
+
+extension UIDevice {
+    
+    var isSimulator: Bool {
+        return TARGET_OS_SIMULATOR != 0
+    }
+    
+    var isJailBroken: Bool {
+        get {
+            if UIDevice.current.isSimulator { return false }
+            if JailBrokenHelper.hasCydiaInstalled() { return true }
+            if JailBrokenHelper.isContainsSuspiciousApps() { return true }
+            if JailBrokenHelper.isSuspiciousSystemPathsExists() { return true }
+            return JailBrokenHelper.canEditSystemFiles()
+        }
+    }
+}
+
+private struct JailBrokenHelper {
+    
+    static func hasCydiaInstalled() -> Bool {
+        return UIApplication.shared.canOpenURL(URL(string: "cydia://")!)
+    }
+    
+    static func isContainsSuspiciousApps() -> Bool {
+        for path in suspiciousAppsPathToCheck {
+            if FileManager.default.fileExists(atPath: path) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    static func isSuspiciousSystemPathsExists() -> Bool {
+        for path in suspiciousSystemPathsToCheck {
+            if FileManager.default.fileExists(atPath: path) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    static func canEditSystemFiles() -> Bool {
+        let jailBreakText = "Developer Insider"
+        do {
+            try jailBreakText.write(toFile: jailBreakText, atomically: true, encoding: .utf8)
+            return true
+        } catch {
+            return false
+        }
+    }
+    
+    /**
+     Add more paths here to check for jail break
+     */
+    static var suspiciousAppsPathToCheck: [String] {
+        return ["/Applications/Cydia.app",
+                "/Applications/blackra1n.app",
+                "/Applications/FakeCarrier.app",
+                "/Applications/Icy.app",
+                "/Applications/IntelliScreen.app",
+                "/Applications/MxTube.app",
+                "/Applications/RockApp.app",
+                "/Applications/SBSettings.app",
+                "/Applications/WinterBoard.app"
+        ]
+    }
+    
+    static var suspiciousSystemPathsToCheck: [String] {
+        return ["/Library/MobileSubstrate/DynamicLibraries/LiveClock.plist",
+                "/Library/MobileSubstrate/DynamicLibraries/Veency.plist",
+                "/private/var/lib/apt",
+                "/private/var/lib/apt/",
+                "/private/var/lib/cydia",
+                "/private/var/mobile/Library/SBSettings/Themes",
+                "/private/var/stash",
+                "/private/var/tmp/cydia.log",
+                "/System/Library/LaunchDaemons/com.ikey.bbot.plist",
+                "/System/Library/LaunchDaemons/com.saurik.Cydia.Startup.plist",
+                "/usr/bin/sshd",
+                "/usr/libexec/sftp-server",
+                "/usr/sbin/sshd",
+                "/etc/apt",
+                "/bin/bash",
+                "/Library/MobileSubstrate/MobileSubstrate.dylib"
+        ]
     }
 }

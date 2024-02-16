@@ -8,7 +8,11 @@
 import Foundation
 import UIKit
 
-class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UITableViewDataSource {
+protocol AlertViewControllerDelegate: AnyObject {
+    func didDismisAlert()
+}
+
+class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UITableViewDataSource, AlertViewControllerDelegate {
     
     let tableView: UITableView = {
         let view = UITableView(frame: .zero, style: .plain)
@@ -20,12 +24,22 @@ class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UI
         view.separatorStyle = .none
         return view
     }()
-    
+    var authType: LocalAuthBiometricAuthentication?
     let viewModel: ProfileViewModel
     weak var coordinator: ProfileCoordinator?
     
+    enum SettingsItem { case language, theme, changePin, smsSignIn, useBiometricAuth, push, docs, about, logout }
+    var settings: [SettingsItem]
+    
     init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
+        let type = LocalAuth.biometricAuthentication
+        if type != nil {
+            self.settings = [.language, .theme, .changePin, .smsSignIn, .useBiometricAuth, .push, .docs, .about, .logout]
+        } else {
+            self.settings = [.language, .theme, .changePin, .smsSignIn, .push, .docs, .about, .logout]
+        }
+        self.authType = type
         super.init(nibName: nil, bundle: nil)
         self.hidesBottomBarWhenPushed = true
     }
@@ -56,7 +70,7 @@ class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UI
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        self.setStatusBarStyle(dark: true)
+        self.setStatusBarStyle(dark: nil)
     }
     
     override func themeChanged(newTheme: Theme) {
@@ -68,108 +82,110 @@ class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UI
     override func languageChanged() {
         super.languageChanged()
         self.navigationItem.title = "PROFILE_SETTINGS".localized
+        self.tableView.reloadData()
+    }
+    
+    func didDismisAlert() {
+        self.tableView.reloadData()
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        switch indexPath.row {
-        case 8:
-            self.coordinator?.presentLogout()
-        case 7:
-            self.coordinator?.navigateToAboutApp()
-        case 6:
-            self.coordinator?.navigateToDocs()
-        case 2:
+        let item = self.settings[indexPath.row]
+        switch item {
+        case .language:
+            self.coordinator?.presentLanguage(delegate: self)
+        case .theme:
+            self.coordinator?.presentTheme(delegate: self)
+        case .changePin:
             guard let account = self.viewModel.account() else { return }
             self.coordinator?.navigateToChangePasscode(account: account)
-        case 1:
-            self.coordinator?.presentTheme()
-        case 0:
-            self.coordinator?.presentLanguage()
-        default: break
+        case .smsSignIn:
+            break
+        case .useBiometricAuth:
+            break
+        case .push:
+            break
+        case .docs:
+            self.coordinator?.navigateToDocs()
+        case .about:
+            self.coordinator?.navigateToAboutApp()
+        case .logout:
+            self.coordinator?.presentLogout()
         }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        switch indexPath.row {
-        case 0:
+        let item = self.settings[indexPath.row]
+        switch item {
+        case .language, .theme, .changePin, .docs, .about, .logout:
             let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! SettingsTableCell
-            cell.titleLabel.text = "LANGUAGE".localized
-            cell.infoLabel.text = Localize.currentLanguage.rawValue.localized
             cell.iconView.backgroundColor = .clear
             cell.iconView.tintColor = Theme.current.secondTintColor
             cell.iconView.image = UIImage(name: .arrow_right)
-            return cell
-        case 1:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! SettingsTableCell
-            cell.titleLabel.text = "THEME".localized
-            cell.infoLabel.text = Constants.Theme.localized
-            cell.iconView.backgroundColor = .clear
-            cell.iconView.tintColor = Theme.current.secondTintColor
-            cell.iconView.image = UIImage(name: .arrow_right)
-            return cell
-        case 2:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! SettingsTableCell
-            cell.titleLabel.text = "CHANGE_PASSCODE_TITLE".localized
-            cell.infoLabel.text = nil
-            cell.iconView.backgroundColor = .clear
-            cell.iconView.tintColor = Theme.current.secondTintColor
-            cell.iconView.image = UIImage(name: .arrow_right)
-            return cell
-        case 3:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "switch_cell", for: indexPath) as! SettingsSwitchCell
-            cell.titleLabel.text = "SMS_SIGN_IN".localized
-            cell.switchView.setOn(self.viewModel.accountInfo.client.smsPush, animated: false)
-            cell.switchDelegate = { (state) -> Void in
-                self.viewModel.setSettings(pushNotify: self.viewModel.accountInfo.client.pushNotify, smsPush: state)
+            cell.rootView.backgroundColor = Theme.current.plainTableCellColor
+            cell.titleLabel.textColor = Theme.current.primaryTextColor
+            cell.infoLabel.textColor = Theme.current.secondaryTextColor
+            switch item {
+            case .language:
+                cell.titleLabel.text = "LANGUAGE".localized
+                cell.infoLabel.text = Localize.currentLanguage.rawValue.localized
+            case .theme:
+                cell.titleLabel.text = "THEME".localized
+                cell.infoLabel.text = Constants.Theme.localized
+            case .changePin:
+                cell.titleLabel.text = "CHANGE_PASSCODE_TITLE".localized
+                cell.infoLabel.text = nil
+            case .docs:
+                cell.titleLabel.text = "PRIVACY_DOCS".localized
+                cell.infoLabel.text = nil
+            case .about:
+                cell.titleLabel.text = "ABOUT_APP".localized
+                cell.infoLabel.text = "APP_VERSION".localizedFormat(arguments: Constants.Version)
+            case .logout:
+                cell.titleLabel.text = "LOGOUT_FROM_ACC".localized
+                cell.infoLabel.text = nil
+                cell.iconView.backgroundColor = .systemRed
+                cell.iconView.tintColor = .white
+                cell.iconView.image = UIImage(name: .logout)
+            default:break
             }
             return cell
-        case 4:
+        case .smsSignIn, .useBiometricAuth, .push:
             let cell = tableView.dequeueReusableCell(withIdentifier: "switch_cell", for: indexPath) as! SettingsSwitchCell
-            cell.titleLabel.text = "USE_BIO_AUTH".localized
-            cell.switchView.setOn(Constants.DeviceBio, animated: false)
-            cell.switchDelegate = { (state) -> Void in
-                Constants.DeviceBio = state
+            cell.rootView.backgroundColor = Theme.current.plainTableCellColor
+            cell.titleLabel.textColor = Theme.current.primaryTextColor
+            switch item {
+            case .smsSignIn:
+                cell.titleLabel.text = "SMS_SIGN_IN".localized
+                cell.switchView.setOn(self.viewModel.accountInfo.client.smsPush, animated: false)
+                cell.switchDelegate = { (state) -> Void in
+                    self.viewModel.setSettings(pushNotify: self.viewModel.accountInfo.client.pushNotify, smsPush: state)
+                }
+            case .useBiometricAuth:
+                cell.titleLabel.text = "USE_BIO_AUTH".localized
+                cell.switchView.setOn(Constants.DeviceBio, animated: false)
+                cell.switchDelegate = { (state) -> Void in
+                    if !state {
+                        Constants.DeviceBio = state
+                    } else if let authType = self.authType {
+                        self.coordinator?.presentBioAuth(auth: authType, delegate: self)
+                    }
+                }
+            case .push:
+                cell.titleLabel.text = "USE_PUSH".localized
+                cell.switchView.setOn(self.viewModel.accountInfo.client.pushNotify, animated: false)
+                cell.switchDelegate = { (state) -> Void in
+                    self.viewModel.setSettings(pushNotify: state, smsPush: self.viewModel.accountInfo.client.smsPush)
+                }
+            default:break
             }
             return cell
-        case 5:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "switch_cell", for: indexPath) as! SettingsSwitchCell
-            cell.titleLabel.text = "USE_PUSH".localized
-            cell.switchView.setOn(Constants.DeviceBio, animated: false)
-            cell.switchDelegate = { (state) -> Void in
-                self.viewModel.setSettings(pushNotify: state, smsPush: self.viewModel.accountInfo.client.smsPush)
-            }
-            return cell
-        case 6:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! SettingsTableCell
-            cell.titleLabel.text = "PRIVACY_DOCS".localized
-            cell.infoLabel.text = nil
-            cell.iconView.backgroundColor = .clear
-            cell.iconView.tintColor = Theme.current.secondTintColor
-            cell.iconView.image = UIImage(name: .arrow_right)
-            return cell
-        case 7:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! SettingsTableCell
-            cell.titleLabel.text = "ABOUT_APP".localized
-            cell.infoLabel.text = "APP_VERSION".localizedFormat(arguments: Constants.Version)
-            cell.iconView.backgroundColor = .clear
-            cell.iconView.tintColor = Theme.current.secondTintColor
-            cell.iconView.image = UIImage(name: .arrow_right)
-            return cell
-        case 8:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! SettingsTableCell
-            cell.titleLabel.text = "LOGOUT_FROM_ACC".localized
-            cell.infoLabel.text = nil
-            cell.iconView.backgroundColor = .systemRed
-            cell.iconView.tintColor = .white
-            cell.iconView.image = UIImage(name: .logout)
-            return cell
-        default:return UITableViewCell(frame: .zero)
         }
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 9
+        return self.settings.count
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

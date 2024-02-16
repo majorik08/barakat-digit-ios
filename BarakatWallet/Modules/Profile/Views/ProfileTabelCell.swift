@@ -21,7 +21,7 @@ class ProfileTabelCell: UITableViewCell {
         return view
     }()
     let iconView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.imageView.image = UIImage(name: .profile_add)
         view.tintColor = .white
@@ -30,7 +30,7 @@ class ProfileTabelCell: UITableViewCell {
     let titleLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 16)
+        view.font = UIFont.regular(size: 17)
         view.textColor = Theme.current.primaryTextColor
         view.text = "Title"
         return view
@@ -55,9 +55,9 @@ class ProfileTabelCell: UITableViewCell {
         self.rootView.addSubview(self.iconView)
         self.rootView.addSubview(self.titleLabel)
         NSLayoutConstraint.activate([
-            self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 20),
+            self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.rootView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 10),
-            self.rootView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -20),
+            self.rootView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.rootView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -10),
             self.titleLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 20),
             self.titleLabel.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 10),

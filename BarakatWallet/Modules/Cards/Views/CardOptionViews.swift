@@ -96,7 +96,7 @@ class ColorOptionView: UIControl {
         return view
     }()
     let firstColorView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .zero)
         view.startColor = UIColor(red: 0.20, green: 0.24, blue: 0.92, alpha: 1.00)
         view.endColor = UIColor(red: 0.20, green: 0.70, blue: 0.92, alpha: 1.00)
         view.circleImage = false
@@ -111,7 +111,7 @@ class ColorOptionView: UIControl {
         return view
     }()
     let secondColorView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .zero)
         view.startColor = UIColor(red: 0.20, green: 0.92, blue: 0.32, alpha: 1.00)
         view.endColor = UIColor(red: 0.73, green: 0.92, blue: 0.20, alpha: 1.00)
         view.circleImage = false
@@ -125,7 +125,7 @@ class ColorOptionView: UIControl {
         return view
     }()
     let thirdColorView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .zero)
         view.startColor = UIColor(red: 0.92, green: 0.20, blue: 0.20, alpha: 1.00)
         view.endColor = UIColor(red: 0.92, green: 0.59, blue: 0.20, alpha: 1.00)
         view.circleImage = false
@@ -139,12 +139,6 @@ class ColorOptionView: UIControl {
         return view
     }()
     var selectedColor: Int = 0
-    
-    var colors: [(start: UIColor, end: UIColor)] = [
-        (start: UIColor(red: 0.20, green: 0.24, blue: 0.92, alpha: 1.00), end: UIColor(red: 0.20, green: 0.70, blue: 0.92, alpha: 1.00)),
-        (start: UIColor(red: 0.20, green: 0.92, blue: 0.32, alpha: 1.00), end: UIColor(red: 0.73, green: 0.92, blue: 0.20, alpha: 1.00)),
-        (start: UIColor(red: 0.92, green: 0.20, blue: 0.20, alpha: 1.00), end: UIColor(red: 0.92, green: 0.59, blue: 0.20, alpha: 1.00))
-    ]
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -173,6 +167,23 @@ class ColorOptionView: UIControl {
         self.firstColorView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tapped(_:))))
         self.secondColorView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tapped(_:))))
         self.thirdColorView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.tapped(_:))))
+    }
+    
+    func setCurrentColor(color: Int) {
+        self.selectedColor = color
+        if color == 0 {
+            self.firstColorView.imageView.image = UIImage(name: .checked_fill)
+            self.secondColorView.imageView.image = nil
+            self.thirdColorView.imageView.image = nil
+        } else if color == 1 {
+            self.firstColorView.imageView.image = nil
+            self.secondColorView.imageView.image = UIImage(name: .checked_fill)
+            self.thirdColorView.imageView.image = nil
+        } else {
+            self.firstColorView.imageView.image = nil
+            self.secondColorView.imageView.image = nil
+            self.thirdColorView.imageView.image = UIImage(name: .checked_fill)
+        }
     }
     
     @objc func tapped(_ gesture: UITapGestureRecognizer) {

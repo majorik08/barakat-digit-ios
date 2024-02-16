@@ -18,7 +18,7 @@ extension UITextInput {
     }
 }
 
-class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextFieldDelegate {
+class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertViewControllerDelegate {
     
     let backButton: UIButton = {
         let view = UIButton(frame: .zero)
@@ -44,23 +44,6 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
         view.numberOfLines = 0
         view.lineBreakMode = .byWordWrapping
         view.text = "ENTER_PIN_MIN".localized
-        return view
-    }()
-    let passcodeField: UITextField = {
-        let view = UITextField()
-        view.isSecureTextEntry = true
-        view.textColor = Theme.current.primaryTextColor
-        view.returnKeyType = .done
-        view.tintColor = Theme.current.tintColor
-        view.keyboardAppearance = Theme.current.dark ? .dark : .light
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = Theme.current.groupedTableCellColor
-        view.textAlignment = .center
-        view.font = UIFont.regular(size: 19)
-        view.isHidden = true
-        view.autocorrectionType = .no
-        view.inputAccessoryView = nil
-        view.inputView = UIView(backgroundColor: .clear)
         return view
     }()
     let passcodeDotView: PasswordDotView = {
@@ -97,8 +80,17 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
         view.isEnabled = false
         return view
     }()
+    let validDigitsSet: CharacterSet = {
+        return CharacterSet(charactersIn: "0".unicodeScalars.first! ... "9".unicodeScalars.first!)
+    }()
+    var dialedNumbersDisplayString = "" {
+        didSet {
+            let text = self.dialedNumbersDisplayString
+            self.passcodeDotView.inputDotCount = text.count
+        }
+    }
     weak var coordinator: PasscodeCoordinator?
- 
+    let hapticFeedback = HapticFeedback()
     let viewModel: PasscodeViewModel
     
     init(viewModel: PasscodeViewModel) {
@@ -121,7 +113,6 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
         self.view.addSubview(self.backButton)
         self.view.addSubview(self.label)
         self.view.addSubview(self.numberHint)
-        self.view.addSubview(self.passcodeField)
         self.view.addSubview(self.passcodeDotView)
         self.view.addSubview(self.timerHint)
         self.view.addSubview(self.keyPadView)
@@ -141,10 +132,6 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
             self.passcodeDotView.topAnchor.constraint(equalTo: self.numberHint.bottomAnchor, constant: 28),
             self.passcodeDotView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -27),
             self.passcodeDotView.heightAnchor.constraint(equalToConstant: 24),
-            self.passcodeField.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 27),
-            self.passcodeField.topAnchor.constraint(equalTo: self.numberHint.bottomAnchor, constant: 10),
-            self.passcodeField.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -27),
-            self.passcodeField.heightAnchor.constraint(equalToConstant: 24),
             self.timerHint.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 27),
             self.timerHint.topAnchor.constraint(equalTo: self.passcodeDotView.bottomAnchor, constant: 20),
             self.timerHint.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -27),
@@ -156,12 +143,11 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
             self.continueButton.topAnchor.constraint(equalTo: self.keyPadView.bottomAnchor, constant: 10),
             self.continueButton.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -27),
             self.continueButton.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            self.continueButton.heightAnchor.constraint(equalToConstant: 56),
+            self.continueButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight),
         ])
+        self.keyPadView.delegate = self
         self.passcodeDotView.totalDotCount = self.viewModel.passcodeMinLength
         self.passcodeDotView.inputDotCount = 0
-        self.keyPadView.delegate = self
-        self.passcodeField.delegate = self
         self.backButton.rx.tap.subscribe { [weak self] _ in
             if let coo = self?.coordinator {
                 coo.navigateBack()
@@ -171,9 +157,8 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
         }.disposed(by: self.viewModel.disposeBag)
         self.continueButton.rx.tap.bind { [weak self] in
             guard let self = self else { return }
-            self.next(text: self.passcodeField.text ?? "")
+            self.next(text: self.dialedNumbersDisplayString)
         }.disposed(by: self.viewModel.disposeBag)
-        self.passcodeField.rx.text.orEmpty.map({ $0.count >= self.viewModel.passcodeMinLength && $0.count <= self.viewModel.passcodeMaxLength }).share(replay: 1).bind(to: self.continueButton.rx.isEnabled).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLogin.subscribe(onNext: { [weak self] info in
             self?.hideProgressView()
             self?.coordinator?.authSuccess(accountInfo: info)
@@ -182,51 +167,87 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
             self?.hideProgressView()
             self?.showErrorAlert(title: "ERROR".localized, message: message)
         }).disposed(by: self.viewModel.disposeBag)
-        self.passcodeField.becomeFirstResponder()
         self.setInfo()
     }
     
     func keyTapped(digit: String) {
-        guard let changeText = self.passcodeField.selectedRange else { return }
-        if self.textField(self.passcodeField, shouldChangeCharactersIn: changeText, replacementString: digit == "<" ? "" : digit) {
-            if digit == "<" {
-                self.passcodeField.deleteBackward()
-            } else {
-                self.passcodeField.insertText(digit)
+        if digit == "." {
+            switch self.viewModel.startFor {
+            case .setup:return
+            case .change(_):
+                self.coordinator?.navigateToResetPasscode()
+            case .check(_):
+                self.coordinator?.navigateToResetPasscode()
             }
+        } else {
+            self.hapticFeedback.tap()
+            var text = self.dialedNumbersDisplayString
+            if digit == "<" {
+                if !text.isEmpty {
+                    text = String(text.dropLast())
+                }
+            } else {
+                text = text + digit
+            }
+            if let _ = text.rangeOfCharacter(from: self.validDigitsSet.inverted) {
+                return
+            }
+            switch self.viewModel.startFor {
+            case .setup:
+                switch self.viewModel.setupStep {
+                case .check, .first:
+                    if text.count > self.viewModel.passcodeMaxLength {
+                        return
+                    }
+                    self.passcodeDotView.totalDotCount = max(self.viewModel.passcodeMinLength, text.count)
+                case .second(new: let new):
+                    if text.count > new.count {
+                        return
+                    }
+                }
+            case .change(let old):
+                switch self.viewModel.setupStep {
+                case .check:
+                    if text.count > old.count {
+                        return
+                    }
+                case .first:
+                    if text.count > self.viewModel.passcodeMaxLength {
+                        return
+                    }
+                    self.passcodeDotView.totalDotCount = max(self.viewModel.passcodeMinLength, text.count)
+                case .second(let new):
+                    if text.count > new.count {
+                        return
+                    }
+                }
+            case .check(let pin):
+                if text.count > pin.count {
+                    return
+                }
+            }
+            self.dialedNumbersDisplayString = text
+            self.passcodeDotView.inputDotCount = text.count
+            self.continueButton.isEnabled = self.dialedNumbersDisplayString.count >= self.viewModel.passcodeMinLength && self.dialedNumbersDisplayString.count <= self.viewModel.passcodeMaxLength
         }
-    }
-    
-    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        let currentText = textField.text ?? ""
-        let text = (currentText as NSString).replacingCharacters(in: range, with: string)
-        if text.count > self.viewModel.passcodeMaxLength {
-            return false
-        }
-        if let _ = text.rangeOfCharacter(from: self.viewModel.validDigitsSet.inverted) {
-            return false
-        }
-        if (text.count >= self.viewModel.passcodeMinLength) && (self.viewModel.setupStep.isFirst || self.viewModel.setupStep.isCheck) {
-            self.passcodeDotView.totalDotCount = text.count
-        }
-        self.passcodeDotView.inputDotCount = text.count
-        return true
     }
     
     func setInfo() {
         switch self.viewModel.startFor {
         case .setup:
-            self.passcodeField.text = ""
+            self.dialedNumbersDisplayString = ""
             self.passcodeDotView.totalDotCount = 4
             self.passcodeDotView.inputDotCount = 0
             self.label.text = "PASSCODE_ENTER_NEW".localized
         case .change(let old):
-            self.passcodeField.text = ""
+            self.keyPadView.starButtonText = "ENTER_PIN_HINT".localized
+            self.dialedNumbersDisplayString = ""
             self.passcodeDotView.totalDotCount = old.count
             self.passcodeDotView.inputDotCount = 0
             self.label.text = "PASSCODE_OLD_ENTER".localized
         case .check(pin: let pin):
-            self.passcodeField.text = ""
+            self.keyPadView.starButtonText = "ENTER_PIN_HINT".localized
+            self.dialedNumbersDisplayString = ""
             self.passcodeDotView.totalDotCount = pin.count
             self.passcodeDotView.inputDotCount = 0
             self.label.text = "ENTER_PIN".localized
@@ -237,10 +258,10 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
         switch self.viewModel.startFor {
         case .check(let pin):
             if pin == text {
-                self.viewModel.delegate?(true)
+                self.viewModel.pinChechSuccess()
             } else {
                 self.passcodeDotView.shakeAnimate()
-                self.passcodeField.text = ""
+                self.dialedNumbersDisplayString = ""
                 self.passcodeDotView.totalDotCount = pin.count
                 self.passcodeDotView.inputDotCount = 0
             }
@@ -253,32 +274,33 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
                     self.label.slideInFromLeft()
                     self.passcodeDotView.totalDotCount = 4
                     self.passcodeDotView.inputDotCount = 0
-                    self.passcodeField.text = ""
+                    self.dialedNumbersDisplayString = ""
                     self.label.text = "PASSCODE_ENTER_NEW".localized
                 } else {
                     self.passcodeDotView.shakeAnimate()
                     self.passcodeDotView.totalDotCount = old.count
                     self.passcodeDotView.inputDotCount = 0
-                    self.passcodeField.text = ""
+                    self.dialedNumbersDisplayString = ""
                     self.label.text = "PASSCODE_OLD_ENTER".localized
                 }
             case .first:
                 self.viewModel.setupStep = .second(new: text)
                 self.passcodeDotView.slideInFromLeft()
                 self.label.slideInFromLeft()
-                self.passcodeField.text = ""
+                self.dialedNumbersDisplayString = ""
                 self.passcodeDotView.totalDotCount = text.count
                 self.passcodeDotView.inputDotCount = 0
                 self.label.text = "PASSCODE_RENTER".localized
             case .second(let new):
                 if new == text {
                     self.viewModel.changePin(pin: text)
-                    self.viewModel.delegate?(true)
+                    self.showProgressView()
+                    self.viewModel.pinChechSuccess()
                 } else {
                     self.viewModel.setupStep = .first
                     self.passcodeDotView.slideInFromLeft()
                     self.label.slideInFromLeft()
-                    self.passcodeField.text = ""
+                    self.dialedNumbersDisplayString = ""
                     self.passcodeDotView.totalDotCount = 4
                     self.passcodeDotView.inputDotCount = 0
                     self.label.text = "PASSCODE_ENTER_NEW".localized
@@ -292,21 +314,24 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
                 self.viewModel.setupStep = .second(new: text)
                 self.passcodeDotView.slideInFromLeft()
                 self.label.slideInFromLeft()
-                self.passcodeField.text = ""
+                self.dialedNumbersDisplayString = ""
                 self.passcodeDotView.totalDotCount = text.count
                 self.passcodeDotView.inputDotCount = 0
                 self.label.text = "PASSCODE_RENTER".localized
             case .second(new: let new):
                 if new == text {
                     self.viewModel.changePin(pin: text)
-                    self.viewModel.delegate?(true)
-                    self.showProgressView()
-                    self.viewModel.pinChechSuccess()
+                    if let auth = LocalAuth.biometricAuthentication {
+                        self.coordinator?.presentBioAuth(auth: auth, delegate: self)
+                    } else {
+                        self.showProgressView()
+                        self.viewModel.pinChechSuccess()
+                    }
                 } else {
                     self.viewModel.setupStep = .first
                     self.passcodeDotView.slideInFromLeft()
                     self.label.slideInFromLeft()
-                    self.passcodeField.text = ""
+                    self.dialedNumbersDisplayString = ""
                     self.passcodeDotView.totalDotCount = 4
                     self.passcodeDotView.inputDotCount = 0
                     self.label.text = "PASSCODE_ENTER_NEW".localized
@@ -314,5 +339,10 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, UITextF
                 }
             }
         }
+    }
+    
+    func didDismisAlert() {
+        self.showProgressView()
+        self.viewModel.pinChechSuccess()
     }
 }

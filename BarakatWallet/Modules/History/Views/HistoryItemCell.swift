@@ -16,12 +16,11 @@ class HistoryItemCell: UITableViewCell {
         view.backgroundColor = .clear
         return view
     }()
-    let iconView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+    let iconView: CircleImageView = {
+        let view = CircleImageView(frame: .zero)
+        view.clipsToBounds = true
+        view.contentMode = .scaleAspectFill
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.imageView.image = UIImage(name: .wallet_inset)
-        view.imageView.contentMode = .scaleAspectFit
-        view.tintColor = .white
         return view
     }()
     let titleView: UILabel = {
@@ -90,8 +89,16 @@ class HistoryItemCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(history: AppStructs.HistoryItem) {
-        self.titleView.text = "Group name"
-        self.detailView.text = "-13s"
+    func configure(history: AppStructs.HistoryItem, service: AppStructs.PaymentGroup.ServiceItem?) {
+        self.titleView.textColor = Theme.current.primaryTextColor
+        self.detailView.textColor = Theme.current.primaryTextColor
+        if let service = service {
+            self.titleView.text = service.name
+            self.iconView.loadImage(filePath: Theme.current.dark ? service.darkListImage : service.listImage)
+        } else {
+            self.titleView.text = "UNKNOWN".localized
+            self.iconView.image = UIImage(name: .wallet_icon)
+        }
+        self.detailView.text = "\(history.amount.balanceText)"
     }
 }

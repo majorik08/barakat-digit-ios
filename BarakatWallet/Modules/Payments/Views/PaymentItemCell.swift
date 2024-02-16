@@ -17,11 +17,10 @@ class PaymentItemCell: UITableViewCell {
         return view
     }()
     let iconView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .init(top: 8, left: 8, bottom: 8, right: 8))
         view.translatesAutoresizingMaskIntoConstraints = false
         view.circleImage = false
         view.radius = 5
-        view.imageView.image = UIImage(name: .profile_add)
         view.imageView.contentMode = .scaleAspectFit
         view.tintColor = .white
         return view
@@ -83,14 +82,18 @@ class PaymentItemCell: UITableViewCell {
         self.titleView.textColor = Theme.current.primaryTextColor
         
         self.titleView.text = paymentGroup.name
+        
+        self.iconView.imageView.loadImage(filePath: Theme.current.dark ? paymentGroup.darkListImage : paymentGroup.listImage)
     }
     
-    func configure(transferType: AppStructs.TransferTypes) {
+    func configure(transferType: AppStructs.PaymentGroup.ServiceItem) {
         self.rootView.backgroundColor = Theme.current.plainTableBackColor
         self.iconView.startColor = Theme.current.mainGradientStartColor
         self.iconView.endColor = Theme.current.mainGradientEndColor
         self.titleView.textColor = Theme.current.primaryTextColor
         
         self.titleView.text = transferType.name
+        
+        self.iconView.imageView.loadImage(filePath: Theme.current.dark ? transferType.darkListImage : transferType.listImage)
     }
 }

@@ -57,6 +57,7 @@ class ChooseTransferViewController: BaseViewController, UITableViewDelegate, UIT
         view.backgroundColor = .clear
         view.register(PaymentItemCell.self, forCellReuseIdentifier: "cell")
         view.separatorStyle = .none
+        view.keyboardDismissMode = .interactive
         return view
     }()
     enum ShowType {
@@ -135,8 +136,8 @@ class ChooseTransferViewController: BaseViewController, UITableViewDelegate, UIT
                 self.titleView.topAnchor.constraint(equalTo: self.topAnchorView.bottomAnchor, constant: 20),
                 self.titleView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
                 self.scrollView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 20),
-                self.scrollView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
-                self.scrollView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.scrollView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 0),
+                self.scrollView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: 0),
                 self.scrollView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -(self.view.safeAreaInsets.bottom + 30)),
             ])
         }
@@ -202,11 +203,11 @@ class ChooseTransferViewController: BaseViewController, UITableViewDelegate, UIT
         case .payments:
             let item = self.viewModel.paymentGroups[indexPath.row]
             self.dismisIfCan()
-            self.coordinator?.navigateToServicesList(selectedGroup: item)
+            self.coordinator?.navigateToServicesList(selectedGroup: item, addFavoriteMode: false)
         case .transfers:
             let item = self.viewModel.transferTypes[indexPath.row]
             self.dismisIfCan()
-            self.coordinator?.navigateToTransferView(transfer: item)
+            self.coordinator?.navigateToPaymentView(service: item, merchant: nil, favorite: nil, addFavoriteMode: false, transferParam: nil)
         }
     }
     

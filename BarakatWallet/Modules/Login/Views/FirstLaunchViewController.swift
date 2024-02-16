@@ -14,11 +14,7 @@ class FirstLaunchViewController: BaseViewController, StoriesViewDelegate {
     lazy var topViewMaxHeight: CGFloat = {
         return UIScreen.main.bounds.height * 0.4
     }()
-    let topBar: LaunchTopView = {
-        let view = LaunchTopView(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
+    var topBar: LaunchTopView!
     let transferButton: BaseButtonView = {
         let view = BaseButtonView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -41,7 +37,7 @@ class FirstLaunchViewController: BaseViewController, StoriesViewDelegate {
         view.font = UIFont.regular(size: 10)
         view.textAlignment = .center
         view.textColor = Theme.current.primaryTextColor
-        view.text = "©LLC MDO «BARAKAT MOLIYA» 2023"
+        view.text = "©LLC MDO «BARAKAT MOLIYA» 2024"
         return view
     }()
     weak var coordinator: LoginCoordinator?
@@ -59,6 +55,8 @@ class FirstLaunchViewController: BaseViewController, StoriesViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.topBar = LaunchTopView(frame: .zero)
+        self.topBar.translatesAutoresizingMaskIntoConstraints = false
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.view.addSubview(self.topBar)
         self.view.addSubview(self.transferButton)

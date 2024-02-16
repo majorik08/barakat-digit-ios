@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 final class RootTabCoordinator: Coordinator {
     
@@ -17,6 +18,7 @@ final class RootTabCoordinator: Coordinator {
     var children: [Coordinator] = []
     var accountInfo: AppStructs.AccountInfo
     var tabBar: RooTabBarViewController
+    let disposeBag = DisposeBag()
     
     lazy var mainCoordinator: HomeCoordinator = {
         return HomeCoordinator(nav: BaseNavigationController(title: "MAIN".localized, image: UIImage(name: .tab_home), tag: MainItems.main.rawValue), accountInfo: self.accountInfo)
@@ -33,6 +35,9 @@ final class RootTabCoordinator: Coordinator {
     lazy var cardsCoordinator: CardsCoordinator = {
         return CardsCoordinator(nav: BaseNavigationController(title: "CARDS".localized, image: UIImage(name: .tab_cards), tag: MainItems.cards.rawValue), accountInfo: self.accountInfo)
     }()
+    var paymentsService: PaymentsService {
+        return ENVIRONMENT.isMock ? PaymentsServiceMockImpl(accountInfo: self.accountInfo) : PaymentsServiceImpl(accountInfo: self.accountInfo)
+    }
     
     init(accountInfo: AppStructs.AccountInfo) {
         self.accountInfo = accountInfo
@@ -86,6 +91,50 @@ final class RootTabCoordinator: Coordinator {
             self.paymentsCoordinator.start()
         case .cards:
             self.cardsCoordinator.start()
+        }
+    }
+    
+    func checkQr(qr: String) {
+        self.tabBar.showProgressView()
+        self.paymentsService.qrCheck(qr: qr)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] result in
+                guard let self = self else { return }
+                self.tabBar.hideProgressView()
+                self.navigateToQrPayment(merchant: result.merchant, serviceId: result.service, transferParam: result.transferParam)
+        } onFailure: { [weak self] error in
+            guard let self = self else { return }
+            self.tabBar.hideProgressView()
+            self.tabBar.showErrorAlert(title: "QR", message: error.localizedDescription)
+        }.disposed(by: self.disposeBag)
+    }
+    
+    private func navigateToQrPayment(merchant: AppStructs.Merchant?, serviceId: Int, transferParam: String?) {
+        let service: AppStructs.PaymentGroup.ServiceItem
+        if let _ = merchant {
+            service = AppStructs.PaymentGroup.ServiceItem(id: serviceId, name: "QR_OPERATION".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [])
+        } else if let _ = transferParam {
+            guard let findService = self.accountInfo.getService(serviceID: serviceId) else {
+                self.tabBar.showErrorAlert(title: "QR", message: "Service not found")
+                return
+            }
+            service = findService
+        } else {
+            self.tabBar.showErrorAlert(title: "QR", message: "Service not found")
+            return
+        }
+        guard let nav = self.tabBar.selectedViewController as? BaseNavigationController else { return }
+        guard let item = MainItems(rawValue: nav.tabBarItem.tag) else { return }
+        switch item {
+        case .main:
+            self.mainCoordinator.navigateToPaymentView(service: service, merchant: merchant, transferParam: transferParam)
+        case .history:
+            self.mainCoordinator.navigateToPaymentView(service: service, merchant: merchant, transferParam: transferParam)
+        case .qr:break
+        case .payments:
+            self.mainCoordinator.navigateToPaymentView(service: service, merchant: merchant, transferParam: transferParam)
+        case .cards:
+            self.mainCoordinator.navigateToPaymentView(service: service, merchant: merchant, transferParam: transferParam)
         }
     }
 }

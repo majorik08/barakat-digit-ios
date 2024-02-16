@@ -11,10 +11,10 @@ import UIKit
 class TransferViewController: BaseViewController {
     
     let viewModel: PaymentsViewModel
-    let transfer: AppStructs.TransferTypes
+    let transfer: AppStructs.PaymentGroup.ServiceItem
     weak var coordinator: PaymentsCoordinator? = nil
     
-    init(viewModel: PaymentsViewModel, transfer: AppStructs.TransferTypes) {
+    init(viewModel: PaymentsViewModel, transfer: AppStructs.PaymentGroup.ServiceItem) {
         self.viewModel = viewModel
         self.transfer = transfer
         super.init(nibName: nil, bundle: nil)

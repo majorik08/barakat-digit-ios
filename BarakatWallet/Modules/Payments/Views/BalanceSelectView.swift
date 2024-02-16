@@ -38,7 +38,15 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    var accounts: [AppStructs.Account] = []
+    var accounts: [AppStructs.AccountInfo.BalanceType] = []
+    var selectedBalance: AppStructs.AccountInfo.BalanceType? {
+        let page = Int(self.controlView.drawer.currentItem)
+        if page < self.accounts.count {
+            return self.accounts[page]
+        } else {
+            return self.accounts.first
+        }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -69,9 +77,20 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(accounts: [AppStructs.Account]) {
-        self.controlView.drawer = ExtendedDotDrawer(numberOfPages: accounts.count, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
-        self.accounts = accounts
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let witdh = scrollView.frame.width - (scrollView.contentInset.left + scrollView.contentInset.right)
+        let index = scrollView.contentOffset.x / witdh
+        let roundedIndex = index.rounded(.up)
+        if self.controlView.numberOfPages > Int(roundedIndex) {
+            self.controlView.setPage(Int(roundedIndex))
+        } else {
+            self.controlView.setPage(self.controlView.numberOfPages - 1)
+        }
+    }
+    
+    func configure(clientBalances: [AppStructs.AccountInfo.BalanceType]) {
+        self.controlView.drawer = ExtendedDotDrawer(numberOfPages: clientBalances.count, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
+        self.accounts = clientBalances
         self.collectionView.reloadData()
     }
     
@@ -119,7 +138,12 @@ class BalanceCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(account: AppStructs.Account) {
+    override func prepareForReuse() {
+        super.prepareForReuse()
         
+    }
+    
+    func configure(account: AppStructs.AccountInfo.BalanceType) {
+        self.balanceView.configure(account: account)
     }
 }

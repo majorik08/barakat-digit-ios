@@ -33,7 +33,7 @@ class BalanceView: UIView {
     let accountNameView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 14)
+        view.font = UIFont.regular(size: 16)
         view.textColor = .white
         view.numberOfLines = 1
         view.adjustsFontSizeToFitWidth = true
@@ -43,7 +43,7 @@ class BalanceView: UIView {
     let cardBalanceView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 14)
+        view.font = UIFont.regular(size: 16)
         view.textColor = .white
         view.numberOfLines = 1
         view.adjustsFontSizeToFitWidth = true
@@ -119,5 +119,38 @@ class BalanceView: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func prepareForReuse() {
+        self.cardTypeIconView.image = nil
+        self.accountNameView.text = nil
+        self.cardBalanceView.text = nil
+        self.cardAuthorView.text = nil
+        self.cardNumberView.text = nil
+        
+    }
+    
+    func configure(account: AppStructs.AccountInfo.BalanceType) {
+        switch account {
+        case .wallet(let account):
+            if account.isBonus {
+                self.accountNameView.text = "BONUS_ACCOUNT".localized
+            } else {
+                self.accountNameView.text = "WALLET_BALANCE_HINT".localized
+            }
+            self.cardBalanceView.text = account.balance.balanceText
+            self.cardAuthorView.text = ""
+            self.cardTypeIconView.image = UIImage(name: .wallet_icon)
+        case .card(let card):
+            let last4 = String(card.pan.suffix(4))
+            self.accountNameView.text = "•• \(last4)"
+            if card.showBalance {
+                self.cardBalanceView.text = card.balance.balanceText
+            } else {
+                self.cardBalanceView.text = ""
+            }
+            self.cardAuthorView.text = card.cardHolder
+            self.cardTypeIconView.loadImage(filePath: card.logo)
+        }
     }
 }

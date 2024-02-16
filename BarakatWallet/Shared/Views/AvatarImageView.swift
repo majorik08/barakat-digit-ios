@@ -43,42 +43,48 @@ public class GradientImageView: GradientView {
         view.contentMode = .scaleAspectFit
         view.tintColor = .white
         view.backgroundColor = .clear
+        view.clipsToBounds = true
         return view
     }()
     var circleImage = true
-
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        self.installLayers()
-    }
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        self.installLayers()
-    }
-
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        self.imageView.frame = self.bounds
-        if self.circleImage {
-            self.radius = self.bounds.width / 2
-        }
-    }
-
-    private func installLayers() {
+    
+    init(insets: UIEdgeInsets) {
+        super.init(frame: .zero)
         self.startColor = Theme.current.mainGradientStartColor
         self.endColor = Theme.current.mainGradientEndColor
-        if self.circleImage {
-            self.radius = self.bounds.width / 2
-        }
         self.backgroundColor = .clear
         self.clipsToBounds = false
         self.addSubview(self.imageView)
-        self.imageView.frame = self.bounds
+        NSLayoutConstraint.activate([
+            self.imageView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: insets.left),
+            self.imageView.topAnchor.constraint(equalTo: self.topAnchor, constant: insets.top),
+            self.imageView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -insets.right),
+            self.imageView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -insets.bottom),
+        ])
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        if self.circleImage {
+            self.radius = self.bounds.width / 2
+            self.imageView.layer.cornerRadius = self.imageView.bounds.width / 2
+        }
     }
 }
 
 public class CircleImageView: UIImageView {
+    
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        self.layer.cornerRadius = self.frame.width / 2
+    }
+}
+
+public class CircleView: UIView {
     
     public override func layoutSubviews() {
         super.layoutSubviews()

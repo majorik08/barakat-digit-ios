@@ -83,7 +83,7 @@ class LaunchTopView: UIView {
         self.addSubview(self.storiesView)
         self.addSubview(self.pageControl)
         NSLayoutConstraint.activate([
-            self.appIcon.topAnchor.constraint(greaterThanOrEqualTo: self.topAnchor, constant: 16),
+            self.appIcon.topAnchor.constraint(equalTo: self.topAnchor, constant: UIApplication.statusBarHeight + 20),
             self.appIcon.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             self.appIcon.heightAnchor.constraint(equalToConstant: 70),
             self.appIcon.widthAnchor.constraint(equalToConstant: 70),
@@ -117,9 +117,9 @@ class LaunchTopView: UIView {
         let shadowPath0 = UIBezierPath(roundedRect: self.shadowView.bounds, cornerRadius: 14)
         self.shadowLayer!.shadowPath = shadowPath0.cgPath
         self.shadowLayer!.shadowColor = UIColor(red: 0.204, green: 0.584, blue: 0.918, alpha: 0.38).cgColor
-        self.shadowLayer!.shadowOpacity = 1
-        self.shadowLayer!.shadowRadius = 28
-        self.shadowLayer!.shadowOffset = CGSize(width: 0, height: 5)
+        self.shadowLayer!.shadowOpacity = 0.6
+        self.shadowLayer!.shadowRadius = 8
+        self.shadowLayer!.shadowOffset = CGSize(width: 0, height: 2)
         self.shadowLayer!.bounds = self.shadowView.bounds
         self.shadowLayer!.position = self.shadowView.center
     }

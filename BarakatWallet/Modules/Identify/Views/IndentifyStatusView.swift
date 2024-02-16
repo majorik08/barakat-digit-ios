@@ -30,14 +30,14 @@ class IndentifyStatusView: UIView {
     let topTitle: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 20)
+        view.font = UIFont.regular(size: 20)
         view.textAlignment = .center
         return view
     }()
     let limitsTitle: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.text = "LIMITS".localized
         view.textColor = Theme.current.primaryTextColor
         return view
@@ -56,7 +56,7 @@ class IndentifyStatusView: UIView {
     let topLimitTitle: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.text = "MAX_IN_WALLET".localized
         view.textColor = Theme.current.primaryTextColor
         return view
@@ -64,7 +64,7 @@ class IndentifyStatusView: UIView {
     let topLimitDetail: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.medium(size: 24)
+        view.font = UIFont.medium(size: 30)
         view.text = "LIMITS".localized
         view.textColor = Theme.current.primaryTextColor
         return view
@@ -83,7 +83,7 @@ class IndentifyStatusView: UIView {
     let bottomLimitTitle: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.text = "MAX_PAY_MONTH".localized
         view.textColor = Theme.current.primaryTextColor
         return view
@@ -91,7 +91,7 @@ class IndentifyStatusView: UIView {
     let bottomLimitDetail: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.medium(size: 24)
+        view.font = UIFont.medium(size: 30)
         view.text = "LIMITS".localized
         view.textColor = Theme.current.primaryTextColor
         return view
@@ -99,7 +99,7 @@ class IndentifyStatusView: UIView {
     let capabilitesLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.text = "CAPABILITIES".localized
         view.textColor = Theme.current.primaryTextColor
         return view
@@ -183,9 +183,9 @@ class IndentifyStatusView: UIView {
         self.addSubview(self.convertItem)
         self.addSubview(self.creditItem)
         NSLayoutConstraint.activate([
-            self.topView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
-            self.topView.topAnchor.constraint(equalTo: self.topAnchor, constant: 16),
-            self.topView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.topView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
+            self.topView.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
+            self.topView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.topView.heightAnchor.constraint(equalTo: self.topView.widthAnchor, multiplier: 0.36),
             self.topAvatar.topAnchor.constraint(equalTo: self.topView.topAnchor, constant: 10),
             self.topAvatar.centerXAnchor.constraint(equalTo: self.topView.centerXAnchor),
@@ -195,12 +195,12 @@ class IndentifyStatusView: UIView {
             self.topTitle.rightAnchor.constraint(equalTo: self.topView.rightAnchor, constant: 0),
             self.topTitle.bottomAnchor.constraint(equalTo: self.topView.bottomAnchor, constant: -16),
             self.topTitle.heightAnchor.constraint(equalToConstant: 20),
-            self.limitsTitle.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
-            self.limitsTitle.topAnchor.constraint(equalTo: self.topView.bottomAnchor, constant: 30),
-            self.limitsTitle.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
-            self.topLimitView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.limitsTitle.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
+            self.limitsTitle.topAnchor.constraint(equalTo: self.topView.bottomAnchor, constant: 20),
+            self.limitsTitle.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.topLimitView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.topLimitView.topAnchor.constraint(equalTo: self.limitsTitle.bottomAnchor, constant: 10),
-            self.topLimitView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.topLimitView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.topLimitTitle.leftAnchor.constraint(equalTo: self.topLimitView.leftAnchor, constant: 16),
             self.topLimitTitle.topAnchor.constraint(equalTo: self.topLimitView.topAnchor, constant: 10),
             self.topLimitTitle.rightAnchor.constraint(equalTo: self.topLimitView.rightAnchor, constant: -16),
@@ -208,9 +208,9 @@ class IndentifyStatusView: UIView {
             self.topLimitDetail.topAnchor.constraint(equalTo: self.topLimitTitle.bottomAnchor, constant: 10),
             self.topLimitDetail.rightAnchor.constraint(equalTo: self.topLimitView.rightAnchor, constant: -16),
             self.topLimitDetail.bottomAnchor.constraint(equalTo: self.topLimitView.bottomAnchor, constant: -10),
-            self.bottomLimitView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.bottomLimitView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.bottomLimitView.topAnchor.constraint(equalTo: self.topLimitView.bottomAnchor, constant: 20),
-            self.bottomLimitView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.bottomLimitView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.bottomLimitTitle.leftAnchor.constraint(equalTo: self.bottomLimitView.leftAnchor, constant: 16),
             self.bottomLimitTitle.topAnchor.constraint(equalTo: self.bottomLimitView.topAnchor, constant: 10),
             self.bottomLimitTitle.rightAnchor.constraint(equalTo: self.bottomLimitView.rightAnchor, constant: -16),
@@ -218,36 +218,36 @@ class IndentifyStatusView: UIView {
             self.bottomLimitDetail.topAnchor.constraint(equalTo: self.bottomLimitTitle.bottomAnchor, constant: 10),
             self.bottomLimitDetail.rightAnchor.constraint(equalTo: self.bottomLimitView.rightAnchor, constant: -16),
             self.bottomLimitDetail.bottomAnchor.constraint(equalTo: self.bottomLimitView.bottomAnchor, constant: -10),
-            self.capabilitesLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.capabilitesLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.capabilitesLabel.topAnchor.constraint(equalTo: self.bottomLimitView.bottomAnchor, constant: 20),
-            self.capabilitesLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
-            self.servicePayItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.capabilitesLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.servicePayItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.servicePayItem.topAnchor.constraint(equalTo: self.capabilitesLabel.bottomAnchor, constant: 10),
-            self.servicePayItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.servicePayItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.servicePayItem.heightAnchor.constraint(equalToConstant: 24),
-            self.qrItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.qrItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.qrItem.topAnchor.constraint(equalTo: self.servicePayItem.bottomAnchor, constant: 10),
-            self.qrItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.qrItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.qrItem.heightAnchor.constraint(equalToConstant: 24),
-            self.orderCardItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.orderCardItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.orderCardItem.topAnchor.constraint(equalTo: self.qrItem.bottomAnchor, constant: 10),
-            self.orderCardItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.orderCardItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.orderCardItem.heightAnchor.constraint(equalToConstant: 24),
-            self.transferItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.transferItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.transferItem.topAnchor.constraint(equalTo: self.orderCardItem.bottomAnchor, constant: 10),
-            self.transferItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.transferItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.transferItem.heightAnchor.constraint(equalToConstant: 24),
-            self.cashItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.cashItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.cashItem.topAnchor.constraint(equalTo: self.transferItem.bottomAnchor, constant: 10),
-            self.cashItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.cashItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.cashItem.heightAnchor.constraint(equalToConstant: 24),
-            self.convertItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.convertItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.convertItem.topAnchor.constraint(equalTo: self.cashItem.bottomAnchor, constant: 10),
-            self.convertItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.convertItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.convertItem.heightAnchor.constraint(equalToConstant: 24),
-            self.creditItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.creditItem.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.creditItem.topAnchor.constraint(equalTo: self.convertItem.bottomAnchor, constant: 10),
-            self.creditItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -16),
+            self.creditItem.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.creditItem.heightAnchor.constraint(equalToConstant: 24),
             self.creditItem.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
         ])

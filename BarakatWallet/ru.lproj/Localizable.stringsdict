@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>number_of_years</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>год</string>
+			<key>two</key>
+			<string>года</string>
+			<key>few</key>
+			<string>%d лет</string>
+			<key>many</key>
+			<string>%d лет</string>
+			<key>other</key>
+			<string>%d лет</string>
+		</dict>
+	</dict>
+	<key>number_of_months</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>few</key>
+			<string>%d месяца</string>
+			<key>many</key>
+			<string>%d месяцев</string>
+			<key>one</key>
+			<string>месяц</string>
+			<key>other</key>
+			<string>%d месяца</string>
+		</dict>
+	</dict>
+	<key>number_of_weeks</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>few</key>
+			<string>%d недель</string>
+			<key>many</key>
+			<string>%d недель</string>
+			<key>one</key>
+			<string>%d неделю</string>
+			<key>other</key>
+			<string>%d недель</string>
+		</dict>
+	</dict>
+	<key>number_of_days</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>few</key>
+			<string>%d дней</string>
+			<key>many</key>
+			<string>%d дней</string>
+			<key>one</key>
+			<string>%d день</string>
+			<key>two</key>
+			<string>%d дня</string>
+			<key>three</key>
+			<string>%d дня</string>
+			<key>other</key>
+			<string>%d дней</string>
+		</dict>
+	</dict>
+	<key>number_of_hours</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>few</key>
+			<string>%d часов</string>
+			<key>many</key>
+			<string>%d часов</string>
+			<key>one</key>
+			<string>час</string>
+			<key>other</key>
+			<string>%d часов</string>
+		</dict>
+	</dict>
+	<key>number_of_minutes</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@value@</string>
+		<key>value</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>few</key>
+			<string>%d минуты</string>
+			<key>many</key>
+			<string>%d минут</string>
+			<key>one</key>
+			<string>минута</string>
+			<key>other</key>
+			<string>%d минут</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

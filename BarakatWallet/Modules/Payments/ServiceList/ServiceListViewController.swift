@@ -20,13 +20,17 @@ class ServiceListViewController: BaseViewController, UITableViewDelegate, UITabl
         view.separatorStyle = .none
         return view
     }()
+    var searchItems: [AppStructs.PaymentGroup.ServiceItem] = []
+    var searchMode: Bool = false
+    let addFavoriteMode: Bool
     let viewModel: PaymentsViewModel
     let selectedGroup: AppStructs.PaymentGroup
     weak var coordinator: PaymentsCoordinator? = nil
     
-    init(viewModel: PaymentsViewModel, selectedGroup: AppStructs.PaymentGroup) {
+    init(viewModel: PaymentsViewModel, selectedGroup: AppStructs.PaymentGroup, addFavoriteMode: Bool) {
         self.viewModel = viewModel
         self.selectedGroup = selectedGroup
+        self.addFavoriteMode = addFavoriteMode
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -74,26 +78,60 @@ class ServiceListViewController: BaseViewController, UITableViewDelegate, UITabl
     }
     
     func updateSearchResults(for searchController: UISearchController) {
-        
+        if let text = searchController.searchBar.text?.lowercased(), text.count > 0 {
+            self.searchMode = true
+            self.searchItems.removeAll()
+            let services = self.selectedGroup.services.filter { service in
+                let lower = service.name.lowercased()
+                if lower == text || lower.contains(text) {
+                    return true
+                }
+                return false
+            }
+            self.searchItems.append(contentsOf: services)
+            self.tableView.reloadData()
+        } else {
+            self.searchItems.removeAll()
+            self.tableView.reloadData()
+        }
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        self.searchMode = false
+        self.searchItems.removeAll()
+        self.tableView.reloadData()
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let service = self.selectedGroup.services[indexPath.row]
-        self.coordinator?.navigateToPaymentView(service: service)
+        if self.searchMode {
+            let service = self.searchItems[indexPath.row]
+            self.coordinator?.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: self.addFavoriteMode, transferParam: nil)
+        } else {
+            let service = self.selectedGroup.services[indexPath.row]
+            self.coordinator?.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: self.addFavoriteMode, transferParam: nil)
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! PaymentServiceCell
-        cell.configure(service: self.selectedGroup.services[indexPath.row])
+        if self.searchMode {
+            cell.configure(item: self.searchItems[indexPath.row])
+        } else {
+            cell.configure(item: self.selectedGroup.services[indexPath.row])
+        }
         return cell
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.selectedGroup.services.count
+        if self.searchMode {
+            return self.searchItems.count
+        } else {
+            return self.selectedGroup.services.count
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 52
+        return 64
     }
 }

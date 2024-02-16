@@ -11,7 +11,7 @@ import UIKit
 class ImageControl: UIControl {
     
     let imageView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.imageView.image = UIImage(name: .plus_inset)
         view.layer.shadowColor = Theme.current.shadowColor.cgColor

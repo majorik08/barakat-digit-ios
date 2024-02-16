@@ -16,11 +16,12 @@ class CardReleaseItemCell: UICollectionViewCell {
         view.backgroundColor = .clear
         return view
     }()
-    let imageView: UIImageView = {
-        let view = UIImageView(frame: .zero)
+    let imageView: GradientImageView = {
+        let view = GradientImageView(insets: .zero)
+        view.circleImage = false
+        view.imageView.contentMode = .scaleAspectFill
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.contentMode = .scaleAspectFit
-        view.backgroundColor = Theme.current.cardGradientStartColor
+        view.backgroundColor = Theme.current.plainTableCellColor
         view.clipsToBounds = true
         view.layer.cornerRadius = 8
         return view
@@ -29,7 +30,7 @@ class CardReleaseItemCell: UICollectionViewCell {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.primaryTextColor
-        view.font = UIFont.medium(size: 12)
+        view.font = UIFont.medium(size: 14)
         view.numberOfLines = 0
         return view
     }()
@@ -37,7 +38,7 @@ class CardReleaseItemCell: UICollectionViewCell {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.secondaryTextColor
-        view.font = UIFont.medium(size: 12)
+        view.font = UIFont.regular(size: 13)
         view.numberOfLines = 0
         return view
     }()
@@ -78,11 +79,36 @@ class CardReleaseItemCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(item: AppStructs.CreditDebitCardItem) {
-        self.imageView.backgroundColor = Theme.current.cardGradientStartColor
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.imageView.imageView.image = nil
+        self.titleView.text = nil
+        self.subTitleView.text = nil
+    }
+    
+    func configure(item: AppStructs.CreditDebitCardTypes) {
         self.titleView.textColor = Theme.current.primaryTextColor
         self.subTitleView.textColor = Theme.current.secondaryTextColor
-        self.titleView.text = "\(item.name)\nДействует 3 года\n0% на остаток"
-        self.subTitleView.text = "Стоимость: 10 сомони\nСтраховой депозит 00.00 сомони"
+        self.titleView.text = "\(item.name)\n\("VALID_DATE".localized) \("number_of_years".localizedPlural(argument: item.limitation))\n\(item.remainder)% \("REMAINDER".localized)"
+        self.subTitleView.text = "\("PRICE".localized): \(item.price) сомони\n\("SEC_DEPOSIT".localized) \(item.securityDeposit) сомони"
+        self.imageView.backgroundColor = Theme.current.plainTableCellColor
+        
+        if item.image.isEmpty {
+            if item.cardCategory.colorID == 0 {
+                self.imageView.endColor = Constants.cardColors[0].end
+                self.imageView.startColor = Constants.cardColors[0].start
+            } else if item.cardCategory.colorID == 1 {
+                self.imageView.endColor = Constants.cardColors[1].end
+                self.imageView.startColor = Constants.cardColors[1].start
+            } else {
+                self.imageView.endColor = Constants.cardColors[2].end
+                self.imageView.startColor = Constants.cardColors[2].start
+            }
+            self.imageView.imageView.image = nil
+        } else {
+            self.imageView.endColor = .clear
+            self.imageView.startColor = .clear
+            self.imageView.imageView.loadImage(filePath: item.image)
+        }
     }
 }

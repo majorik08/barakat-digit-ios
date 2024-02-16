@@ -21,7 +21,7 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         view.backgroundColor = .clear
         view.showsVerticalScrollIndicator = false
         view.showsHorizontalScrollIndicator = false
-        view.contentInset = .init(top: 0, left: 11, bottom: 0, right: 11)
+        view.contentInset = .init(top: 0, left: Theme.current.mainPaddings - 5, bottom: 0, right: Theme.current.mainPaddings - 5)
         //view.isPagingEnabled = true
         return view
     }()
@@ -39,6 +39,7 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         view.setTitle("ALL".localized, for: .normal)
         view.setTitleColor(Theme.current.tintColor, for: .normal)
         view.titleLabel?.font = UIFont.medium(size: 16)
+        view.isHidden = true
         return view
     }()
     let controlView: AdvancedPageControlView = {
@@ -65,23 +66,23 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.contentView.addSubview(self.collectionView)
         self.contentView.addSubview(self.controlView)
         NSLayoutConstraint.activate([
-            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.titleView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
-            self.titleView.rightAnchor.constraint(lessThanOrEqualTo: self.allButton.leftAnchor, constant: -10),
+            self.titleView.rightAnchor.constraint(lessThanOrEqualTo: self.allButton.leftAnchor, constant: -Theme.current.mainPaddings),
             self.titleView.heightAnchor.constraint(equalToConstant: 18),
             self.allButton.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
-            self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.allButton.heightAnchor.constraint(equalToConstant: 18),
-            self.emptyView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.emptyView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.emptyView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
-            self.emptyView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.emptyView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.emptyView.bottomAnchor.constraint(equalTo: self.controlView.topAnchor, constant: -8),
             self.collectionView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 0),
             self.collectionView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
             self.collectionView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: 0),
-            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.controlView.topAnchor.constraint(equalTo: self.collectionView.bottomAnchor, constant: 8),
-            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.controlView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -4),
             self.controlView.heightAnchor.constraint(equalToConstant: 12)
         ])
@@ -124,7 +125,8 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         guard width > 0 else {
             return .init(width: 1, height: 1)
         }
-        let itemWidth = ((width - 22) / 2.6)
+        let insets = 2 * (Theme.current.mainPaddings - 5)
+        let itemWidth = ((width - insets) / 2.6)
         let height = (itemWidth - 10) * 0.6
         return .init(width: itemWidth, height: height)
     }
@@ -172,7 +174,7 @@ class MainVitrinaCell: UICollectionViewCell {
     let mainImage: UIImageView = {
         let view = UIImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.contentMode = .scaleAspectFit
+        view.contentMode = .scaleAspectFill
         view.layer.cornerRadius = 12
         view.clipsToBounds = true
         view.backgroundColor = .clear
@@ -182,7 +184,6 @@ class MainVitrinaCell: UICollectionViewCell {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.primaryTextColor
-        view.text = "КЕШБЕК НА ВСЕ ПЛАТИ БОЛЬШЕ"
         view.font = UIFont.medium(size: 10)
         view.textAlignment = .left
         view.lineBreakMode = .byWordWrapping
@@ -221,9 +222,16 @@ class MainVitrinaCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.titleView.text = nil
+        self.mainImage.image = nil
+    }
+    
     func configure(item: AppStructs.Showcase) {
         self.titleView.textColor = Theme.current.primaryTextColor
         self.rootView.backgroundColor = Theme.current.plainTableCellColor
         self.titleView.text = item.name
+        self.mainImage.loadImage(filePath: item.image)
     }
 }

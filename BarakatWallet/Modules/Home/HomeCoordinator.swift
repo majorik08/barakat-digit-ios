@@ -16,19 +16,19 @@ class HomeCoordinator: Coordinator {
     let accountInfo: AppStructs.AccountInfo
     
     var paymentsService: PaymentsService {
-        return ENVIRONMENT.isMock ? PaymentsServiceMockImpl() : PaymentsServiceImpl()
+        return ENVIRONMENT.isMock ? PaymentsServiceMockImpl(accountInfo: self.accountInfo) : PaymentsServiceImpl(accountInfo: self.accountInfo)
     }
     var bannerService: BannerService {
-        return ENVIRONMENT.isMock ? BannerServiceImpl() : BannerServiceMockImpl()
-    }
-    var favouriteService: FavouriteService {
-        return ENVIRONMENT.isMock ? FavouriteServiceImpl() : FavouriteServiceImpl()
+        return ENVIRONMENT.isMock ? BannerServiceMockImpl() : BannerServiceImpl()
     }
     var ratesService: RatesService {
         return ENVIRONMENT.isMock ? RatesServiceMockImpl() : RatesServiceImpl()
     }
     var accountService: AccountService {
         return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
+    }
+    var cardService: CardService {
+        return CardServiceImpl(accountInfo: self.accountInfo)
     }
     
     init(nav: BaseNavigationController, accountInfo: AppStructs.AccountInfo) {
@@ -38,7 +38,7 @@ class HomeCoordinator: Coordinator {
     }
     
     func start() {
-        let home = HomeViewController(viewModel: .init(accountService: self.accountService, paymentsService: self.paymentsService, bannerService: self.bannerService, ratesService: self.ratesService, accountInfo: self.accountInfo))
+        let home = HomeViewController(viewModel: .init(accountService: self.accountService, paymentsService: self.paymentsService, bannerService: self.bannerService, ratesService: self.ratesService, accountInfo: self.accountInfo, cardService: self.cardService))
         home.coordinator = self
         self.nav.viewControllers = [home]
     }
@@ -57,24 +57,24 @@ class HomeCoordinator: Coordinator {
         self.children.append(notify)
     }
     
-    func navigateToPayments(fromTransfers: Bool, paymentGroups: [AppStructs.PaymentGroup], transferTypes: [AppStructs.TransferTypes]) {
+    func navigateToPayments(fromTransfers: Bool, paymentGroups: [AppStructs.PaymentGroup], transferTypes: [AppStructs.PaymentGroup.ServiceItem], addFavoriteMode: Bool) {
         let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
         payments.parent = self.parent
-        payments.navigateToServiceGroups(paymentsOrder: fromTransfers ? .firstTransfers : .firstPayments, paymentGroups: paymentGroups, transferTypes: transferTypes)
+        payments.navigateToServiceGroups(paymentsOrder: fromTransfers ? .firstTransfers : .firstPayments, paymentGroups: paymentGroups, transferTypes: transferTypes, addFavoriteMode: addFavoriteMode, searchMode: false)
+        self.children.append(payments)
+    }
+    
+    func navigateToPaymentView(service: AppStructs.PaymentGroup.ServiceItem, merchant: AppStructs.Merchant?, transferParam: String?) {
+        let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
+        payments.parent = self.parent
+        payments.navigateToPaymentView(service: service, merchant: merchant, favorite: nil, addFavoriteMode: false, transferParam: transferParam)
         self.children.append(payments)
     }
     
     func navigateToServicesList(selectedGroup: AppStructs.PaymentGroup) {
         let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
         payments.parent = self.parent
-        payments.navigateToServicesList(selectedGroup: selectedGroup)
-        self.children.append(payments)
-    }
-    
-    func navigateToTransferView(transfer: AppStructs.TransferTypes) {
-        let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
-        payments.parent = self.parent
-        payments.navigateToTransferView(transfer: transfer)
+        payments.navigateToServicesList(selectedGroup: selectedGroup, addFavoriteMode: false)
         self.children.append(payments)
     }
     
@@ -104,7 +104,7 @@ class HomeCoordinator: Coordinator {
     }
     
     func navigateToFavouriteList() {
-        let vc = FavouriteListViewController(viewModel: .init(favouriteService: self.favouriteService))
+        let vc = FavouriteListViewController(viewModel: .init(service: self.paymentsService))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
@@ -115,8 +115,11 @@ class HomeCoordinator: Coordinator {
         self.nav.present(vc, animated: true)
     }
     
-    func navigateToServiceByFavourite(favourite: AppStructs.Favourite) {
-        
+    func navigateToServiceByFavourite(favourite: AppStructs.Favourite, service: AppStructs.PaymentGroup.ServiceItem) {
+        let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
+        payments.parent = self.parent
+        payments.navigateToPaymentView(service: service, merchant: nil, favorite: favourite, addFavoriteMode: false, transferParam: nil)
+        self.children.append(payments)
     }
     
     func navigateToCardView(userCards: [AppStructs.CreditDebitCard], selectedCard: AppStructs.CreditDebitCard?) {
@@ -125,6 +128,16 @@ class HomeCoordinator: Coordinator {
             cards.parent = self.parent
             cards.navigateToCardView(userCards: userCards, selectedCard: card)
             self.children.append(cards)
+        } else {
+            self.parent?.tabBar.selectedIndex = 4
+            self.parent?.didSelectTabItem(tag: 5)
         }
+    }
+    
+    func navigateToSearchView(paymentGroups: [AppStructs.PaymentGroup], transferTypes: [AppStructs.PaymentGroup.ServiceItem]) {
+        let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
+        payments.parent = self.parent
+        payments.navigateToServiceGroups(paymentsOrder: .firstPayments, paymentGroups: paymentGroups, transferTypes: transferTypes, addFavoriteMode: false, searchMode: true)
+        self.children.append(payments)
     }
 }

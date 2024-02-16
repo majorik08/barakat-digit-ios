@@ -8,13 +8,18 @@
 import Foundation
 import UIKit
 
-class CardItemCell: UICollectionViewCell {
-    
+protocol CardItemCellDelegate: AnyObject {
+    func copyInfo(cell: CardItemCell, number: Bool, date: Bool, cvv: Bool)
+}
+
+class CardItemCell: UICollectionViewCell, CardViewDelegate {
+   
     let cardView: CardView = {
         let view = CardView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+    weak var delegate: CardItemCellDelegate?
     
     override var isHighlighted: Bool {
         didSet {
@@ -38,7 +43,12 @@ class CardItemCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(card: AppStructs.CreditDebitCard, show: Bool, selectedColor: (start: UIColor, end: UIColor)? = nil) {
-        self.cardView.configure(card: card, show: show, selectedColor: selectedColor)
+    func configure(card: AppStructs.CreditDebitCard, show: Bool, showCopy: Bool, selectedColor: (start: UIColor, end: UIColor)? = nil) {
+        self.cardView.delegate = self
+        self.cardView.configure(card: card, show: show, showCopy: showCopy, selectedColor: selectedColor)
+    }
+    
+    func copyInfo(cardView: CardView, number: Bool, date: Bool, cvv: Bool) {
+        self.delegate?.copyInfo(cell: self, number: number, date: date, cvv: cvv)
     }
 }

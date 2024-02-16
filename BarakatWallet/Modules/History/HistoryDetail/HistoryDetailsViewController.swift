@@ -7,9 +7,34 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
-class HistoryDetailsViewController: BaseViewController {
+class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControllerDelegate {
     
+    let bgView: GradientView = {
+        let view = GradientView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.startColor = Theme.current.mainGradientStartColor
+        view.endColor = Theme.current.mainGradientEndColor
+        view.alpha = 1
+        view.isUserInteractionEnabled = true
+        return view
+    }()
+    let rootView: UIView = {
+        let view = UIView()
+        view.backgroundColor = Theme.current.plainTableBackColor
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 20
+        return view
+    }()
+    let topAnchorView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor(red:0.73, green:0.74, blue:0.75, alpha:1.0)
+        view.clipsToBounds = true
+        view.layer.cornerRadius = 3
+        return view
+    }()
     private let scrollView: UIScrollView = {
         let view = UIScrollView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -19,29 +44,71 @@ class HistoryDetailsViewController: BaseViewController {
         view.backgroundColor = .clear
         return view
     }()
-    private let rootView: UIView = {
-        let view = UIView(frame: .zero)
+    let containerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .clear
-        view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    private let shareButton: BaseButtonView = {
-        let view = BaseButtonView(frame: .zero)
+    let statusLabel: UILabel = {
+        let view = UILabel()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.setTitleColor(.white, for: .normal)
-        view.radius = 14
-        view.setTitle("SEND".localized, for: .normal)
-        view.isEnabled = true
-        view.setImage(UIImage(name: .profile_share), for: .normal)
-        view.imageView?.tintColor = .white
+        view.textColor = .systemGreen
+        view.font = UIFont.medium(size: 20)
+        view.text = "Платеж выполнен"
+        view.numberOfLines = 0
         return view
     }()
-    private let checkView: UIView = {
-        let view = UIView(backgroundColor: .clear)
+    let sumLabel: UILabel = {
+        let view = UILabel()
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.textColor = Theme.current.tintColor
+        view.font = UIFont.medium(size: 30)
+        view.numberOfLines = 0
         return view
     }()
-    private let stackView: UIStackView = {
+    let statusIcon: UIImageView = {
+        let view = UIImageView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.contentMode = .scaleAspectFit
+        view.image = UIImage(name: .success)
+        view.tintColor = Theme.current.tintColor
+        return view
+    }()
+    let saveFavButton: VerticalButtonView = {
+        let view = VerticalButtonView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.nameView.text = "TO_FAVORITES".localized
+        view.iconView.imageView.image = UIImage(name: .fav_icon).tintedWithLinearGradientColors()
+        view.iconView.imageView.layer.borderWidth = 1
+        view.iconView.imageView.layer.borderColor = Theme.current.borderColor.cgColor
+        view.iconView.startColor = .clear
+        view.iconView.endColor = .clear
+        return view
+    }()
+    let retryButton: VerticalButtonView = {
+        let view = VerticalButtonView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.nameView.text = "REPEAT".localized
+        view.iconView.imageView.image = UIImage(name: .repeat_icon).tintedWithLinearGradientColors()
+        view.iconView.imageView.layer.borderWidth = 1
+        view.iconView.imageView.layer.borderColor = Theme.current.borderColor.cgColor
+        view.iconView.startColor = .clear
+        view.iconView.endColor = .clear
+        return view
+    }()
+    let recipeButton: VerticalButtonView = {
+        let view = VerticalButtonView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.nameView.text = "SHOW_CHECK".localized
+        view.iconView.imageView.image = UIImage(name: .recipe).tintedWithLinearGradientColors()
+        view.iconView.imageView.layer.borderWidth = 1
+        view.iconView.imageView.layer.borderColor = Theme.current.borderColor.cgColor
+        view.iconView.startColor = .clear
+        view.iconView.endColor = .clear
+        return view
+    }()
+    let stackView: UIStackView = {
         let view = UIStackView(frame: .zero)
         view.axis = .vertical
         view.distribution = .fill
@@ -50,17 +117,13 @@ class HistoryDetailsViewController: BaseViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    private let stampView: StampView = {
-        let view = StampView(frame: .zero)
-        view.backgroundColor = Theme.current.plainTableCellColor
-        return view
-    }()
-    
     let viewModel: HistoryViewModel
+    let item: AppStructs.HistoryItem
     weak var coordinator: HistoryCoordinator? = nil
      
-    init(viewModel: HistoryViewModel) {
+    init(viewModel: HistoryViewModel, item: AppStructs.HistoryItem) {
         self.viewModel = viewModel
+        self.item = item
         super.init(nibName: nil, bundle: nil)
         self.hidesBottomBarWhenPushed = true
     }
@@ -71,70 +134,197 @@ class HistoryDetailsViewController: BaseViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationItem.title = "HISTORY".localized
-        self.view.backgroundColor = Theme.current.plainTableBackColor
-        self.view.addSubview(self.scrollView)
-        self.scrollView.addSubview(self.rootView)
-        self.rootView.addSubview(self.checkView)
-        self.checkView.addSubview(self.stackView)
-        self.checkView.addSubview(self.stampView)
-        self.rootView.addSubview(self.shareButton)
-        let rootHeight = self.rootView.heightAnchor.constraint(equalTo: self.scrollView.heightAnchor)
+        self.view.backgroundColor = .clear
+        self.view.addSubview(self.bgView)
+        self.view.addSubview(self.rootView)
+        self.rootView.addSubview(self.topAnchorView)
+        self.rootView.addSubview(self.scrollView)
+        self.scrollView.addSubview(self.containerView)
+        self.containerView.addSubview(self.statusLabel)
+        self.containerView.addSubview(self.sumLabel)
+        self.containerView.addSubview(self.statusIcon)
+        self.containerView.addSubview(self.saveFavButton)
+        self.containerView.addSubview(self.retryButton)
+        self.containerView.addSubview(self.recipeButton)
+        self.containerView.addSubview(self.stackView)
+        let rootHeight = self.containerView.heightAnchor.constraint(equalTo: self.scrollView.heightAnchor)
         rootHeight.priority = UILayoutPriority(rawValue: 250)
         NSLayoutConstraint.activate([
-            self.scrollView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
-            self.scrollView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor),
-            self.scrollView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
-            self.scrollView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor),
-            self.rootView.leftAnchor.constraint(equalTo: self.scrollView.leftAnchor),
-            self.rootView.topAnchor.constraint(equalTo: self.scrollView.topAnchor),
-            self.rootView.rightAnchor.constraint(equalTo: self.scrollView.rightAnchor),
-            self.rootView.bottomAnchor.constraint(equalTo: self.scrollView.bottomAnchor),
-            rootView.widthAnchor.constraint(equalTo: self.scrollView.widthAnchor),
+            self.bgView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            self.bgView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            self.bgView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            self.bgView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+            self.rootView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            self.rootView.topAnchor.constraint(greaterThanOrEqualTo: self.view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            self.rootView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            self.rootView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+            self.rootView.heightAnchor.constraint(equalTo: self.view.heightAnchor, multiplier: 0.8),
+            self.topAnchorView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 16),
+            self.topAnchorView.centerXAnchor.constraint(equalTo: self.rootView.centerXAnchor),
+            self.topAnchorView.heightAnchor.constraint(equalToConstant: 6),
+            self.topAnchorView.widthAnchor.constraint(equalToConstant: 48),
+            self.scrollView.topAnchor.constraint(equalTo: self.topAnchorView.bottomAnchor, constant: 20),
+            self.scrollView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings + 20),
+            self.scrollView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -(Theme.current.mainPaddings + 20)),
+            self.scrollView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -(self.view.safeAreaInsets.bottom + 30)),
+            self.containerView.leftAnchor.constraint(equalTo: self.scrollView.leftAnchor),
+            self.containerView.topAnchor.constraint(equalTo: self.scrollView.topAnchor),
+            self.containerView.rightAnchor.constraint(equalTo: self.scrollView.rightAnchor),
+            self.containerView.bottomAnchor.constraint(equalTo: self.scrollView.bottomAnchor),
+            self.containerView.widthAnchor.constraint(equalTo: self.scrollView.widthAnchor),
             rootHeight,
-            self.checkView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor),
-            self.checkView.topAnchor.constraint(equalTo: self.rootView.topAnchor),
-            self.checkView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor),
-            self.shareButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
-            self.shareButton.topAnchor.constraint(greaterThanOrEqualTo: self.checkView.bottomAnchor, constant: Theme.current.mainPaddings),
-            self.shareButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.shareButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -30),
-            self.shareButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight),
-            self.stackView.leftAnchor.constraint(equalTo: self.checkView.leftAnchor, constant: Theme.current.mainPaddings),
-            self.stackView.topAnchor.constraint(equalTo: self.checkView.topAnchor, constant: Theme.current.mainPaddings),
-            self.stackView.rightAnchor.constraint(equalTo: self.checkView.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.stampView.topAnchor.constraint(equalTo: self.stackView.bottomAnchor, constant: 30),
-            self.stampView.centerXAnchor.constraint(equalTo: self.checkView.centerXAnchor),
-            self.stampView.widthAnchor.constraint(equalTo: self.checkView.widthAnchor, multiplier: 0.8),
-            self.stampView.bottomAnchor.constraint(equalTo: self.checkView.bottomAnchor, constant: -30),
+            self.statusLabel.leftAnchor.constraint(equalTo: self.containerView.leftAnchor, constant: 0),
+            self.statusLabel.topAnchor.constraint(equalTo: self.containerView.topAnchor),
+            self.statusLabel.rightAnchor.constraint(equalTo: self.statusIcon.leftAnchor, constant: -10),
+            self.sumLabel.leftAnchor.constraint(equalTo: self.containerView.leftAnchor, constant: 0),
+            self.sumLabel.topAnchor.constraint(equalTo: self.statusLabel.bottomAnchor, constant: 6),
+            self.sumLabel.rightAnchor.constraint(equalTo: self.statusIcon.leftAnchor, constant: -10),
+            self.statusIcon.topAnchor.constraint(equalTo: self.containerView.topAnchor),
+            self.statusIcon.rightAnchor.constraint(equalTo: self.containerView.rightAnchor, constant: 0),
+            self.statusIcon.widthAnchor.constraint(equalToConstant: 55),
+            self.statusIcon.heightAnchor.constraint(equalToConstant: 55),
+            self.retryButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
+            self.retryButton.centerXAnchor.constraint(equalTo: self.containerView.centerXAnchor),
+            self.retryButton.heightAnchor.constraint(equalToConstant: 76),
+            self.saveFavButton.leftAnchor.constraint(equalTo: self.containerView.leftAnchor),
+            self.saveFavButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
+            self.saveFavButton.rightAnchor.constraint(equalTo: self.retryButton.leftAnchor, constant: -30),
+            self.saveFavButton.heightAnchor.constraint(equalToConstant: 76),
+            self.recipeButton.leftAnchor.constraint(equalTo: self.retryButton.rightAnchor, constant: 30),
+            self.recipeButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
+            self.recipeButton.rightAnchor.constraint(equalTo: self.containerView.rightAnchor),
+            self.recipeButton.heightAnchor.constraint(equalToConstant: 76),
+            self.stackView.leftAnchor.constraint(equalTo: self.containerView.leftAnchor, constant: 0),
+            self.stackView.topAnchor.constraint(equalTo: self.retryButton.bottomAnchor, constant: 40),
+            self.stackView.rightAnchor.constraint(equalTo: self.containerView.rightAnchor, constant: 0),
+            self.stackView.bottomAnchor.constraint(lessThanOrEqualTo: self.containerView.bottomAnchor, constant: -10),
         ])
-        self.shareButton.addTarget(self, action: #selector(self.asImage), for: .touchUpInside)
+        self.bgView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.dismisIfCan)))
+        self.recipeButton.addTarget(self, action: #selector(self.goToRecipe), for: .touchUpInside)
+        self.saveFavButton.addTarget(self, action: #selector(self.goToSave), for: .touchUpInside)
+        self.retryButton.addTarget(self, action: #selector(self.goToRepeat), for: .touchUpInside)
+        self.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
         self.configure()
+    }
+    
+    override func themeChanged(newTheme: Theme) {
+        super.themeChanged(newTheme: newTheme)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.navigationBar.isHidden = false
-        self.setStatusBarStyle(dark: nil)
+        self.setStatusBarStyle(dark: false)
+        self.navigationController?.navigationBar.isHidden = true
+        self.setNeedsStatusBarAppearanceUpdate()
+        self.animateView()
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        if #available(iOS 13.0, *) {
+            return .lightContent
+        } else {
+            return .default
+        }
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+    }
+    
+    func animateView() {
+        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut, animations: {() -> Void in
+            self.rootView.transform = .identity
+        }, completion: {(finished: Bool) -> Void in })
+    }
+    
+    func animateDismis() {
+        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut, animations: {() -> Void in
+            self.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
+        }, completion: {(finished: Bool) -> Void in
+            self.coordinator?.navigateBack()
+        })
+    }
+    
+    @objc func dismisIfCan() {
+        self.animateDismis()
+    }
+    
+    @objc func goToRecipe() {
+        self.coordinator?.navigateToRecipeView(item: self.item)
+    }
+    
+    @objc func goToRepeat() {
+        if let serviceId = Int(self.item.service), let service = self.viewModel.accountInfo.getService(serviceID: serviceId) {
+            self.coordinator?.navigateToRepetPayment(service: service)
+        }
+    }
+    
+    @objc func goToSave() {
+        let c = AddFavoriteViewController()
+        c.delegate = self
+        self.present(c, animated: true)
+    }
+    
+    func addFavorite(name: String) {
+        if let serviceId = Int(self.item.service) {
+            self.showProgressView()
+            self.viewModel.paymentsService.addFavorite(account: self.item.accountFrom, amount: self.item.amount, comment: "", params: [self.item.accountTo], name: name, serviceID: serviceId)
+                .observe(on: MainScheduler.instance).subscribe { [weak self] _ in
+                    guard let self = self else { return }
+                    self.successProgress(text: "ADDED".localized)
+                } onFailure: { [weak self] error in
+                    guard let self = self else { return }
+                    if let error = error as? NetworkError {
+                        self.viewModel.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
+                    } else {
+                        self.viewModel.didLoadError.onNext(error.localizedDescription)
+                    }
+                }.disposed(by: self.viewModel.disposeBag)
+        }
     }
     
     func configure() {
-        for i in 0...7 {
+        self.sumLabel.text = self.item.amount.balanceText
+        if self.item.status == 0 {
+            self.statusLabel.textColor = .systemGreen
+            self.statusLabel.text = "PAYMENT_SUCCESS".localized
+        } else {
+            self.statusLabel.textColor = .systemRed
+            self.statusLabel.text = "PAYMENT_FAILED".localized
+        }
+        if let serviceId = Int(self.item.service), let service = self.viewModel.accountInfo.getService(serviceID: serviceId) {
             let infoView = HistoryInfoItemView(frame: .zero)
-            infoView.titleLabel.text = "Title #\(i)"
-            infoView.infoLabel.text = "Detail #\(i)"
+            infoView.titleLabel.text = "HISTORY_TITLE".localized
+            infoView.infoLabel.text = service.name
             self.stackView.addArrangedSubview(infoView)
         }
-    }
-    
-    @objc func asImage() {
-        let renderer = UIGraphicsImageRenderer(bounds: self.checkView.bounds)
-        let image = renderer.image { rendererContext in
-            self.checkView.layer.render(in: rendererContext.cgContext)
-        }
-        let imagesToShare = [image]
-        let activityViewController = UIActivityViewController(activityItems: imagesToShare, applicationActivities: nil)
-        activityViewController.popoverPresentationController?.sourceView = self.shareButton
-        self.present(activityViewController, animated: true, completion: nil)
+        let tranView = HistoryInfoItemView(frame: .zero)
+        tranView.titleLabel.text = "HISTORY_TRANSACTIONS".localized
+        tranView.infoLabel.text = self.item.tran_id
+        self.stackView.addArrangedSubview(tranView)
+        let toBillView = HistoryInfoItemView(frame: .zero)
+        toBillView.titleLabel.text = "HISTORY_TO_BILL".localized
+        toBillView.infoLabel.text = self.item.accountTo
+        self.stackView.addArrangedSubview(toBillView)
+        let dateView = HistoryInfoItemView(frame: .zero)
+        dateView.titleLabel.text = "HISTORY_DATE".localized
+        dateView.infoLabel.text = self.item.datetime
+        self.stackView.addArrangedSubview(dateView)
+        let sumView = HistoryInfoItemView(frame: .zero)
+        sumView.titleLabel.text = "HISTORY_SUM".localized
+        sumView.infoLabel.text = self.item.amount.balanceText
+        self.stackView.addArrangedSubview(sumView)
+        let feeView = HistoryInfoItemView(frame: .zero)
+        feeView.titleLabel.text = "HISTORY_FEE".localized
+        feeView.infoLabel.text = self.item.commission.balanceText
+        self.stackView.addArrangedSubview(feeView)
+        let totalView = HistoryInfoItemView(frame: .zero)
+        totalView.titleLabel.text = "HISTORY_TOTAL".localized
+        totalView.infoLabel.text = self.item.amount.balanceText
+        self.stackView.addArrangedSubview(totalView)
+        let fromBill = HistoryInfoItemView(frame: .zero)
+        fromBill.titleLabel.text = "HISTORY_FROM_BILL".localized
+        fromBill.infoLabel.text = self.item.accountFrom
+        self.stackView.addArrangedSubview(fromBill)
     }
 }

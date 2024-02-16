@@ -14,7 +14,7 @@ struct AppMethods {
         
         struct Register: EndpointRequestType {
             static var method: HTTPMethod = .post
-            static var url: String = "registration"
+            var url: String = "registration"
             public static var result: Result.Type = Result.self
             public var params: Params
             
@@ -32,7 +32,7 @@ struct AppMethods {
         
         struct Confirm: EndpointRequestType {
             static var method: HTTPMethod = .post
-            static var url: String = "registration/confirm"
+            var url: String = "registration/confirm"
             public static var result: Result.Type = Result.self
             public var params: Params
             
@@ -53,7 +53,7 @@ struct AppMethods {
         
         struct DeviceUpdate: EndpointRequestType {
             static var method: HTTPMethod = .post
-            static var url: String = "device/update"
+            var url: String = "device/update"
             public static var result: Result.Type = Result.self
             public var params: AppStructs.Device
             
@@ -66,7 +66,7 @@ struct AppMethods {
         }
         struct RefreshToken: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "refresh/token"
+            var url: String = "refresh/token"
             public static var result: Result.Type = Result.self
             public var params: EmptyParams
             
@@ -84,12 +84,86 @@ struct AppMethods {
     struct Acccount {
         struct Accounts: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "accounts/accounts"
-            public static var result: [[AppStructs.Account]].Type = [[AppStructs.Account]].self
+            var url: String = "accounts/accounts"
+            public static var result: [AppStructs.Account].Type = [AppStructs.Account].self
             public var params: EmptyParams
             
             public init(_ params: EmptyParams) {
                 self.params = params
+            }
+        }
+        struct GetEntries: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "accounts/entries"
+            public static var result: [AppStructs.EntryItem].Type = [AppStructs.EntryItem].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
+        struct GetHistory: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "accounts/history"
+            public static var result: [AppStructs.HistoryItem].Type = [AppStructs.HistoryItem].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                var str = "accounts/history?"
+                if let t = params.account {
+                    str += "account=\(t)&"
+                }
+                if let t = params.amountFrom {
+                    str += "amountFrom=\(t)&"
+                }
+                if let t = params.amountTo {
+                    str += "amountFrom=\(t)&"
+                }
+                if let t = params.dateFrom {
+                    str += "dateFrom=\(t)&"
+                }
+                if let t = params.dateTo {
+                    str += "dateTo=\(t)&"
+                }
+                if let t = params.expenses {
+                    str += "expenses=\(t)&"
+                }
+                if let t = params.incoming {
+                    str += "incoming=\(t)&"
+                }
+                if let t = params.type {
+                    str += "type=\(t)&"
+                }
+                str += "limit=\(params.limit)&"
+                str += "offset=\(params.offset)&"
+                self.url = str
+            }
+            public struct Params: Codable {
+                var account: String?
+                var amountFrom: Double?
+                var amountTo: Double?
+                var dateFrom: String?
+                var dateTo: String?
+                var expenses: Bool?
+                var incoming: Bool?
+                var type: Int?
+                var limit: Int
+                var offset: Int
+            }
+        }
+        struct GetHistoryById: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "accounts/history"
+            public static var result: AppStructs.HistoryItem.Type = AppStructs.HistoryItem.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "accounts/history/\(params.tranId)"
+            }
+            public struct Params: Codable {
+                var tranId: String
             }
         }
     }
@@ -97,8 +171,8 @@ struct AppMethods {
     struct Client {
         struct Info: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "clients/client"
-            public static var result: [AppStructs.ClientInfo].Type = [AppStructs.ClientInfo].self
+            var url: String = "clients/client"
+            public static var result: AppStructs.ClientInfo.Type = AppStructs.ClientInfo.self
             public var params: EmptyParams
             
             public init(_ params: EmptyParams) {
@@ -107,7 +181,7 @@ struct AppMethods {
         }
         struct InfoSet: EndpointRequestType {
             static var method: HTTPMethod = .put
-            static var url: String = "clients/client"
+            var url: String = "clients/client"
             public static var result: EmptyParams.Type = EmptyParams.self
             public var params: Params
             
@@ -125,7 +199,7 @@ struct AppMethods {
         }
         struct AvatarSet: EndpointRequestType {
             static var method: HTTPMethod = .put
-            static var url: String = "clients/client/avatar"
+            var url: String = "clients/client/avatar"
             public static var result: EmptyParams.Type = EmptyParams.self
             public var params: Params
             
@@ -138,7 +212,7 @@ struct AppMethods {
         }
         struct SettingsSet: EndpointRequestType {
             static var method: HTTPMethod = .put
-            static var url: String = "clients/client/settings"
+            var url: String = "clients/client/settings"
             public static var result: EmptyParams.Type = EmptyParams.self
             public var params: Params
             
@@ -153,8 +227,8 @@ struct AppMethods {
         
         struct IdentifyGet: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "clients/client/identification"
-            public static var result: [IdentifyResult].Type = [IdentifyResult].self
+            var url: String = "clients/client/identification"
+            public static var result: IdentifyResult.Type = IdentifyResult.self
             public var params: EmptyParams
             
             public init(_ params: EmptyParams) {
@@ -177,9 +251,19 @@ struct AppMethods {
                 }
             }
         }
+        struct IdentifyLimitsGet: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "clients/limits"
+            public static var result: [AppStructs.ClientInfo.Limit].Type = [AppStructs.ClientInfo.Limit].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
         struct IdentifySet: EndpointRequestType {
             static var method: HTTPMethod = .post
-            static var url: String = "clients/client/identification"
+            var url: String = "clients/client/identification"
             public static var result: EmptyParams.Type = EmptyParams.self
             public var params: Params
             
@@ -193,13 +277,118 @@ struct AppMethods {
                 let status: Int
             }
         }
+        struct FavoritesGet: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "clients/favorites"
+            public static var result: [AppStructs.Favourite].Type = [AppStructs.Favourite].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
+        struct FavoriteSet: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "clients/favorites"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                var account: String
+                var amount: Double
+                var comment: String
+                var params: [String]
+                var name: String
+                var serviceID: Int
+            }
+        }
+        struct FavoriteDelete: EndpointRequestType {
+            static var method: HTTPMethod = .delete
+            var url: String = "clients/favorites"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "clients/favorites/\(params.id)"
+            }
+            public struct Params: Codable {
+                var id: Int
+            }
+        }
+    }
+    
+    struct Transfers {
+        struct GetNumberInfo: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "simple/services/info/"
+            public static var result: [GetNumberInfoResult].Type = [GetNumberInfoResult].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "simple/services/info/\(params.account)"
+            }
+            public struct Params: Codable {
+                let account: String
+            }
+            public struct GetNumberInfoResult: Codable {
+                let accountInfo: String
+                let service: AppStructs.PaymentGroup.ServiceItem
+            }
+        }
+        struct GetTransgerData: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "simple/services/transfer/data"
+            public static var result: GetTransgerDataResult.Type = GetTransgerDataResult.self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+            public struct GetTransgerDataResult: Codable {
+                let commissions: [Commissions]
+                let rate: AppStructs.CurrencyRate
+                
+                struct Commissions: Codable {
+                    let calcMethod: Int
+                    let commissionValue: Int
+                    let maxValue: Int
+                    let minValue: Int
+                }
+            }
+        }
+        struct TransferSend: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "simple/services/transfer/data"
+            public static var result: TransferSendResult.Type = TransferSendResult.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let accountFrom: String
+                let accountTo: String
+                let accountType: AppStructs.AccountType
+                let amountCurrency: Int
+                let phoneNumber: String
+                let serviceID: Int
+            }
+            public struct TransferSendResult: Codable {
+                let formURL: String
+                let OrderId: Int
+            }
+        }
     }
     
     struct Payments {
         struct GetServices: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "services/services"
-            public static var result: [ServicesResult].Type = [ServicesResult].self
+            var url: String = "services/services"
+            public static var result: ServicesResult.Type = ServicesResult.self
             public var params: EmptyParams
             
             public init(_ params: EmptyParams) {
@@ -208,7 +397,104 @@ struct AppMethods {
             
             public struct ServicesResult: Codable {
                 let groups: [AppStructs.PaymentGroup]
-                let transfers: [AppStructs.TransferTypes]
+                let transfers: [AppStructs.PaymentGroup.ServiceItem]
+            }
+        }
+        struct TransactionVerify: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "services/transaction/verify"
+            public static var result: VerifyResult.Type = VerifyResult.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let account: String
+                let accountType: AppStructs.AccountType
+                let amount: Double
+                let comment: String
+                let params: [String]
+                let serviceID: Int
+            }
+            public struct VerifyResult: Codable {
+                let admission: Double
+                let commission: Double
+                let dateTran: String
+                let isCheckVerify: Bool
+                let timeTran: String
+                let tranID: String
+                let verifyKey: String
+            }
+        }
+        struct TransactionCommit: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "services/transaction/commit/trainId"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "services/transaction/commit/\(params.tranID)"
+            }
+            public struct Params: Codable {
+                let tranID: String
+                let code: String
+                let key: String
+            }
+        }
+        struct GetAccountInfo: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "services/account/info/service/account"
+            public static var result: GetAccountResult.Type = GetAccountResult.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "services/account/info/\(params.service)/\(params.account)"
+            }
+            public struct Params: Codable {
+                let service: String
+                let account: String
+            }
+            public struct GetAccountResult: Codable {
+                let info: String
+            }
+        }
+        struct GetNumberInfo: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "services/info/"
+            public static var result: [GetNumberInfoResult].Type = [GetNumberInfoResult].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "services/info/\(params.account)"
+            }
+            public struct Params: Codable {
+                let account: String
+            }
+            public struct GetNumberInfoResult: Codable {
+                let accountInfo: String
+                let service: AppStructs.PaymentGroup.ServiceItem
+            }
+        }
+        struct QrCheck: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "qr/check"
+            public static var result: CheckResult.Type = CheckResult.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let data: String
+            }
+            public struct CheckResult: Codable {
+                let merchant: AppStructs.Merchant?
+                let service: Int
+                let transferParam: String?
             }
         }
     }
@@ -216,8 +502,8 @@ struct AppMethods {
     struct App {
         struct GetBanners: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "banners/banners"
-            public static var result: [[AppStructs.Banner]].Type = [[AppStructs.Banner]].self
+            var url: String = "simple/banners/banners"
+            public static var result: [AppStructs.Banner].Type = [AppStructs.Banner].self
             public var params: Params
             
             public init(_ params: Params) {
@@ -227,8 +513,23 @@ struct AppMethods {
         }
         struct GetCashbeks: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "banners/cash_back"
-            public static var result: [[AppStructs.Showcase]].Type = [[AppStructs.Showcase]].self
+            var url: String = "banners/cash_back"
+            public static var result: [AppStructs.Showcase].Type = [AppStructs.Showcase].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "banners/cash_back?limit=\(params.limit)&offset=\(params.offset)"
+            }
+            public struct Params: Codable {
+                let limit: Int
+                let offset: Int
+            }
+        }
+        struct GetStories: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "simple/banners/stories"
+            public static var result: [AppStructs.Stories].Type = [AppStructs.Stories].self
             public var params: Params
             
             public init(_ params: Params) {
@@ -236,16 +537,205 @@ struct AppMethods {
             }
             public struct Params: Codable {}
         }
-        struct GetStories: EndpointRequestType {
+        struct NotificationsGet: EndpointRequestType {
             static var method: HTTPMethod = .get
-            static var url: String = "banners/stories"
-            public static var result: [[AppStructs.Stories]].Type = [[AppStructs.Stories]].self
+            var url: String = "notify/notifications"
+            public static var result: [AppStructs.NotificationNews].Type = [AppStructs.NotificationNews].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "notify/notifications?limit=\(params.limit)&offset=\(params.offset)"
+            }
+            public struct Params: Codable {
+                let limit: Int
+                let offset: Int
+            }
+        }
+        struct GetRates: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "clients/rates"
+            public static var result: [AppStructs.CurrencyRate].Type = [AppStructs.CurrencyRate].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
+    }
+    
+    struct Card {
+        struct GetCategories: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "cards/categories"
+            public static var result: [AppStructs.CreditDebitCardCategory].Type = [AppStructs.CreditDebitCardCategory].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
+        struct GetRegions: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "cards/regions"
+            public static var result: [AppStructs.Region].Type = [AppStructs.Region].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
+        struct GetBankCards: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "cards/bank/cards"
+            public static var result: [AppStructs.CreditDebitCardTypes].Type = [AppStructs.CreditDebitCardTypes].self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "cards/bank/cards?category=\(params.category)"
+            }
+            public struct Params: Codable {
+                let category: Int
+            }
+        }
+        struct OrderBankCard: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "cards/card/order"
+            public static var result: OrderResult.Type = OrderResult.self
             public var params: Params
             
             public init(_ params: Params) {
                 self.params = params
             }
-            public struct Params: Codable {}
+            public struct Params: Codable {
+                let account: String
+                let accountType: AppStructs.AccountType
+                let bankCardID: Int
+                let holderMidname: String
+                let holderName: String
+                let holderSurname: String
+                let phoneNumber: String
+                let receivingType: ReceivingType
+                let regionID: Int
+                let pointID: Int
+                
+                enum ReceivingType: Int, Codable {
+                    case ship = 0
+                    case point = 1
+                }
+            }
+            struct OrderResult: Codable {
+                let DeliveryTranID: String?
+                let cardTranID: String?
+                let id: Int
+                let succeedTime: String
+            }
+        }
+        struct GetOrderBankCard: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "cards/card/orders"
+            public static var result: [OrderResult].Type = [OrderResult].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+            public struct OrderResult: Codable {
+                let bankCard: AppStructs.CreditDebitCardTypes
+                let bankCardID: Int
+                let cardStatus: Int
+                let holderMidname: String
+                let holderName: String
+                let holderSurname: String
+                let id: Int
+                let paymentStatus: PaymentStatus
+                let phoneNumber: String
+                let receivingType: OrderBankCard.Params.ReceivingType
+                let region: AppStructs.Region
+                let point: AppStructs.Region.Points
+                let regionID: Int
+                let pointID: Int
+            }
+            
+            enum PaymentStatus: Int, Codable {
+                case notPay = 0
+                case pay = 1
+            }
+        }
+        
+        struct GetUserCards: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "cards/card"
+            public static var result: [AppStructs.CreditDebitCard].Type = [AppStructs.CreditDebitCard].self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
+        struct GetUserCardsBalance: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "cards/card/balance"
+            public static var result: AppStructs.CreditDebitCard.Type = AppStructs.CreditDebitCard.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "cards/card/balance/\(params.id)"
+            }
+            public struct Params: Codable {
+                let id: Int
+            }
+        }
+        struct UpdateUserCard: EndpointRequestType {
+            static var method: HTTPMethod = .put
+            var url: String = "cards/card"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let PINOnPay: Bool?
+                let block: Bool?
+                let colorID: Int?
+                let id: Int
+                let internetPay: Bool?
+            }
+        }
+        struct AddUserCard: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "cards/card"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let cardHolder: String
+                let colorID: Int
+                let cvv: String
+                let pan: String
+                let validMonth: String
+                let validYear: String
+            }
+        }
+        struct DeleteUserCard: EndpointRequestType {
+            static var method: HTTPMethod = .delete
+            var url: String = "cards/card"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "cards/card/\(params.id)"
+            }
+            public struct Params: Codable {
+                let id: Int
+            }
         }
     }
 }

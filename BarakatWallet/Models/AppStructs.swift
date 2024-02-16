@@ -23,8 +23,51 @@ struct AppStructs {
     
     class AccountInfo {
         
+        enum BalanceType {
+            case wallet(account: Account)
+            case card(card: CreditDebitCard)
+            
+            var name: String {
+                switch self {
+                case .wallet(account: let account):
+                    return account.name
+                case .card(card: let card):
+                    return card.pan
+                }
+            }
+            var account: String {
+                switch self {
+                case .wallet(account: let account):
+                    return account.account
+                case .card(card: let card):
+                    return card.pan
+                }
+            }
+            var balance: Double? {
+                switch self {
+                case .wallet(account: let account):
+                    return account.balance
+                case .card(_):
+                    return nil
+                }
+            }
+            var accountType: AccountType {
+                switch self {
+                case .wallet(_):return .wallet
+                case .card(_):return .card
+                }
+            }
+        }
+        
         let didUpdateClient = PublishSubject<Void>()
         let didUpdateAccounts = PublishSubject<Void>()
+        let didUpdateCards = PublishSubject<Void>()
+        let didUpdateFavorites = PublishSubject<Void>()
+        
+        var paymentGroups: [AppStructs.PaymentGroup] = []
+        var transferTypes: [AppStructs.PaymentGroup.ServiceItem] = []
+        var favorites: [AppStructs.Favourite] = []
+        
         
         var accounts: [Account] {
             didSet {
@@ -36,14 +79,43 @@ struct AppStructs {
                 self.didUpdateClient.onNext(())
             }
         }
+        var cards: [AppStructs.CreditDebitCard] {
+            didSet {
+                self.didUpdateCards.onNext(())
+            }
+        }
+        var clientBalances: [BalanceType] {
+            var items = [BalanceType]()
+            for account in accounts {
+                items.append(.wallet(account: account))
+            }
+            for card in cards {
+                items.append(.card(card: card))
+            }
+            return items
+        }
+        var walletBalance: Double {
+            let acc = self.accounts.first(where: { $0.bal_account == "63" })?.balance ?? 0
+            return acc
+        }
+        var bonusBalance: Double {
+            let acc = self.accounts.first(where: { $0.bal_account == "64" })?.balance ?? 0
+            return acc
+        }
         
-        init(accounts: [Account], client: ClientInfo) {
+        init(accounts: [Account], client: ClientInfo, cards: [AppStructs.CreditDebitCard] = []) {
             self.accounts = accounts
+            self.cards = cards
             self.client = client
+        }
+        
+        func getService(serviceID: Int) -> AppStructs.PaymentGroup.ServiceItem? {
+            return self.paymentGroups.first(where: { $0.services.contains(where: { $0.id == serviceID }) })?.services.first(where: { $0.id == serviceID }) ?? self.transferTypes.first(where: { $0.id == serviceID })
         }
     }
     
-    class Account: Codable {
+    struct Account: Codable, Hashable {
+        
         var account: String
         var bal_account: String
         var closingBalance: Double
@@ -59,9 +131,21 @@ struct AppStructs {
             self.overDraft = overDraft
             self.reserve = reserve
         }
+        
+        static func == (lhs: AppStructs.Account, rhs: AppStructs.Account) -> Bool {
+            return lhs.account == rhs.account
+        }
+        
+        var balance: Double {
+            return self.closingBalance + self.overDraft - self.reserve
+        }
+        
+        var isBonus: Bool {
+            return self.bal_account == "64"
+        }
     }
     
-    class ClientInfo: Codable {
+    struct ClientInfo: Codable, Hashable {
         var avatar: String
         var birthDate: String
         var email: String
@@ -77,7 +161,7 @@ struct AppStructs {
         var wallet: String
         var limit: Limit
         
-        struct Limit: Codable {
+        struct Limit: Codable, Hashable {
             var QRPayment: Bool
             var SummaOnMonth: Int
             var cardOrder: Bool
@@ -118,28 +202,132 @@ struct AppStructs {
         }
     }
     
-    struct CreditDebitCard: Codable {
-        let number: String
+    enum AccountType: Int, Codable {
+        case wallet = 1
+        case card = 2
+    }
+    
+    enum TransferType: Int {
+        case transferToPhone = 101
+        case transferToCard = 102
+        case transferToForeign = 103
+        case transferBetweenAccounts = 106
+    }
+    
+    struct CreditDebitCard: Codable, Hashable {
+        var PINOnPay: Bool
+        var balance: Double
+        var bankName: String
+        var block: Bool
+        var cardHolder: String
+        var clientID: Int
+        var color: CreditDebitCardCategory.Color
+        var colorID:Int
+        var cvv: String
+        let id: Int
+        var internetPay: Bool
+        var logo: String
+        var pan: String
+        var showBalance: Bool
+        var validMonth: String
+        var validYear: String
+        
+        mutating func update(PINOnPay: Bool?, block: Bool?, colorID: Int?, internetPay: Bool?) {
+            if let PINOnPay {
+                self.PINOnPay = PINOnPay
+            }
+            if let block {
+                self.block = block
+            }
+            if let colorID {
+                self.colorID = colorID
+            }
+            if let internetPay {
+                self.internetPay = internetPay
+            }
+        }
+    }
+    
+    struct CreditDebitCardCategory: Codable {
+        let color: Color
+        let colorID: Int
+        let id: Int
+        let name: String
+        
+        struct Color: Codable, Hashable {
+            let id: Int
+            let name: String
+        }
+    }
+    
+    struct Region: Codable {
+        let deliveryPrice: Double
+        let id: Int
+        let name: String
+        let points: [Points]
+        
+        struct Points: Codable {
+            let address: String
+            let id: Int
+            let name: String
+            let regionID: Int
+        }
     }
     
     struct CreditDebitCardTypes: Codable {
+        let cardCategory: CreditDebitCardCategory
+        let categoryID: Int
+        let details: [Detail]
+        let electron: Bool
+        let id: Int
+        let limitation: Int
         let name: String
+        let logo: String
+        let image: String
+        let price: Double
+        let remainder: Double
+        let securityDeposit: Double
+        
+        struct Detail: Codable {
+            let bankCardID: Int
+            let id: Int
+            let text: String
+        }
     }
     
-    struct CreditDebitCardItem: Codable {
-        let name: String
+    struct HistoryItem: Codable {
+        let accountFrom: String
+        let accountTo: String
+        let admission: Double
+        let amount: Double
+        let commission: Double
+        let datetime: String
+        let service: String
+        let status: Int
+        let tran_id: String
+    }
+    
+    struct EntryItem: Codable, Hashable {
+        var id: Int
+        var name: String
     }
     
     struct PaymentGroup: Codable {
         let id: Int
         let name: String
         let image: String
+        let listImage: String
+        let darkImage: String
+        let darkListImage: String
         let services: [ServiceItem]
         
         struct ServiceItem: Codable {
             let id: Int
             let name: String
             let image: String
+            let listImage: String
+            let darkImage: String
+            let darkListImage: String
             let isCheck: Int
             let params: [Params]
             
@@ -157,66 +345,66 @@ struct AppStructs {
         }
     }
     
-    struct TransferTypes: Codable {
+    struct Merchant: Codable {
+        var id: Int
+        var merchantAddress: String
+        var merchantID: String
+        var name: String
+    }
+    
+    struct Favourite: Codable, Hashable {
+        var id: Int
+        var account: String
+        var amount: Double
+        var comment: String
+        var params: [String]
+        var name: String
+        var serviceID: Int
+    }
+    
+    struct NotificationNews: Codable {
         let id: Int
-        let name: String
+        let category: Int
+        let dateTime: String
+        let title: String
+        let text: String
         let image: String
-        let isCheck: Int
-        let params: [Params]
-        struct Params: Codable {
-            let id: Int
-            let name: String
-            let coment: String
-            let keyboard: Int
-            let mask: String
-            let maxLen: Int
-            let minLen: Int
-            let param: Int
-            let prefix: String
-        }
-    }
-    
-    struct Favourite: Codable {
-        
-    }
-    
-    struct HistoryItem: Codable {
-        var date: Date
     }
     
     struct Showcase: Codable {
-        let address: String
+        let address: String?
         let cashBack: Int
-        var contacts: [Contact]
-        let description: String
+        var contacts: [Contact]?
+        let description: String?
         let id: Int
         let image: String
-        let lat: Double
-        let long: Double
-        let name: String
-        let payText: String
-        let validityDate: String
+        let lat: Double?
+        let long: Double?
+        let name: String?
+        let payText: String?
+        let validityDate: String?
         
         struct Contact: Codable {
             let cashID: Int
             let id: Int
-            let logo: String
-            let text: String
+            let logo: String?
+            let text: String?
             let type: String
         }
     }
     
     struct Stories: Codable {
-        let action: String
-        let button: String
         let type: Int
         let id: Int
         let images: [Image]
+        let mainImage: String
         
         struct Image: Codable {
             let id: Int
             let source: String
             let storyID: Int
+            let button: String?
+            let action: String?
         }
     }
     
@@ -228,8 +416,11 @@ struct AppStructs {
     }
     
     struct CurrencyRate: Codable {
-        let currencyOne: Currency
-        let currencyTwo: Currency
-        let rate: Double
+        let code: String
+        let icon: String
+        let id: Int
+        let name: String
+        let purchase: Double
+        let sale: Double
     }
 }

@@ -19,7 +19,7 @@ class TransferTypeView: UIControl {
     let nameView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 20)
+        view.font = UIFont.regular(size: 16)
         view.textColor = Theme.current.primaryTextColor
         view.numberOfLines = 0
         view.lineBreakMode = .byWordWrapping

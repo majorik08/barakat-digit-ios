@@ -6,7 +6,7 @@
 	<string>development</string>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.kmi.BarakatWallet</string>
+		<string>group.tj.barakat.digit</string>
 	</array>
 </dict>
 </plist>

@@ -27,17 +27,25 @@ class HistoryCoordinator: Coordinator {
         return ENVIRONMENT.isMock ? HistoryServiceMockImpl(clientInfo: self.accountInfo.client) : HistoryServiceImpl(clientInfo: self.accountInfo.client)
     }
     
+    var paymentsService: PaymentsService {
+        return ENVIRONMENT.isMock ? PaymentsServiceMockImpl(accountInfo: self.accountInfo) : PaymentsServiceImpl(accountInfo: self.accountInfo)
+    }
+    
     func start() {
         if !self.started {
             self.started = true
-            let vc = HistoryViewController(viewModel: .init(historyService: self.historyService))
+            let vc = HistoryViewController(viewModel: .init(accountInfo: self.accountInfo, historyService: self.historyService, paymentsService: self.paymentsService))
             vc.coordinator = self
             self.nav.viewControllers = [vc]
         }
     }
     
+    func navigateBack() {
+        self.nav.popViewController(animated: true)
+    }
+    
     func navigateToHistory(forCreditCard: AppStructs.CreditDebitCard?) {
-        let vm = HistoryViewModel(historyService: self.historyService)
+        let vm = HistoryViewModel(accountInfo: self.accountInfo, historyService: self.historyService, paymentsService: self.paymentsService)
         vm.forCreditCard = forCreditCard
         let vc = HistoryViewController(viewModel: vm)
         vc.coordinator = self
@@ -45,9 +53,37 @@ class HistoryCoordinator: Coordinator {
     }
     
     func navigateToHistoryDetails(item: AppStructs.HistoryItem) {
-        let viewModel = HistoryViewModel(historyService: self.historyService)
-        viewModel.selectedHistory = item
-        let vc = HistoryDetailsViewController(viewModel: viewModel)
+        let viewModel = HistoryViewModel(accountInfo: self.accountInfo, historyService: self.historyService, paymentsService: self.paymentsService)
+        let vc = HistoryDetailsViewController(viewModel: viewModel, item: item)
+        vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToRepetPayment(service: AppStructs.PaymentGroup.ServiceItem) {
+        let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
+        payments.parent = self.parent
+        payments.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: false, transferParam: nil)
+        self.children.append(payments)
+    }
+    
+    func navigateToRecipeView(item: AppStructs.HistoryItem) {
+        let viewModel = HistoryViewModel(accountInfo: self.accountInfo, historyService: self.historyService, paymentsService: self.paymentsService)
+        let vc = HistoryRecipeViewController(viewModel: viewModel, item: item)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func presentSumPicker(currency: CurrencyEnum, delegate: HistorySumPickViewControllerDelegate?) {
+        let vc = HistorySumPickViewController(currency: currency)
+        vc.delegate = delegate
+        vc.coordinator = self
+        self.nav.present(vc, animated: true)
+    }
+    
+    func presentFilterPicker(filter: HistoryFilter, delegate: HistoryFilterPickViewControllerDelegate?) {
+        let vc = HistoryFilterPickViewController(filter: filter, viewModel: .init(accountInfo: self.accountInfo, historyService: self.historyService, paymentsService: self.paymentsService))
+        vc.delegate = delegate
+        vc.coordinator = self
+        self.nav.present(vc, animated: true)
     }
 }

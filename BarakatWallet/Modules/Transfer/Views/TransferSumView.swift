@@ -13,7 +13,7 @@ class TransferSumView: UIView {
     let leftView: UIView = {
         let view = UIView(backgroundColor: .clear)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.00)
+        view.backgroundColor = Theme.current.grayColor
         view.layer.cornerRadius = 26
         view.clipsToBounds = true
         return view
@@ -32,18 +32,6 @@ class TransferSumView: UIView {
         view.text = "MINUS_AMOUNT".localized
         return view
     }()
-    let topSumField: UITextField = {
-        let view = UITextField(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 16)
-        view.textAlignment = .center
-        view.placeholder = "RUB"
-        view.layer.cornerRadius = 23
-        view.borderStyle = .none
-        view.clipsToBounds = true
-        view.keyboardType = .decimalPad
-        return view
-    }()
     let bottomLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -53,32 +41,54 @@ class TransferSumView: UIView {
         view.text = "PLUS_AMOUNT".localized
         return view
     }()
-    let bottomSumField: UITextField = {
-        let view = UITextField(frame: .zero)
+    let topSumContainer: UIView = {
+        let view = UIView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 16)
-        view.textAlignment = .center
-        view.placeholder = "TJS"
+        view.backgroundColor = .clear
         view.layer.cornerRadius = 23
-        view.borderStyle = .none
         view.clipsToBounds = true
-        view.keyboardType = .decimalPad
+        return view
+    }()
+    let bottomSumContainer: UIView = {
+        let view = UIView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .clear
+        view.layer.cornerRadius = 23
+        view.clipsToBounds = true
+        return view
+    }()
+    let topSumField: CurrencyEnterView = {
+        let view = CurrencyEnterView(insets: .init(top: 0, left: 0, bottom: 0, right: 0), aligment: .center)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.field.placeholder = "RUB"
+        view.currency = .RUB
+        view.font = UIFont.bold(size: 16)
+        view.rightView.adjustsFontSizeToFitWidth = false
+        return view
+    }()
+    let bottomSumField: CurrencyEnterView = {
+        let view = CurrencyEnterView(insets: .init(top: 0, left: 0, bottom: 0, right: 0), aligment: .center)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.field.placeholder = "TJS"
+        view.currency = .TJS
+        view.font = UIFont.bold(size: 16)
+        view.rightView.adjustsFontSizeToFitWidth = false
         return view
     }()
     let transferRateView: TransferInfoView = {
         let view = TransferInfoView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.iconView.image = UIImage(name: .rubl_icon).tintedWithLinearGradientColors()
-        view.titleLabel.text = "0 RUB = 0.1115 TJS"
-        view.subTitleLabel.text = "Курс"
+        view.titleLabel.text = ""
+        view.subTitleLabel.text = ""
         return view
     }()
     let transferTaxView: TransferInfoView = {
         let view = TransferInfoView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.iconView.image = UIImage(name: .per_icon).tintedWithLinearGradientColors()
-        view.titleLabel.text = "40 RUB"
-        view.subTitleLabel.text = "Комиссия 1.5% но не менее 40 RUB"
+        view.titleLabel.text = ""
+        view.subTitleLabel.text = ""
         return view
     }()
     
@@ -93,9 +103,11 @@ class TransferSumView: UIView {
         self.addSubview(self.topLabel)
         self.addSubview(self.rightView)
         self.addSubview(self.leftView)
-        self.leftView.addSubview(self.topSumField)
+        self.leftView.addSubview(self.topSumContainer)
         self.leftView.addSubview(self.bottomLabel)
-        self.leftView.addSubview(self.bottomSumField)
+        self.leftView.addSubview(self.bottomSumContainer)
+        self.topSumContainer.addSubview(self.topSumField)
+        self.bottomSumContainer.addSubview(self.bottomSumField)
         self.rightView.addSubview(self.transferRateView)
         self.rightView.addSubview(self.transferTaxView)
         NSLayoutConstraint.activate([
@@ -110,18 +122,28 @@ class TransferSumView: UIView {
             self.rightView.topAnchor.constraint(equalTo: self.topLabel.topAnchor, constant: 4),
             self.rightView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -8),
             self.rightView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -16),
-            self.topSumField.leftAnchor.constraint(equalTo: self.leftView.leftAnchor),
-            self.topSumField.topAnchor.constraint(equalTo: self.leftView.topAnchor, constant: 0),
-            self.topSumField.rightAnchor.constraint(equalTo: self.leftView.rightAnchor),
-            self.topSumField.heightAnchor.constraint(equalToConstant: 46),
+            self.topSumContainer.leftAnchor.constraint(equalTo: self.leftView.leftAnchor),
+            self.topSumContainer.topAnchor.constraint(equalTo: self.leftView.topAnchor, constant: 0),
+            self.topSumContainer.rightAnchor.constraint(equalTo: self.leftView.rightAnchor),
+            self.topSumContainer.heightAnchor.constraint(equalToConstant: 46),
+            self.topSumField.leftAnchor.constraint(greaterThanOrEqualTo: self.topSumContainer.leftAnchor),
+            self.topSumField.topAnchor.constraint(equalTo: self.topSumContainer.topAnchor),
+            self.topSumField.rightAnchor.constraint(lessThanOrEqualTo: self.topSumContainer.rightAnchor),
+            self.topSumField.bottomAnchor.constraint(equalTo: self.topSumContainer.bottomAnchor),
+            self.topSumField.centerXAnchor.constraint(equalTo: self.topSumContainer.centerXAnchor),
             self.bottomLabel.leftAnchor.constraint(equalTo: self.leftView.leftAnchor),
-            self.bottomLabel.topAnchor.constraint(equalTo: self.topSumField.bottomAnchor, constant: 10),
+            self.bottomLabel.topAnchor.constraint(equalTo: self.topSumContainer.bottomAnchor, constant: 10),
             self.bottomLabel.rightAnchor.constraint(equalTo: self.leftView.rightAnchor),
-            self.bottomSumField.leftAnchor.constraint(equalTo: self.leftView.leftAnchor),
-            self.bottomSumField.topAnchor.constraint(equalTo: self.bottomLabel.bottomAnchor, constant: 6),
-            self.bottomSumField.rightAnchor.constraint(equalTo: self.leftView.rightAnchor),
-            self.bottomSumField.heightAnchor.constraint(equalToConstant: 46),
-            self.bottomSumField.bottomAnchor.constraint(equalTo: self.leftView.bottomAnchor),
+            self.bottomSumContainer.leftAnchor.constraint(equalTo: self.leftView.leftAnchor),
+            self.bottomSumContainer.topAnchor.constraint(equalTo: self.bottomLabel.bottomAnchor, constant: 6),
+            self.bottomSumContainer.rightAnchor.constraint(equalTo: self.leftView.rightAnchor),
+            self.bottomSumContainer.heightAnchor.constraint(equalToConstant: 46),
+            self.bottomSumContainer.bottomAnchor.constraint(equalTo: self.leftView.bottomAnchor),
+            self.bottomSumField.leftAnchor.constraint(greaterThanOrEqualTo: self.bottomSumContainer.leftAnchor),
+            self.bottomSumField.topAnchor.constraint(equalTo: self.bottomSumContainer.topAnchor),
+            self.bottomSumField.rightAnchor.constraint(lessThanOrEqualTo: self.bottomSumContainer.rightAnchor),
+            self.bottomSumField.bottomAnchor.constraint(equalTo: self.bottomSumContainer.bottomAnchor),
+            self.bottomSumField.centerXAnchor.constraint(equalTo: self.bottomSumContainer.centerXAnchor),
             self.transferRateView.leftAnchor.constraint(equalTo: self.rightView.leftAnchor),
             self.transferRateView.topAnchor.constraint(equalTo: self.rightView.topAnchor, constant: 0),
             self.transferRateView.rightAnchor.constraint(equalTo: self.rightView.rightAnchor),
@@ -129,10 +151,9 @@ class TransferSumView: UIView {
             self.transferTaxView.topAnchor.constraint(equalTo: self.transferRateView.bottomAnchor, constant: 10),
             self.transferTaxView.rightAnchor.constraint(equalTo: self.rightView.rightAnchor),
             self.transferTaxView.bottomAnchor.constraint(lessThanOrEqualTo: self.rightView.bottomAnchor)
-            
         ])
-        self.topSumField.addTarget(self, action: #selector(activateField), for: .editingDidBegin)
-        self.bottomSumField.addTarget(self, action: #selector(activateField), for: .editingDidBegin)
+        self.topSumField.field.addTarget(self, action: #selector(activateField), for: .editingDidBegin)
+        self.bottomSumField.field.addTarget(self, action: #selector(activateField), for: .editingDidBegin)
     }
     
     required init?(coder: NSCoder) {
@@ -140,31 +161,34 @@ class TransferSumView: UIView {
     }
     
     @objc func activateField(textField: UITextField) {
-        self.makeActive(textField: textField)
-        if textField == self.topSumField {
+        if textField == self.topSumField.field {
+            self.topSumContainer.backgroundColor = Theme.current.tintColor
+            self.bottomSumContainer.backgroundColor = .clear
+            self.makeActive(textField: self.topSumField)
             self.makeDisable(textField: self.bottomSumField)
-        } else if textField == self.bottomSumField {
+        } else if textField == self.bottomSumField.field {
+            self.topSumContainer.backgroundColor = .clear
+            self.bottomSumContainer.backgroundColor = Theme.current.tintColor
+            self.makeActive(textField: self.bottomSumField)
             self.makeDisable(textField: self.topSumField)
         }
     }
     
-    func makeActive(textField: UITextField) {
-        textField.backgroundColor = Theme.current.tintColor
+    func makeActive(textField: CurrencyEnterView) {
         textField.textColor = .white
         if textField == self.topSumField {
-            textField.attributedPlaceholder = NSAttributedString(string: "RUB", attributes: [NSAttributedString.Key.foregroundColor: UIColor.white])
+            textField.field.attributedPlaceholder = NSAttributedString(string: "RUB", attributes: [NSAttributedString.Key.foregroundColor: UIColor.white])
         } else if textField == self.bottomSumField {
-            textField.attributedPlaceholder = NSAttributedString(string: "TJS", attributes: [NSAttributedString.Key.foregroundColor : UIColor.white])
+            textField.field.attributedPlaceholder = NSAttributedString(string: "TJS", attributes: [NSAttributedString.Key.foregroundColor : UIColor.white])
         }
     }
     
-    func makeDisable(textField: UITextField) {
-        textField.backgroundColor = .clear
+    func makeDisable(textField: CurrencyEnterView) {
         textField.textColor = Theme.current.tintColor
         if textField == self.topSumField {
-            textField.attributedPlaceholder = NSAttributedString(string: "RUB", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.primaryTextColor])
+            textField.field.attributedPlaceholder = NSAttributedString(string: "RUB", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.tintColor])
         } else if textField == self.bottomSumField {
-            textField.attributedPlaceholder = NSAttributedString(string: "TJS", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.primaryTextColor])
+            textField.field.attributedPlaceholder = NSAttributedString(string: "TJS", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.tintColor])
         }
     }
 }

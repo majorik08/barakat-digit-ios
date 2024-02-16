@@ -33,6 +33,10 @@ class ProfileCoordinator: Coordinator {
         self.nav.pushViewController(vc, animated: true)
     }
     
+    func navigateToRoot() {
+        self.nav.popToRootViewController(animated: true)
+    }
+    
     func navigateBack() {
         self.nav.popViewController(animated: true)
     }
@@ -43,11 +47,11 @@ class ProfileCoordinator: Coordinator {
         self.nav.pushViewController(vc, animated: true)
     }
     
-    func navigateToIdentify() {
-        let identify = IdentifyCoordinator(nav: self.nav, identifyService: IdentifyServiceImpl())
-        identify.parent = self
-        identify.start()
-        self.children.append(identify)
+    func navigateToIdentify(identify: AppMethods.Client.IdentifyGet.IdentifyResult?) {
+        let identifyCoor = IdentifyCoordinator(nav: self.nav, identifyService: self.identifyService, accountInfo: self.accountInfo)
+        identifyCoor.parent = self
+        identifyCoor.navigateToStatusView(identify: identify, limit: self.accountInfo.client.limit)
+        self.children.append(identifyCoor)
     }
     
     func navigateToSettings() {
@@ -62,15 +66,24 @@ class ProfileCoordinator: Coordinator {
         self.nav.present(vc, animated: true)
     }
     
-    func presentLanguage() {
+    func presentLanguage(delegate: AlertViewControllerDelegate?) {
         let vc = LanguageViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
+        vc.delegate = delegate
         self.nav.present(vc, animated: true)
     }
     
-    func presentTheme() {
+    func presentTheme(delegate: AlertViewControllerDelegate?) {
         let vc = ThemeViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
         vc.coordinator = self
+        vc.delegate = delegate
+        self.nav.present(vc, animated: true)
+    }
+    
+    func presentBioAuth(auth: LocalAuthBiometricAuthentication, delegate: AlertViewControllerDelegate?) {
+        let vc = BioAuthViewController(authType: auth)
+        vc.coordinator = self
+        vc.delegate = delegate
         self.nav.present(vc, animated: true)
     }
     
@@ -89,9 +102,9 @@ class ProfileCoordinator: Coordinator {
     }
     
     func navigateToChangePasscode(account: CoreAccount) {
-        let vc = PasscodeSetViewController(viewModel: .init(authService: self.authService, account: account, startFor: .change(old: account.pin ?? ""), checkComplition: { result in
-            self.nav.popViewController(animated: true)
-        }))
-        self.nav.pushViewController(vc, animated: true)
+        let passcode = PasscodeCoordinator(nav: self.nav, account: account, authService: self.authService)
+        passcode.parent = self
+        passcode.navigateToSetPasscode()
+        self.children.append(passcode)
     }
 }

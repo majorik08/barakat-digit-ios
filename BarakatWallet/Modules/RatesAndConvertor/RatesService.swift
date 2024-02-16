@@ -15,20 +15,26 @@ protocol RatesService: Service {
 final class RatesServiceImpl: RatesService {
     
     func loadRates() -> Single<[AppStructs.CurrencyRate]> {
-        var rates: [AppStructs.CurrencyRate] = []
-        rates.append(.init(currencyOne: .TJS, currencyTwo: .RUB, rate: 1.3))
-        rates.append(.init(currencyOne: .TJS, currencyTwo: .USD, rate: 1.1))
-        rates.append(.init(currencyOne: .TJS, currencyTwo: .EUR, rate: 1.3))
-        return .just(rates)
+        return Single.create { single in
+            APIManager.instance.request(.init(AppMethods.App.GetRates(.init())), auth: .auth, timeOut: 20) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
     }
 }
 
 final class RatesServiceMockImpl: RatesService {
     func loadRates() -> Single<[AppStructs.CurrencyRate]> {
-        var rates: [AppStructs.CurrencyRate] = []
-        rates.append(.init(currencyOne: .TJS, currencyTwo: .RUB, rate: 1.3))
-        rates.append(.init(currencyOne: .TJS, currencyTwo: .USD, rate: 1.1))
-        rates.append(.init(currencyOne: .TJS, currencyTwo: .EUR, rate: 1.3))
+        let rates: [AppStructs.CurrencyRate] = []
+//        rates.append(.init(currency: .USD, buy: 10.91, sell: 10.98))
+//        rates.append(.init(currency: .EUR, buy: 11.5, sell: 12))
+//        rates.append(.init(currency: .RUB, buy: 0.1225, sell: 0.124))
         return .just(rates)
     }
 }

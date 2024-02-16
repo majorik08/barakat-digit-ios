@@ -10,7 +10,7 @@ import UIKit
 
 public class Theme {
     
-    public var mainPaddings: CGFloat = 24
+    public var mainPaddings: CGFloat = 20
     public var mainButtonHeight: CGFloat = 52
     
     public var whiteColor: UIColor = UIColor(red: 0.976, green: 0.976, blue: 0.976, alpha: 1)
@@ -103,6 +103,7 @@ public class Theme {
         t.shadowColor = UIColor(red: 0.279, green: 0.29, blue: 0.35, alpha: 0.29)
         t.grayColor = UIColor(red: 0.141, green: 0.141, blue: 0.149, alpha: 1)
         t.dimColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.6)
+        t.borderColor = UIColor(red: 0.30, green: 0.67, blue: 0.93, alpha: 1.00)
         t.primaryTextColor = UIColor(red: 0.976, green: 0.976, blue: 0.976, alpha: 1)
         t.secondaryTextColor = UIColor(red:0.49, green:0.55, blue:0.60, alpha:1.0)
         t.searchBarTint = t.navigationColor
@@ -115,8 +116,8 @@ public class Theme {
         t.groupedSelectedCellBackground = UIColor(red: 0.19, green: 0.19, blue: 0.21, alpha: 1.00)//UIColor(red:0.10, green:0.10, blue:0.10, alpha:1.0)
         t.plainSelectedCellBackground = UIColor(red:0.10, green:0.10, blue:0.10, alpha:1.0)
         
-        t.mainGradientEndColor = UIColor(red: 0.003, green: 0.318, blue: 0.396, alpha: 1)
-        t.mainGradientStartColor = UIColor(red: 0.042, green: 0.15, blue: 0.35, alpha: 1)
+        t.mainGradientEndColor = UIColor(red: 0.33, green: 0.82, blue: 0.94, alpha: 1.00)//UIColor(red: 0.003, green: 0.318, blue: 0.396, alpha: 1)
+        t.mainGradientStartColor = UIColor(red: 0.25, green: 0.49, blue: 0.91, alpha: 1.00)//UIColor(red: 0.042, green: 0.15, blue: 0.35, alpha: 1)
         
         return t
     }

@@ -48,34 +48,34 @@ public enum IGError: Error, CustomStringConvertible {
     }
 }
 
-class IGURLSession: URLSession {
-    static let `default` = IGURLSession()
-    private(set) var dataTasks: [URLSessionDataTask] = []
-}
-extension IGURLSession {
-    func cancelAllPendingTasks() {
-        dataTasks.forEach({
-            if $0.state != .completed {
-                $0.cancel()
-            }
-        })
-    }
-
-    func downloadImage(using urlString: String, completionBlock: @escaping ImageResponse) {
-        guard let url = URL(string: urlString) else {
-            return completionBlock(.failure(IGError.invalidImageURL))
-        }
-        dataTasks.append(IGURLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
-            if let result = data, error == nil, let imageToCache = UIImage(data: result) {
-                IGCache.shared.setObject(imageToCache, forKey: url.absoluteString as AnyObject)
-                completionBlock(.success(imageToCache))
-            } else {
-                return completionBlock(.failure(error ?? IGError.downloadError))
-            }
-        }))
-        dataTasks.last?.resume()
-    }
-}
+//class IGURLSession: URLSession {
+//    static let `default` = IGURLSession()
+//    private(set) var dataTasks: [URLSessionDataTask] = []
+//}
+//extension IGURLSession {
+//    func cancelAllPendingTasks() {
+//        dataTasks.forEach({
+//            if $0.state != .completed {
+//                $0.cancel()
+//            }
+//        })
+//    }
+//
+//    func downloadImage(using urlString: String, completionBlock: @escaping ImageResponse) {
+//        guard let url = URL(string: urlString) else {
+//            return completionBlock(.failure(IGError.invalidImageURL))
+//        }
+//        dataTasks.append(IGURLSession.shared.dataTask(with: url, completionHandler: { (data, response, error) in
+//            if let result = data, error == nil, let imageToCache = UIImage(data: result) {
+//                IGCache.shared.setObject(imageToCache, forKey: url.absoluteString as AnyObject)
+//                completionBlock(.success(imageToCache))
+//            } else {
+//                return completionBlock(.failure(error ?? IGError.downloadError))
+//            }
+//        }))
+//        dataTasks.last?.resume()
+//    }
+//}
 
 enum ImageStyle: Int {
     case squared,rounded
@@ -123,22 +123,35 @@ extension IGImageRequestable where Self: UIImageView {
             }
             guard let completion = completionBlock else { return }
             return completion(.success(cachedImage))
-        }else {
-            IGURLSession.default.downloadImage(using: urlString) { [weak self] (response) in
+        } else {
+            APIManager.instance.loadImage(into: self, filePath: urlString) { [weak self] result in
                 guard let strongSelf = self else { return }
                 strongSelf.hideActivityIndicator()
-                switch response {
-                case .success(let image):
-                    DispatchQueue.main.async {
-                        strongSelf.image = image
-                    }
+                if let image = result {
+                    IGCache.shared.setObject(image, forKey: urlString as AnyObject)
                     guard let completion = completionBlock else { return }
                     return completion(.success(image))
-                case .failure(let error):
+                } else {
                     guard let completion = completionBlock else { return }
-                    return completion(.failure(error))
+                    return completion(.failure(APIManager.downloadError))
                 }
             }
+//            IGURLSession.default.downloadImage(using: urlString) { [weak self] (response) in
+//                guard let strongSelf = self else { return }
+//                strongSelf.hideActivityIndicator()
+//                switch response {
+//                case .success(let image):
+//                    IGCache.shared.setObject(imageToCache, forKey: url.absoluteString as AnyObject)
+//                    DispatchQueue.main.async {
+//                        strongSelf.image = image
+//                    }
+//                    guard let completion = completionBlock else { return }
+//                    return completion(.success(image))
+//                case .failure(let error):
+//                    guard let completion = completionBlock else { return }
+//                    return completion(.failure(error))
+//                }
+//            }
         }
     }
 }
@@ -252,7 +265,7 @@ extension UIImageView {
     func hideActivityIndicator() {
         if isActivityEnabled {
             DispatchQueue.main.async {
-                self.backgroundColor = UIColor.white
+                self.backgroundColor = UIColor.black
                 self.subviews.forEach({ (view) in
                     if let av = view as? UIActivityIndicatorView {
                         av.stopAnimating()

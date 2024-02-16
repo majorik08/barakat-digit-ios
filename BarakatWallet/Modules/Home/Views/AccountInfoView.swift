@@ -10,7 +10,7 @@ import UIKit
 
 class AccountInfoView: UIView {
    
-    private let balanceHintLabel: UILabel = {
+    let balanceHintLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 20)
@@ -18,23 +18,23 @@ class AccountInfoView: UIView {
         view.text = "WALLET_BALANCE_HINT".localized
         return view
     }()
-    private let balanceLabel: UILabel = {
+    let balanceLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 25)
         view.textColor = Theme.current.whiteColor
-        view.text = "00.00 s."
+        view.text = "00.0 с."
         return view
     }()
-    private let bonusLabel: UILabel = {
+    let bonusLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 16)
         view.textColor = Theme.current.whiteColor
-        view.text = "00.00 som. bonus"
+        view.text = "00.0 с. bonus"
         return view
     }()
-    private let plusButton: CircleButtonView = {
+    let plusButton: CircleButtonView = {
         let view = CircleButtonView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.tintColor = Theme.current.whiteColor
@@ -44,7 +44,7 @@ class AccountInfoView: UIView {
         view.imageEdgeInsets = .init(top: 4, left: 4, bottom: 4, right: 4)
         return view
     }()
-    private let hideButton: UIButton = {
+    let hideButton: UIButton = {
         let view = UIButton(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.tintColor = Theme.current.whiteColor
@@ -72,11 +72,11 @@ class AccountInfoView: UIView {
         self.addSubview(self.plusButton)
         self.addSubview(self.hideButton)
         NSLayoutConstraint.activate([
-            self.balanceHintLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.balanceHintLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.balanceHintLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
-            self.balanceHintLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -10),
+            self.balanceHintLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.balanceHintLabel.heightAnchor.constraint(equalToConstant: 20),
-            self.balanceLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.balanceLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.balanceLabel.topAnchor.constraint(equalTo: self.balanceHintLabel.bottomAnchor, constant: 6),
             self.balanceLabel.heightAnchor.constraint(equalToConstant: 24),
             self.plusButton.leftAnchor.constraint(equalTo: self.balanceLabel.rightAnchor, constant: 10),
@@ -85,12 +85,12 @@ class AccountInfoView: UIView {
             self.plusButton.widthAnchor.constraint(equalToConstant: 26),
             self.hideButton.leftAnchor.constraint(equalTo: self.plusButton.rightAnchor, constant: 10),
             self.hideButton.topAnchor.constraint(equalTo: self.balanceHintLabel.bottomAnchor, constant: 4),
-            self.hideButton.rightAnchor.constraint(lessThanOrEqualTo: self.rightAnchor, constant: -10),
+            self.hideButton.rightAnchor.constraint(lessThanOrEqualTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.hideButton.heightAnchor.constraint(equalToConstant: 26),
             self.hideButton.widthAnchor.constraint(equalToConstant: 26),
-            self.bonusLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
+            self.bonusLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.bonusLabel.topAnchor.constraint(equalTo: self.balanceLabel.bottomAnchor, constant: 6),
-            self.bonusLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -10),
+            self.bonusLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.bonusLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
             self.bonusLabel.heightAnchor.constraint(equalToConstant: 16),
         ])

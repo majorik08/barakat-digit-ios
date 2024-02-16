@@ -7,56 +7,11 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
-enum CardTypes: String {
-    case Viza = "viza"
-    case MasterCard = "mastercard"
-    case AmericanExpress = "amex"
-    case UnionPay = "unionpay"
-    case DinersClub = "dinersclub"
-    
-    var pattern: String {
-        switch self {
-        case .Viza: return "^4[0-9]{1,15}$"
-        case .MasterCard: return "^5[1-5][0-9]{0,14}$"
-        case .AmericanExpress: return "^3[47][0-9]{0,13}$"
-        case .UnionPay: return "^62[0-9]{0,14}$"
-        case .DinersClub: return "^3(?:0[0-5,9]|[689][0-9])[0-9]{0,11}$"
-        }
-    }
-    var tag: Int {
-        switch self {
-        case .Viza: return 1
-        case .MasterCard: return 2
-        case .AmericanExpress: return 3
-        case .UnionPay: return 4
-        case .DinersClub: return 5
-        }
-    }
-    var image: UIImage? {
-        switch self {
-        case .Viza:
-            return UIImage(name: .card_visa)
-        case .MasterCard:
-            return UIImage(name: .card_master)
-        case .AmericanExpress:
-            return UIImage(name: .card_american)
-        case .UnionPay:
-            return UIImage(name: .card_union)
-        case .DinersClub:
-            return UIImage(name: .card_diners)
-        }
-    }
-    //visa = ["4"] // length = 16 format = 4-4-4-4
-    //masterCard =  ["51", "52", "53", "54", "55"] // length = 16 format = 4-4-4-4
-    //amex = ["34", "37"] // length = 15 format = 4-5-6
-    //union = ["62"] // length = 16 format = 4-4-4-4
-    //dinersClub = ["300", "301", "302", "303", "304", "305", "309", "36", "38", "39"] // length = 14 format = 4-6-4
-}
-
-class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
-    
-    let topBar: TransferTopView = {
+class TransferSenderViewController: BaseViewController, UITextFieldDelegate, TransferConfirmViewDelegate, WalletWebViewControllerDelegate {
+  
+    private let topBar: TransferTopView = {
         let view = TransferTopView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backButton.tintColor = .white
@@ -64,7 +19,22 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
         view.subTitleLabel.text = ""
         return view
     }()
-    let nextButton: BaseButtonView = {
+    private let scrollView: UIScrollView = {
+        let view = UIScrollView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.alwaysBounceVertical = true
+        view.keyboardDismissMode = .interactive
+        view.showsVerticalScrollIndicator = false
+        view.backgroundColor = .clear
+        return view
+    }()
+    private let rootView: UIView = {
+        let view = UIView(frame: .zero)
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    private let nextButton: BaseButtonView = {
         let view = BaseButtonView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setTitleColor(.white, for: .normal)
@@ -73,7 +43,7 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
         view.isEnabled = false
         return view
     }()
-    let cardNumerField: CardTextFiled = {
+    private let cardNumerField: CardTextFiled = {
         let view = CardTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text =  "SENDER_CARD_NUMBER".localized
@@ -86,51 +56,31 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
         //view.textField.textContentType = UITextContentType.creditCardNumber
         return view
     }()
-    let cardDateField: CardTextFiled = {
-        let view = CardTextFiled()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.topLabel.text =  "CARD_DATE".localized
-        view.textField.attributedPlaceholder = NSAttributedString(string: "12/24", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
-        view.textField.textColor = Theme.current.primaryTextColor
-        view.textField.keyboardType = .numberPad
-        view.textField.returnKeyType = .done
-        return view
-    }()
-    let cardCvvField: CardTextFiled = {
-        let view = CardTextFiled()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.topLabel.text = "CVC/CVV"
-        view.textField.attributedPlaceholder = NSAttributedString(string: "123", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
-        view.textField.textColor = Theme.current.primaryTextColor
-        view.textField.keyboardType = .numberPad
-        view.textField.returnKeyType = .done
-        view.textField.enablesReturnKeyAutomatically = true
-        return view
-    }()
-    let secureTextLabel: UILabel = {
-        let view = UILabel(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 11)
-        view.textColor = Theme.current.secondaryTextColor
-        view.numberOfLines = 0
-        view.lineBreakMode = .byWordWrapping
-        view.text = "CARD_INFO_SEND_SECURE".localized
-        return view
-    }()
-    var type: TransferType
-    weak var delegate: TransferSumViewControllerDelegate?
-    weak var coordinator: TransferCoordinator?
-    var cards: [CardTypes] = {
-        return [.AmericanExpress, .DinersClub, .MasterCard, .Viza, .UnionPay]
-    }()
+    private var nextButtonBottom: NSLayoutConstraint!
     private var previousTextFieldContent: String?
     private var previousSelection: UITextRange?
+    weak var coordinator: TransferCoordinator?
+    let viewModel: TransferViewModel
+    let type: TransferType
+    let receiver: TransferIdentifier
+    let commision: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult.Commissions
+    let plusAmount: Int
+    let minusAmount: Int
+    let commisionAmout: Int
+    var cards: [CardTypes] = {
+        return [.AmericanExpress, .DinersClub, .MasterCard, .Viza, .UnionPay, .kortimilli]
+    }()
     
-    init(type: TransferType, delegate: TransferSumViewControllerDelegate?) {
+    init(viewModel: TransferViewModel, type: TransferType, receiver: TransferIdentifier, commision: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult.Commissions, plusAmount: Int, minusAmount: Int, commisionAmout: Int) {
         self.type = type
-        self.delegate = delegate
+        self.viewModel = viewModel
+        self.receiver = receiver
+        self.commision = commision
+        self.plusAmount = plusAmount
+        self.minusAmount = minusAmount
+        self.commisionAmout = commisionAmout
         super.init(nibName: nil, bundle: nil)
-        self.hidesBottomBarWhenPushed = true
+        self.hidesBottomBarWhenPushed = false
     }
     
     required init?(coder: NSCoder) {
@@ -141,35 +91,37 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
         super.viewDidLoad()
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.view.addSubview(self.topBar)
-        self.view.addSubview(self.nextButton)
-        self.view.addSubview(self.cardNumerField)
-        self.view.addSubview(self.cardDateField)
-        self.view.addSubview(self.cardCvvField)
-        self.view.addSubview(self.secureTextLabel)
+        self.view.addSubview(self.scrollView)
+        self.scrollView.addSubview(self.rootView)
+        self.rootView.addSubview(self.cardNumerField)
+        self.rootView.addSubview(self.nextButton)
+        let rootHeight = self.rootView.heightAnchor.constraint(equalTo: self.scrollView.heightAnchor)
+        rootHeight.priority = UILayoutPriority(rawValue: 250)
+        self.nextButtonBottom = self.nextButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -20)
         NSLayoutConstraint.activate([
             self.topBar.leftAnchor.constraint(equalTo: self.view.leftAnchor),
             self.topBar.topAnchor.constraint(equalTo: self.view.topAnchor),
             self.topBar.rightAnchor.constraint(equalTo: self.view.rightAnchor),
             self.topBar.heightAnchor.constraint(equalToConstant: 160),
-            self.nextButton.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.nextButton.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
-            self.nextButton.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
-            self.nextButton.heightAnchor.constraint(equalToConstant: 56),
-            self.cardNumerField.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.cardNumerField.topAnchor.constraint(equalTo: self.topBar.bottomAnchor, constant: 30),
-            self.cardNumerField.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
+            self.scrollView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            self.scrollView.topAnchor.constraint(equalTo: self.topBar.bottomAnchor),
+            self.scrollView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            self.scrollView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor),
+            self.rootView.leftAnchor.constraint(equalTo: self.scrollView.leftAnchor),
+            self.rootView.topAnchor.constraint(equalTo: self.scrollView.topAnchor),
+            self.rootView.rightAnchor.constraint(equalTo: self.scrollView.rightAnchor),
+            self.rootView.bottomAnchor.constraint(equalTo: self.scrollView.bottomAnchor),
+            rootView.widthAnchor.constraint(equalTo: self.scrollView.widthAnchor),
+            rootHeight,
+            self.cardNumerField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+            self.cardNumerField.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 30),
+            self.cardNumerField.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.cardNumerField.heightAnchor.constraint(equalToConstant: 74),
-            self.cardDateField.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.cardDateField.topAnchor.constraint(equalTo: self.cardNumerField.bottomAnchor, constant: 20),
-            self.cardDateField.rightAnchor.constraint(equalTo: self.view.centerXAnchor, constant: -10),
-            self.cardDateField.heightAnchor.constraint(equalToConstant: 74),
-            self.cardCvvField.leftAnchor.constraint(equalTo: self.view.centerXAnchor, constant: 10),
-            self.cardCvvField.topAnchor.constraint(equalTo: self.cardNumerField.bottomAnchor, constant: 20),
-            self.cardCvvField.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24),
-            self.cardCvvField.heightAnchor.constraint(equalToConstant: 74),
-            self.secureTextLabel.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 24),
-            self.secureTextLabel.topAnchor.constraint(equalTo: self.cardDateField.bottomAnchor, constant: 20),
-            self.secureTextLabel.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -24)
+            self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+            self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.cardNumerField.bottomAnchor, constant: 20),
+            self.nextButtonBottom,
+            self.nextButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight)
         ])
         self.topBar.backButton.addTarget(self, action: #selector(self.goBack), for: .touchUpInside)
         self.nextButton.addTarget(self, action: #selector(self.goToReceiver), for: .touchUpInside)
@@ -182,11 +134,34 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
         self.view.isUserInteractionEnabled = true
         self.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.hideKeyboard)))
         self.cardNumerField.textField.delegate = self
-        self.cardCvvField.textField.delegate = self
-        self.cardDateField.textField.delegate = self
         self.cardNumerField.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
-        self.cardCvvField.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
-        self.cardDateField.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        self.cardNumerField.textField.becomeFirstResponder()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc func keyboardWillShow(_ notification: Notification) {
+        var visibleHeight: CGFloat = 0
+        if let userInfo = notification.userInfo {
+            if let windowFrame = UIApplication.shared.keyWindow?.frame,
+                let keyboardRect = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+                visibleHeight = windowFrame.intersection(keyboardRect).height
+            }
+        }
+        self.nextButtonBottom.constant = -(visibleHeight - (self.tabBarController?.tabBar.frame.height ?? 0) + 6)
+    }
+     
+    @objc func keyboardWillHide(_ notification: Notification) {
+        self.nextButtonBottom.constant = -20
     }
     
     @objc func goBack() {
@@ -194,29 +169,81 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
     }
     
     @objc func goToReceiver() {
-        if let delegate = self.delegate {
-            delegate.senderPicked(sender: .card(number: "342342342342"))
-            self.coordinator?.navigateBack()
-        } else {
-            self.coordinator?.navigateToPickReceiver(type: self.type, sender: .card(number: "342342342342"), delegate: nil)
+        guard let cardNumber = self.cardNumerField.textField.text, cardNumber.count >= 14 else {
+            self.snackView(viewToShake: self.cardNumerField)
+            return
         }
+        self.view.endEditing(true)
+        let confirmView = TransferConfirmView(bottomInset: self.view.safeAreaInsets.bottom)
+        confirmView.delegate = self
+        confirmView.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
+        confirmView.senderView.subTitleLabel.text = cardNumber
+        confirmView.senderView.itemIcon.image = CardTypes.getCardType(creditCard: cardNumber.digits)?.image
+        switch receiver {
+        case .card(let number, _):
+            confirmView.receiverView.subTitleLabel.text = number
+            confirmView.receiverView.itemIcon.image = CardTypes.getCardType(creditCard: number.digits)?.image
+            confirmView.receiverView.typeIcon.image = UIImage(name: .card_icon)
+            confirmView.receiverView.typeIcon.tintColor = .white
+            confirmView.receiverView.typeIcon.layer.borderColor = Theme.current.tintColor.cgColor
+            confirmView.receiverView.typeIcon.backgroundColor = Theme.current.tintColor
+            confirmView.receiverInfoView.infoLabel.text = CardTypes.getBankName(number: number.digits)
+            confirmView.receiverCurrencyView.infoLabel.text = "TJS"
+        case .number(let number, let service, let info):
+            confirmView.receiverView.subTitleLabel.text = number.formatedPrefix()
+            confirmView.receiverView.itemIcon.loadImage(filePath: Theme.current.dark ? service.darkImage : service.image)
+            confirmView.receiverView.typeIcon.image = UIImage(name: .wallet_inset)
+            confirmView.receiverView.typeIcon.tintColor = Theme.current.tintColor
+            confirmView.receiverView.typeIcon.layer.borderColor = Theme.current.tintColor.cgColor
+            confirmView.receiverView.typeIcon.backgroundColor = Theme.current.plainTableCellColor
+            confirmView.receiverInfoView.infoLabel.text = info
+            confirmView.receiverCurrencyView.infoLabel.text = "TJS"
+        }
+        confirmView.sumPlusView.infoLabel.text = self.plusAmount.formattedAmount(.TJS)
+        confirmView.sumMinusView.infoLabel.text = self.minusAmount.formattedAmount(.RUB)
+        if self.commision.calcMethod == 1 {
+            confirmView.sumComView.infoLabel.text = self.commisionAmout.formattedAmount(.TJS)
+            confirmView.sumComView.titleLabel.text = "\("HISTORY_FEE".localized) \(self.commision.commissionValue)%"
+        } else {
+            confirmView.sumComView.infoLabel.text = self.commisionAmout.formattedAmount(.TJS)
+            confirmView.sumComView.titleLabel.text = "\("HISTORY_FEE".localized) \(self.commision.commissionValue.formattedAmount(.TJS))"
+        }
+        self.view.addSubview(confirmView)
+        NSLayoutConstraint.activate([
+            confirmView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            confirmView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            confirmView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            confirmView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+        ])
+        confirmView.animateView()
     }
     
-//    @objc func applyPayment() {
-//        guard let cardNumber = self.cardNumberField.text?.digits, cardNumber.count >= 14 else {
-//            self.snackView(viewToShake: self.cardNumberField)
-//            return
-//        }
-//        guard let expDate = self.cardDateField.text, expDate.count == 5, self.regexCheck(pattern: "(0[1-9]|1[0-2]{1})\\/(1[8-9]|[2-9][0-9])$", text: expDate) else {
-//            self.snackView(viewToShake: self.cardDateField)
-//            return
-//        }
-//        guard let cscCode = self.cardCscField.text, cscCode.count == 3, self.regexCheck(pattern: "[0-9]{3}$", text: cscCode) else {
-//            self.snackView(viewToShake: self.cardCscField)
-//            return
-//        }
-//        //let paymentReq = PaymentRequestParams.CreditCardPaymentRequest(phoneNumber: self.phoneNumber, cardNumber: Int(cardNumber) ?? 0, expirationDate: expDate, cardCode: Int(cscCode) ?? 0, amount: self.amount, currency: .USD)
-//    }
+    func confirmViewClose(view: TransferConfirmView) { }
+    
+    func confirmViewNext(view: TransferConfirmView) {
+        let cardNumber = self.cardNumerField.textField.text?.digits ?? ""
+        self.showProgressView()
+        self.viewModel.service.sendTransfer(accountFrom: cardNumber, accountTo: self.receiver.account.digits, accountType: self.receiver.accountType, amountCurrency: self.minusAmount, phoneNumber: "+\(self.receiver.phoneNumber.digits)", serviceID: self.receiver.serviceId)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] result in
+                guard let self = self, let url = URL(string: result.formURL) else { return }
+                self.hideProgressView()
+                self.openWebAction(url: url)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func openWebAction(url: URL) {
+        let view = WalletWebViewController(url: url, delegate: self)
+        self.present(BaseNavigationController(rootViewController: view, title: nil, image: nil, tag: -1), animated: true, completion: nil)
+    }
+    
+    func getUpdatedIntent(result: Bool) {
+        self.coordinator?.navigateToResult(result: result)
+    }
     
     override func themeChanged(newTheme: Theme) {
         super.themeChanged(newTheme: newTheme)
@@ -228,14 +255,6 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
             self.previousTextFieldContent = textField.text
             self.previousSelection = textField.selectedTextRange
             return true
-        } else if textField == self.cardDateField.textField {
-            guard let text = textField.text else { return true }
-            let newLength = text.count + string.count - range.length
-            return newLength <= 5
-        } else if textField == self.cardCvvField.textField {
-            guard let text = textField.text else { return true }
-            let newLength = text.count + string.count - range.length
-            return newLength <= 3
         }
         return false
     }
@@ -246,16 +265,9 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
         }
     }
     
+    @discardableResult
     func checkFields() -> Bool {
         guard let cardNumber = self.cardNumerField.textField.text?.digits, cardNumber.count >= 14 else {
-            self.nextButton.isEnabled = false
-            return false
-        }
-        guard let expDate = self.cardDateField.textField.text, expDate.count == 5 else {
-            self.nextButton.isEnabled = false
-            return false
-        }
-        guard let cscCode = self.cardCvvField.textField.text, cscCode.count == 3 else {
             self.nextButton.isEnabled = false
             return false
         }
@@ -273,82 +285,17 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
             if let text = textField.text {
                 cardNumberWithoutSpaces = self.removeNonDigits(string: text, andPreserveCursorPosition: &targetCursorPosition)
             }
-            if cardNumberWithoutSpaces.count > 13 {
-                if cardNumberWithoutSpaces.count > 16 {
-                    textField.text = self.previousTextFieldContent
-                    textField.selectedTextRange = self.previousSelection
-                    if self.checkFields() {
-                        self.cardNumerField.textField.resignFirstResponder()
-                    } else {
-                        self.cardDateField.textField.becomeFirstResponder()
-                    }
-                    return
-                }
+            if cardNumberWithoutSpaces.count > 16 {
+                textField.text = self.previousTextFieldContent
+                textField.selectedTextRange = self.previousSelection
+                self.checkFields()
+                return
             }
+            self.checkFields()
             let cardNumberWithSpaces = self.insertCreditCardSpaces(cardNumberWithoutSpaces, preserveCursorPosition: &targetCursorPosition)
             textField.text = cardNumberWithSpaces
             if let targetPosition = textField.position(from: textField.beginningOfDocument, offset: targetCursorPosition) {
                 textField.selectedTextRange = textField.textRange(from: targetPosition, to: targetPosition)
-            }
-        } else if textField == self.cardDateField.textField {
-            var targetCursorPosition = 0
-            if let startPosition = textField.selectedTextRange?.start {
-                targetCursorPosition = textField.offset(from: textField.beginningOfDocument, to: startPosition)
-            }
-            var cardNumberWithoutSpaces = ""
-            if let text = textField.text {
-                cardNumberWithoutSpaces = self.removeNonDigits(string: text, andPreserveCursorPosition: &targetCursorPosition)
-            }
-            if cardNumberWithoutSpaces.count > 4 {
-                return
-            }
-            var cardNumberWithSpaces = ""
-            for i in 0..<cardNumberWithoutSpaces.count {
-                if i == 2 {
-                    cardNumberWithSpaces.append("/")
-                    if i < targetCursorPosition {
-                        targetCursorPosition += 1
-                    }
-                }
-                let characterToAdd = cardNumberWithoutSpaces[cardNumberWithoutSpaces.index(cardNumberWithoutSpaces.startIndex, offsetBy:i)]
-                cardNumberWithSpaces.append(characterToAdd)
-            }
-            textField.text = cardNumberWithSpaces
-            if let targetPosition = textField.position(from: textField.beginningOfDocument, offset: targetCursorPosition) {
-                textField.selectedTextRange = textField.textRange(from: targetPosition, to: targetPosition)
-            }
-            if cardNumberWithSpaces.count >= 5 {
-                if self.regexCheck(pattern: "(0[1-9]|1[0-2]{1})\\/(1[8-9]|[2-9][0-9])$", text: cardNumberWithSpaces) {
-                    if self.checkFields() {
-                        self.cardDateField.textField.resignFirstResponder()
-                    } else {
-                        self.cardCvvField.textField.becomeFirstResponder()
-                    }
-                } else {
-                    self.snackView(viewToShake: self.cardDateField)
-                }
-            }
-        } else if textField == self.cardCvvField.textField {
-            var targetCursorPosition = 0
-            if let startPosition = textField.selectedTextRange?.start {
-                targetCursorPosition = textField.offset(from: textField.beginningOfDocument, to: startPosition)
-            }
-            var cardNumberWithoutSpaces = ""
-            if let text = textField.text {
-                cardNumberWithoutSpaces = self.removeNonDigits(string: text, andPreserveCursorPosition: &targetCursorPosition)
-            }
-            textField.text = cardNumberWithoutSpaces
-            if let targetPosition = textField.position(from: textField.beginningOfDocument, offset: targetCursorPosition) {
-                textField.selectedTextRange = textField.textRange(from: targetPosition, to: targetPosition)
-            }
-            if cardNumberWithoutSpaces.count >= 3 {
-                if self.regexCheck(pattern: "[0-9]{3}$", text: cardNumberWithoutSpaces) {
-                    if self.checkFields() {
-                        self.cardCvvField.textField.resignFirstResponder()
-                    }
-                } else {
-                    self.snackView(viewToShake: self.cardCvvField)
-                }
             }
         }
     }
@@ -360,11 +307,7 @@ class TransferSenderViewController: BaseViewController, UITextFieldDelegate {
                 card = cardItem
             }
         }
-        if let card = card {
-            self.cardNumerField.rightImage.image = card.image
-        } else {
-            self.cardNumerField.rightImage.image = nil
-        }
+        self.cardNumerField.rightImage.image = card?.image
         let is464 = card == .DinersClub
         let is456 = card == .AmericanExpress
         let is4444 = !(is464 || is456)

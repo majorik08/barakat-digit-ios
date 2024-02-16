@@ -10,16 +10,20 @@ import UIKit
 
 class VerticalButtonView: UIControl {
     
-    let iconView: CircleImageView = {
-        let view = CircleImageView(frame: .zero)
+    let iconView: GradientImageView = {
+        let view = GradientImageView(insets: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
+        view.circleImage = true
+        view.clipsToBounds = true
+        view.isUserInteractionEnabled = false
+        view.imageView.isUserInteractionEnabled = false
         return view
     }()
-    let nameView: GradientLabel = {
-        let view = GradientLabel(shadowEnabled: false)
+    let nameView: UILabel = {
+        let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 14)
+        view.font = UIFont.regular(size: 16)
         view.numberOfLines = 0
         view.lineBreakMode = .byWordWrapping
         view.textAlignment = .center
@@ -51,6 +55,7 @@ class VerticalButtonView: UIControl {
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.backgroundColor = .clear
+        self.clipsToBounds = true
         self.addSubview(self.iconView)
         self.addSubview(self.nameView)
         NSLayoutConstraint.activate([

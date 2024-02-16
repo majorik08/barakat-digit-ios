@@ -13,7 +13,7 @@ public protocol EndpointRequestType {
     associatedtype Result: Codable
     
     static var method: HTTPMethod {get}
-    static var url: String {get}
+    var url: String {get set}
     var params: Params {get set}
     static var result: Result.Type {get}
     
@@ -33,7 +33,7 @@ public struct EmptyParams: Codable {
 
 public struct EndpointRequest<Params: Codable, Response: Codable>: EndpointRequestType {
     public let method: HTTPMethod
-    public let url: String
+    public var url: String
     public var params: Params
     public let result: Response.Type
     
@@ -42,7 +42,7 @@ public struct EndpointRequest<Params: Codable, Response: Codable>: EndpointReque
     }
     
     public init<Type: EndpointRequestType>(_ request: Type) where Type.Params == Params, Type.Result == Response  {
-        self.url = Type.url
+        self.url = request.url
         self.params = request.params
         self.result = Type.result
         self.method = Type.method
@@ -105,4 +105,42 @@ public struct ResponseModel<T: Codable>: Codable {
         case error
         case unblockTime
     }
+}
+
+enum ServerErrors: String, Codable {
+    case expiredToken = "0x000"
+    case registrationData = "0x001"
+    case ConfirmData = "1x001"
+    case ConfirmDeviceNotFound = "1x002"
+    case ConfirmInvalidCode = "1x003"
+    case ConfirmWentWrong = "1x004"
+    case ConfirmDeviceBlocked = "1x005"
+    case PinCodeDeviceNotFound = "2x002"
+    case UpdateDeviceData = "3x001"
+    case UpdateDeviceInternal = "3x002"
+    case ResourceNotFound = "4x001"
+    case tokenRefreshTimeExpired = "0x900"
+
+    case GroupsNotFound = "7x001"
+    case TransactionFormatError = "7x002"
+    case TransactionErrorChecking = "7x003"
+    case TransactionNotFound = "7x004"
+    case RequestInfoNotAllowed = "7x005"
+    case AccountNotFound = "7x006"
+    case TransactionTimeout = "7x007"
+    case TransactionIncorrectCode = "7x008"
+    case TransactionCommitError = "7x009"
+    
+    case CardsNotFound = "11x001"
+    case IncorrectCardData = "11x002"
+    case CardNotCreated = "11x003"
+    case WrongParams = "11x004"
+
+    case BankCardsNotFound = "11x005"
+    case CategoriesNotFound = "11x006"
+    case CardOrdersNotFound  = "11x007"
+    case IncorrectOrderData  = "11x008"
+    case ErrorCreatingOrder  = "11x009"
+    case RegionsNotFound = "11x010"
+    case ErrorGettingBalance = "11x011"
 }

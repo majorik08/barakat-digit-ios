@@ -45,6 +45,17 @@ final class AppCoordinator: Coordinator {
         return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
     }
     
+    func startWithCheck() {
+        if UIDevice.current.isJailBroken {
+            let vc = WarningViewController()
+            vc.coordinator = self
+            self.window.rootViewController = vc
+            self.window.makeKeyAndVisible()
+        } else {
+            self.start()
+        }
+    }
+    
     func start() {
         let accounts = CoreAccount.accounts()
         if accounts.isEmpty {

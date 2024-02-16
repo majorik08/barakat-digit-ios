@@ -90,7 +90,7 @@ class CardTextFiled: UIView {
             self.topLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 0),
             self.topLabel.rightAnchor.constraint(lessThanOrEqualTo: self.rootView.rightAnchor, constant: -16),
             self.textFieldTopLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 16),
-            self.textFieldTopLabel.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 0),
+            self.textFieldTopLabel.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 6),
             self.textFieldTopLabel.rightAnchor.constraint(equalTo: self.rightImage.leftAnchor, constant: -10),
             self.textField.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 16),
             self.textField.topAnchor.constraint(equalTo: self.textFieldTopLabel.bottomAnchor, constant: 0),

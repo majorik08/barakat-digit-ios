@@ -31,7 +31,7 @@ class MainTopBarView: UIView {
         view.backgroundColor = .clear
         view.startColor = Theme.current.mainGradientStartColor
         view.endColor = Theme.current.mainGradientEndColor
-        view.startPoint = .init(x: 0.25, y: 0.5)
+        view.startPoint = .init(x: 0, y: 0.5)
         view.endPoint = .init(x: 1, y: 0)
         return view
     }()
@@ -72,6 +72,13 @@ class MainTopBarView: UIView {
     
     func configure(viewModel: HomeViewModel) {
         self.headerView.avatarView.loadImage(filePath: viewModel.accountInfo.client.avatar)
+        if Constants.HideBalanceInMain {
+            self.accountInfoView.balanceLabel.text = "**** с."
+            self.accountInfoView.bonusLabel.text = "\(viewModel.accountInfo.bonusBalance) с. \("BONUSES".localized)"
+        } else {
+            self.accountInfoView.balanceLabel.text = "\(viewModel.accountInfo.walletBalance) с."
+            self.accountInfoView.bonusLabel.text = "\(viewModel.accountInfo.bonusBalance) с. \("BONUSES".localized)"
+        }
     }
     
     func themeChanged(newTheme: Theme) {

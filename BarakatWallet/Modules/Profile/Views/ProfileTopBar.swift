@@ -8,6 +8,42 @@
 import Foundation
 import UIKit
 
+class ProfileAlertView: UIView {
+
+    let infoLabel: UILabel = {
+        let view = UILabel(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.font = UIFont.regular(size: 12)
+        view.textColor = .black
+        view.lineBreakMode = .byWordWrapping
+        view.numberOfLines = 0
+        return view
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.setup()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        self.setup()
+    }
+    
+    func setup() {
+        self.backgroundColor = UIColor(red: 1.00, green: 0.80, blue: 0.35, alpha: 1.00)
+        self.clipsToBounds = true
+        self.layer.cornerRadius = 14
+        self.addSubview(self.infoLabel)
+        NSLayoutConstraint.activate([
+            self.infoLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
+            self.infoLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 40),
+            self.infoLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.infoLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10)
+        ])
+    }
+}
+
 class ProfileTopBar: UIView {
     
     private var shadowView: UIView = {
@@ -84,23 +120,23 @@ class ProfileTopBar: UIView {
         self.addSubview(self.subTitleLabel)
         self.addSubview(self.statusView)
         NSLayoutConstraint.activate([
-            self.backButton.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 20),
+            self.backButton.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 16),
             self.backButton.topAnchor.constraint(equalTo: self.topAnchor, constant: UIApplication.statusBarHeight),
             self.backButton.heightAnchor.constraint(equalToConstant: 28),
             self.backButton.widthAnchor.constraint(equalToConstant: 28),
-            self.avatarView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 20),
+            self.avatarView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.avatarView.topAnchor.constraint(equalTo: self.backButton.bottomAnchor, constant: 10),
             self.avatarView.heightAnchor.constraint(equalToConstant: 74),
             self.avatarView.widthAnchor.constraint(equalToConstant: 74),
             self.titleLabel.leftAnchor.constraint(equalTo: self.avatarView.rightAnchor, constant: 20),
             self.titleLabel.topAnchor.constraint(equalTo: self.avatarView.topAnchor, constant: 10),
-            self.titleLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -20),
+            self.titleLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.subTitleLabel.leftAnchor.constraint(equalTo: self.avatarView.rightAnchor, constant: 20),
             self.subTitleLabel.topAnchor.constraint(equalTo: self.titleLabel.bottomAnchor, constant: 6),
-            self.subTitleLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -20),
-            self.statusView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 20),
+            self.subTitleLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.statusView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.statusView.topAnchor.constraint(equalTo: self.avatarView.bottomAnchor, constant: 20),
-            self.statusView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -20),
+            self.statusView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.statusView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -30),
             self.statusView.heightAnchor.constraint(equalToConstant: 64)
         ])
@@ -139,7 +175,7 @@ class ProfileTopBar: UIView {
 class StatusView: UIControl {
     
     let iconView: GradientImageView = {
-        let view = GradientImageView(frame: .zero)
+        let view = GradientImageView(insets: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.imageView.image = UIImage(name: .profile_add)
         view.tintColor = .white
@@ -149,7 +185,7 @@ class StatusView: UIControl {
     let titleLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.textColor = Theme.current.primaryTextColor
         view.text = "ID_STATUS".localized
         return view
@@ -157,7 +193,7 @@ class StatusView: UIControl {
     let subTitleLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 18)
+        view.font = UIFont.medium(size: 17)
         view.textColor = .systemRed
         view.text = "ID_NOT_IDENTIFY".localized
         return view
@@ -217,10 +253,16 @@ class StatusView: UIControl {
     func configure(limits: AppStructs.ClientInfo.Limit) {
         switch limits.identifyed {
         case .noIdentified:
+            self.iconView.imageView.image = UIImage(name: .status_one)
+            self.subTitleLabel.textColor = .systemRed
             self.subTitleLabel.text = "ID_NOT_IDENTIFY".localized
         case .onlineIdentified:
+            self.iconView.imageView.image = UIImage(name: .status_two)
+            self.subTitleLabel.textColor = Theme.current.tintColor
             self.subTitleLabel.text = "IDENTIFY_ONLINE".localized
         case .identified:
+            self.iconView.imageView.image = UIImage(name: .status_three)
+            self.subTitleLabel.textColor = Theme.current.tintColor
             self.subTitleLabel.text = "IDENTIFIED".localized
         }
     }

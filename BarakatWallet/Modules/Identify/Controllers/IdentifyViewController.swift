@@ -30,6 +30,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
         let view = BaseButtonView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setTitleColor(.white, for: .normal)
+        view.titleLabel?.font = UIFont.medium(size: 17)
         view.radius = 14
         view.setTitle("SEND".localized, for: .normal)
         view.isEnabled = false
@@ -37,7 +38,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
     }()
     let frontLabel: UILabel = {
         let view = UILabel(frame: .zero)
-        view.font = UIFont.medium(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.textColor = Theme.current.primaryTextColor
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "FRONT_PASSPORT_HELP".localized
@@ -51,7 +52,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
     }()
     let backLabel: UILabel = {
         let view = UILabel(frame: .zero)
-        view.font = UIFont.medium(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.textColor = Theme.current.primaryTextColor
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "BACK_PASSPORT_HELP".localized
@@ -65,7 +66,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
     }()
     let selfieLabel: UILabel = {
         let view = UILabel(frame: .zero)
-        view.font = UIFont.medium(size: 18)
+        view.font = UIFont.regular(size: 17)
         view.textColor = Theme.current.primaryTextColor
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "SELFIE_HELP".localized
@@ -74,7 +75,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
     }()
     let selfieInfoLabel: UILabel = {
         let view = UILabel(frame: .zero)
-        view.font = UIFont.medium(size: 14)
+        view.font = UIFont.regular(size: 14)
         view.textColor = Theme.current.secondaryTextColor
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "SELFIE_INFO_HELP".localized
@@ -137,36 +138,36 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
             self.rootView.bottomAnchor.constraint(equalTo: self.scrollView.bottomAnchor),
             rootView.widthAnchor.constraint(equalTo: self.scrollView.widthAnchor),
             rootHeight,
-            self.frontLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.frontLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.frontLabel.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 20),
-            self.frontLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
-            self.frontPick.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.frontLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.frontPick.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.frontPick.topAnchor.constraint(equalTo: self.frontLabel.bottomAnchor, constant: 10),
-            self.frontPick.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
+            self.frontPick.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.frontPick.heightAnchor.constraint(equalTo: self.frontPick.widthAnchor, multiplier: 0.5),
-            self.backLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.backLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.backLabel.topAnchor.constraint(equalTo: self.frontPick.bottomAnchor, constant: 20),
-            self.backLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
-            self.backPick.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.backLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.backPick.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.backPick.topAnchor.constraint(equalTo: self.backLabel.bottomAnchor, constant: 10),
-            self.backPick.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
+            self.backPick.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.backPick.heightAnchor.constraint(equalTo: self.backPick.widthAnchor, multiplier: 0.5),
-            self.selfieLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.selfieLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.selfieLabel.topAnchor.constraint(equalTo: self.backPick.bottomAnchor, constant: 20),
-            self.selfieLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
-            self.selfieInfoLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.selfieLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.selfieInfoLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.selfieInfoLabel.topAnchor.constraint(equalTo: self.selfieLabel.bottomAnchor, constant: 10),
-            self.selfieInfoLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
-            self.selfiePick.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.selfieInfoLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.selfiePick.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.selfiePick.topAnchor.constraint(equalTo: self.selfieInfoLabel.bottomAnchor, constant: 10),
-            self.selfiePick.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
+            self.selfiePick.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.selfiePick.heightAnchor.constraint(equalTo: self.selfiePick.widthAnchor, multiplier: 0.5),
-            self.infoView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.infoView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.infoView.topAnchor.constraint(equalTo: self.selfiePick.bottomAnchor, constant: 20),
-            self.infoView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
-            self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 30),
+            self.infoView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.nextButton.topAnchor.constraint(equalTo: self.infoView.bottomAnchor, constant: 30),
-            self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -30),
+            self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.nextButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -30),
             self.nextButton.heightAnchor.constraint(equalToConstant: 56),
         ])

@@ -20,11 +20,7 @@ final class AccountServiceImpl: AccountService {
             APIManager.instance.request(.init(AppMethods.Client.Info(.init())), auth: .auth, timeOut: 20) { response in
                 switch response.result {
                 case .success(let result):
-                    if let first = result.first {
-                        single(.success(first))
-                    } else {
-                        single(.failure(APIManager.decodeError))
-                    }
+                    single(.success(result))
                 case .failure(let error):
                     single(.failure(error))
                 }
@@ -38,11 +34,7 @@ final class AccountServiceImpl: AccountService {
             APIManager.instance.request(.init(AppMethods.Acccount.Accounts(.init())), auth: .auth, timeOut: 20) { response in
                 switch response.result {
                 case .success(let result):
-                    if let first = result.first {
-                        single(.success(first))
-                    } else {
-                        single(.failure(APIManager.decodeError))
-                    }
+                    single(.success(result))
                 case .failure(let error):
                     single(.failure(error))
                 }

@@ -29,6 +29,7 @@ class QrCoordinator: Coordinator, QRScannerCodeDelegate {
     
     func qrScanner(_ controller: UIViewController, scanDidComplete result: String) {
         print("result:\(result)")
+        self.parent?.checkQr(qr: result)
     }
     
     func qrScannerDidFail(_ controller: UIViewController, error: QRCodeError) {

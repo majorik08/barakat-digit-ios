@@ -14,10 +14,10 @@ class TransferCardView: UIControl {
         let view = GradientView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.radius = 14
-        view.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.25).cgColor
-        view.layer.shadowOpacity = 1
+        view.layer.shadowColor = Theme.current.shadowColor.cgColor
+        view.layer.shadowOpacity = 0.6
         view.layer.shadowRadius = 4
-        view.layer.shadowOffset = CGSize(width: 0, height: 4)
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
         view.isUserInteractionEnabled = false
         return view
     }()
@@ -35,7 +35,7 @@ class TransferCardView: UIControl {
     let titleLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = UIColor.black
         view.font = UIFont.bold(size: 16)
         view.isUserInteractionEnabled = false
         return view
@@ -43,7 +43,7 @@ class TransferCardView: UIControl {
     let subTitleLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = UIColor.black
         view.font = UIFont.bold(size: 14)
         view.isUserInteractionEnabled = false
         return view
@@ -59,7 +59,7 @@ class TransferCardView: UIControl {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "CHANGE".localized
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = UIColor.black
         view.font = UIFont.bold(size: 14)
         view.isUserInteractionEnabled = false
         return view
@@ -131,10 +131,10 @@ class TransferCardNumberView: UIControl {
         let view = GradientView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.radius = 14
-        view.layer.shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.25).cgColor
-        view.layer.shadowOpacity = 1
+        view.layer.shadowColor = Theme.current.shadowColor.cgColor
+        view.layer.shadowOpacity = 0.6
         view.layer.shadowRadius = 4
-        view.layer.shadowOffset = CGSize(width: 0, height: 4)
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
         view.isUserInteractionEnabled = false
         return view
     }()
@@ -152,7 +152,7 @@ class TransferCardNumberView: UIControl {
     let titleLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = UIColor.black
         view.font = UIFont.bold(size: 16)
         view.isUserInteractionEnabled = false
         return view
@@ -168,7 +168,7 @@ class TransferCardNumberView: UIControl {
     let numberLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = UIColor.black
         view.font = UIFont.bold(size: 16)
         view.isUserInteractionEnabled = false
         return view
@@ -176,7 +176,7 @@ class TransferCardNumberView: UIControl {
     let accountLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = UIColor.black
         view.font = UIFont.bold(size: 12)
         view.isUserInteractionEnabled = false
         return view
@@ -192,7 +192,7 @@ class TransferCardNumberView: UIControl {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "CHANGE".localized
-        view.textColor = Theme.current.primaryTextColor
+        view.textColor = UIColor.black
         view.font = UIFont.bold(size: 14)
         view.textAlignment = .right
         view.isUserInteractionEnabled = false
@@ -253,7 +253,7 @@ class TransferCardNumberView: UIControl {
             self.logoImageView.leftAnchor.constraint(equalTo: self.accountLabel.rightAnchor, constant: 6),
             self.logoImageView.rightAnchor.constraint(lessThanOrEqualTo: self.changeButton.leftAnchor, constant: 10),
             self.logoImageView.widthAnchor.constraint(equalTo: self.logoImageView.heightAnchor, multiplier: 2),
-            self.logoImageView.heightAnchor.constraint(equalToConstant: 14),
+            self.logoImageView.heightAnchor.constraint(equalToConstant: 18),
             self.logoImageView.centerYAnchor.constraint(equalTo: self.accountLabel.centerYAnchor, constant: 0),
             self.changeButton.topAnchor.constraint(greaterThanOrEqualTo: self.rootView.topAnchor, constant: 8),
             self.changeButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -24),

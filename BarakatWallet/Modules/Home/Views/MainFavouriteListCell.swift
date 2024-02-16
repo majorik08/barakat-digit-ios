@@ -21,7 +21,7 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
         view.backgroundColor = .clear
         view.showsVerticalScrollIndicator = false
         view.showsHorizontalScrollIndicator = false
-        view.contentInset = .init(top: 0, left: 11, bottom: 0, right: 11)
+        view.contentInset = .init(top: 0, left: Theme.current.mainPaddings - 5, bottom: 0, right: Theme.current.mainPaddings - 5)
         return view
     }()
     let titleView: UILabel = {
@@ -38,6 +38,7 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
         view.setTitle("ALL".localized, for: .normal)
         view.titleLabel?.font = UIFont.medium(size: 16)
         view.setTitleColor(Theme.current.tintColor, for: .normal)
+        view.isHidden = true
         return view
     }()
     let controlView: AdvancedPageControlView = {
@@ -46,6 +47,7 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
         return view
     }()
     weak var delegate: HomeViewControllerItemDelegate? = nil
+    var viewModel: HomeViewModel? = nil
     var favorites: [AppStructs.Favourite] = []
     
     override init(frame: CGRect) {
@@ -56,19 +58,19 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
         self.contentView.addSubview(self.collectionView)
         self.contentView.addSubview(self.controlView)
         NSLayoutConstraint.activate([
-            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.titleView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.titleView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
             self.titleView.rightAnchor.constraint(lessThanOrEqualTo: self.allButton.leftAnchor, constant: -10),
             self.titleView.heightAnchor.constraint(equalToConstant: 18),
             self.allButton.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 4),
-            self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.allButton.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.allButton.heightAnchor.constraint(equalToConstant: 18),
             self.collectionView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 0),
             self.collectionView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 8),
             self.collectionView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: 0),
-            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
+            self.controlView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: Theme.current.mainPaddings),
             self.controlView.topAnchor.constraint(equalTo: self.collectionView.bottomAnchor, constant: 8),
-            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -16),
+            self.controlView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.controlView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -4),
             self.controlView.heightAnchor.constraint(equalToConstant: 12)
         ])
@@ -86,10 +88,28 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
         self.delegate?.goToAllTapped(cell: self)
     }
     
+    @available(iOS 13.0, *)
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemsAt indexPaths: [IndexPath], point: CGPoint) -> UIContextMenuConfiguration? {
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { suggestedActions in
+            if let indexPath = indexPaths.first, indexPaths.count == 1 {
+                let deleteAction = UIAction(title: "DELETE".localized, image: UIImage(systemName: "trash"), attributes: .destructive) { action in
+                    if indexPath.item < self.favorites.count {
+                        self.delegate?.favouriteDelete(favouite: self.favorites[indexPath.item])
+                    }
+                }
+                return UIMenu(title: "", children: [deleteAction])
+            }
+            return UIMenu(title: "", children: [])
+        }
+    }
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         collectionView.deselectItem(at: indexPath, animated: true)
         if indexPath.item < self.favorites.count {
-            self.delegate?.favouriteTapped(favouite: self.favorites[indexPath.item])
+            let item = self.favorites[indexPath.item]
+            if let service = self.viewModel?.getService(serviceID: item.serviceID) {
+                self.delegate?.favouriteTapped(favouite: (item, service))
+            }
         } else {
             self.delegate?.favouriteTapped(favouite: nil)
         }
@@ -102,7 +122,9 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! MainFavouriteCell
         if indexPath.item < self.favorites.count {
-            cell.configure(item: self.favorites[indexPath.item])
+            let item = self.favorites[indexPath.item]
+            let service = self.viewModel?.getService(serviceID: item.serviceID)
+            cell.configure(item: (item, service))
         } else {
             cell.configure(item: nil)
         }
@@ -125,13 +147,15 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
         guard width > 0 else {
             return .init(width: 1, height: 1)
         }
-        let itemWidth = ((width - 22) / 4)
+        let insets = 2 * (Theme.current.mainPaddings - 5)
+        let itemWidth = ((width - insets) / 4)
         let height = (itemWidth - 10) - 2
         return .init(width: itemWidth, height: height)
     }
     
-    func configure(items: [AppStructs.Favourite]) {
+    func configure(items: [AppStructs.Favourite], viewModel: HomeViewModel) {
         self.favorites = items
+        self.viewModel = viewModel
         self.titleView.textColor = Theme.current.primaryTextColor
         self.collectionView.reloadData()
         
@@ -164,6 +188,8 @@ class MainFavouriteCell: UICollectionViewCell {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = Theme.current.plainTableBackColor
         view.isUserInteractionEnabled = false
+        view.clipsToBounds = true
+        view.contentMode = .scaleAspectFill
         return view
     }()
     let titleView: UILabel = {
@@ -171,7 +197,7 @@ class MainFavouriteCell: UICollectionViewCell {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.primaryTextColor
         view.font = UIFont.regular(size: 12)
-        view.text = "МегаФон"
+        view.text = ""
         return view
     }()
     let subTitleView: UILabel = {
@@ -179,7 +205,7 @@ class MainFavouriteCell: UICollectionViewCell {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.textColor = Theme.current.secondaryTextColor
         view.font = UIFont.regular(size: 12)
-        view.text = "905005050"
+        view.text = ""
         return view
     }()
     let addLabelView: UILabel = {
@@ -251,17 +277,31 @@ class MainFavouriteCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(item: AppStructs.Favourite?) {
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.titleView.text = nil
+        self.iconView.image = nil
+        self.subTitleView.text = nil
+    }
+    
+    func configure(item: (AppStructs.Favourite, AppStructs.PaymentGroup.ServiceItem?)?) {
         self.rootView.backgroundColor = Theme.current.plainTableCellColor
         self.iconView.backgroundColor = Theme.current.plainTableBackColor
         self.titleView.textColor = Theme.current.primaryTextColor
         self.subTitleView.textColor = Theme.current.secondaryTextColor
-        if let _ = item {
+        if let item = item {
             self.addLabelView.isHidden = true
             self.addImageView.isHidden = true
             self.titleView.isHidden = false
             self.iconView.isHidden = false
             self.subTitleView.isHidden = false
+            self.titleView.text = item.1?.name ?? ""
+            if let service = item.1 {
+                self.iconView.loadImage(filePath: Theme.current.dark ? service.darkImage : service.image)
+            } else {
+                self.iconView.image = nil
+            }
+            self.subTitleView.text = item.0.params.first ?? ""
         } else {
             self.addLabelView.isHidden = false
             self.addImageView.isHidden = false
