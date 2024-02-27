@@ -21,14 +21,29 @@ protocol PaymentsService: Service {
     func loadNumberInfo(number: String) -> Single<[AppMethods.Payments.GetNumberInfo.GetNumberInfoResult]>
     func verifyPayment(account: String, accountType: AppStructs.AccountType, amount: Double, comment: String, params: [String], serviceID: Int) -> Single<AppMethods.Payments.TransactionVerify.VerifyResult>
     func commitPayment(tranID: String, code: String, key: String) -> Single<AppMethods.Payments.TransactionCommit.Result>
+    func verifySendCode(tranID: String) -> Single<AppMethods.Payments.TransactionSendCode.Result>
 }
 
 final class PaymentsServiceImpl: PaymentsService {
-  
+
     var accountInfo: AppStructs.AccountInfo
     
     init(accountInfo: AppStructs.AccountInfo) {
         self.accountInfo = accountInfo
+    }
+    
+    func verifySendCode(tranID: String) -> RxSwift.Single<AppMethods.Payments.TransactionSendCode.Result> {
+        return Single<AppMethods.Payments.TransactionSendCode.Result>.create { single in
+            APIManager.instance.request(.init(AppMethods.Payments.TransactionSendCode(.init(tranID: tranID))), auth: .auth, timeOut: 20) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
     }
     
     func commitPayment(tranID: String, code: String, key: String) -> Single<AppMethods.Payments.TransactionCommit.Result> {
@@ -168,16 +183,21 @@ final class PaymentsServiceImpl: PaymentsService {
 }
 
 final class PaymentsServiceMockImpl: PaymentsService {
-    
+   
     var accountInfo: AppStructs.AccountInfo
     
     init(accountInfo: AppStructs.AccountInfo) {
         self.accountInfo = accountInfo
     }
     
+    func verifySendCode(tranID: String) -> RxSwift.Single<AppMethods.Payments.TransactionSendCode.Result> {
+        fatalError("")
+    }
+    
     func commitPayment(tranID: String, code: String, key: String) -> RxSwift.Single<AppMethods.Payments.TransactionCommit.Result> {
         fatalError("")
     }
+    
     func verifyPayment(account: String, accountType: AppStructs.AccountType, amount: Double, comment: String, params: [String], serviceID: Int) -> RxSwift.Single<AppMethods.Payments.TransactionVerify.VerifyResult> {
         fatalError("")
     }

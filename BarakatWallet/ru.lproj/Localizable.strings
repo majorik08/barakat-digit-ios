@@ -13,7 +13,7 @@
 "FAVOURITE_SERVICES" = "Избранные сервисы";
 "RATES_LIST" = "Курсы валют";
 "CONVERTOR" = "Конвертер";
-"WELLCOME_TO_APP" = "Добро пожаловать в Barakat Digit!";
+"WELLCOME_TO_APP" = "Добро пожаловать в Barakat digit!";
 "TRANSFER_TO_TJ" = "ПЕРЕВОД В ТАДЖИКИСТАН";
 "LOGIN_SIGNIN" = "ВХОД/РЕГИСТРАЦИЯ";
 "YOUR_PHONE_NUMBER" = "Введите ваш номер";
@@ -94,7 +94,6 @@
 "LOGOUT_FROM_ACC" = "Выход из акаунта";
 "APP_VERSION" = "Version: %@";
 "LOGOUT_HELP" = "Вы действительно хотите выйти из аккаунта?";
-"ABOUT_TEXT" = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
 "THEME" = "Тема";
 "ru" = "Русский";
 "en" = "English";
@@ -173,7 +172,7 @@
 "PAYMENT_OPERATION" = "Оплата услуг";
 "QR_OPERATION" = "Оплата по QR коду";
 "TRANSFER_TO_NUMBER_OPERATION" = "Перевод по номеру телефона";
-"TRANSFER_TO_CARD_OPERATION" = "Перевод на карту по номеру карты";
+"TRANSFER_TO_CARD_OPERATION" = "Перевод на карту";
 "TRANSFER_TO_ABROAD" = "Перевод за рубеж";
 "SUM_IN_CUR" = "Сумма в %@";
 "READY" = "Готово";
@@ -273,3 +272,20 @@
 "TRANSFER_IN_PROGRESS" = "Запрос обрабатывается";
 "TRANSFER_IN_PROGRESS_INFO" = "Ваш запрос принят на обработку. После обработки ва придет push-уведомление со статусом запроса. Пожалуйста, убедитесь, что push-уведомления включены в разделе Настройки";
 "GO_TO_MAIN" = "На главную";
+"FROM_CARD" = "с Карты %@";
+"FROM_WALLET" = "с Баланса кошелька";
+"FROM_BONUS" = "с Бонусного счета";
+"TO_DEST" = "На";
+"PAYMENT_NOT_VERIFIED" = "Не подтвержден";
+"PAYMENT_PENDING" = "В обработке";
+"PAYMENT_IN_PROGRESS" = "В обработке";
+"TO_DEST_CARD" = "На карту";
+"TO_CARD" = "На карту %@";
+"TO_WALLET" = "На баланса кошелька";
+"TO_BONUS" = "На бонусный счет";
+"TO_CARD_OR_WALLET" = "На счет/карту";
+"QR_SHOW_HELP" = "Покажите его для получение платежа или бонусов";
+"QR_VIEW_HELP" = "Наведите камеру на QR-код чтобы оплатить";
+"QR_FROM_PHOTOS" = "Upload from photos";
+"QR_INVALID_CODE" = "Invalid QR Code";
+"FOR_FULL_ACCESS_JOIN" = "Для полного доступа войдите в приложение, используя свой номер телефона.";

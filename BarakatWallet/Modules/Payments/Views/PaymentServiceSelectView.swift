@@ -51,7 +51,7 @@ class PaymentServiceSelectView: UIView, UICollectionViewDelegate, UICollectionVi
         view.layer.cornerRadius = 14
         view.clipsToBounds = true
         view.backgroundColor = Theme.current.plainTableCellColor
-        view.isHidden = true
+        view.isHidden = false
         return view
     }()
     weak var delegate: PaymentServiceSelectViewDelegate? = nil
@@ -137,7 +137,7 @@ class PaymentServiceSelectView: UIView, UICollectionViewDelegate, UICollectionVi
     func configure(services: [PaymentsViewModel.NumberServiceInfo]) {
         if services.isEmpty {
             self.emptyView.isHidden = false
-            self.titleView.isHidden = true
+            self.titleView.isHidden = false
             self.controlView.isHidden = true
         } else {
             self.emptyView.isHidden = true

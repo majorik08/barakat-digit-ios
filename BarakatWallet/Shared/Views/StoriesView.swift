@@ -113,7 +113,7 @@ class StoriesCell: UICollectionViewCell {
     let rootView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .clear
+        //view.backgroundColor = Theme.current.whiteColor.withAlphaComponent(0.3)
         //view.layer.borderColor = UIColor.white.cgColor
         //view.layer.borderWidth = 0.5
         view.layer.cornerRadius = 16

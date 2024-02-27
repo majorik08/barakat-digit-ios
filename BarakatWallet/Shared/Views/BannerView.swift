@@ -131,11 +131,13 @@ class BannerCell: UICollectionViewCell {
         view.backgroundColor = Theme.current.plainTableBackColor
         return view
     }()
-    let imageView: CircleImageView = {
-        let view = CircleImageView(frame: .zero)
+    let imageView: UIImageView = {
+        let view = UIImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.image = UIImage(name: .transfer_help)
-        view.contentMode = .scaleAspectFit
+        view.image = nil
+        view.contentMode = .scaleAspectFill
+        view.clipsToBounds = true
+        view.layer.cornerRadius = 14
         return view
     }()
     let titleLabel: UILabel = {
@@ -167,14 +169,14 @@ class BannerCell: UICollectionViewCell {
             self.rootView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 0),
             self.rootView.rightAnchor.constraint(equalTo: self.contentView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.rootView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -4),
-            self.imageView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 16),
-            self.imageView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 16),
-            self.imageView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -16),
-            self.imageView.widthAnchor.constraint(equalTo: self.imageView.heightAnchor, multiplier: 1),
-            self.titleLabel.leftAnchor.constraint(equalTo: self.imageView.rightAnchor, constant: 16),
-            self.titleLabel.topAnchor.constraint(equalTo: self.imageView.topAnchor, constant: 0),
+            self.imageView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 0),
+            self.imageView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 0),
+            self.imageView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: 0),
+            self.imageView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 0),
+            self.titleLabel.leftAnchor.constraint(equalTo: self.rootView.centerXAnchor, constant: -20),
+            self.titleLabel.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 20),
             self.titleLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -16),
-            self.subTitleLabel.leftAnchor.constraint(equalTo: self.imageView.rightAnchor, constant: 16),
+            self.subTitleLabel.leftAnchor.constraint(equalTo: self.rootView.centerXAnchor, constant: -20),
             self.subTitleLabel.topAnchor.constraint(equalTo: self.titleLabel.bottomAnchor, constant: 10),
             self.subTitleLabel.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -16),
             self.subTitleLabel.bottomAnchor.constraint(lessThanOrEqualTo: self.rootView.bottomAnchor, constant: -10)
@@ -189,7 +191,7 @@ class BannerCell: UICollectionViewCell {
         self.rootView.backgroundColor = Theme.current.plainTableBackColor
         self.titleLabel.textColor = Theme.current.tintColor
         self.subTitleLabel.textColor = Theme.current.primaryTextColor
-        self.imageView.setImage(url: banner.image)
+        self.imageView.loadImage(filePath: banner.image)
         self.titleLabel.text = banner.title
         self.subTitleLabel.text = banner.text
     }

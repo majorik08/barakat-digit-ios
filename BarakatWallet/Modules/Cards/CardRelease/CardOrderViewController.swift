@@ -75,8 +75,8 @@ class CardOrderViewController: BaseViewController, CardRegionViewControllerDeleg
         view.backgroundColor = Theme.current.plainTableBackColor
         return view
     }()
-    private let firstnameField: CardTextFiled = {
-        let view = CardTextFiled()
+    private let firstnameField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text =  "FIRSTNAME".localized
         view.textField.textColor = Theme.current.primaryTextColor
@@ -85,8 +85,8 @@ class CardOrderViewController: BaseViewController, CardRegionViewControllerDeleg
         view.textField.returnKeyType = .done
         return view
     }()
-    private let lastnameField: CardTextFiled = {
-        let view = CardTextFiled()
+    private let lastnameField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text =  "LASTNAME".localized
         view.textField.textColor = Theme.current.primaryTextColor
@@ -95,8 +95,8 @@ class CardOrderViewController: BaseViewController, CardRegionViewControllerDeleg
         view.textField.returnKeyType = .done
         return view
     }()
-    private let surnameField: CardTextFiled = {
-        let view = CardTextFiled()
+    private let surnameField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text =  "SURNAME".localized
         view.textField.textColor = Theme.current.primaryTextColor
@@ -105,8 +105,8 @@ class CardOrderViewController: BaseViewController, CardRegionViewControllerDeleg
         view.textField.returnKeyType = .done
         return view
     }()
-    private let phoneNumberField: CardTextFiled = {
-        let view = CardTextFiled()
+    private let phoneNumberField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "PHONE_NUMBER".localized
         view.textField.textColor = Theme.current.primaryTextColor
@@ -136,8 +136,8 @@ class CardOrderViewController: BaseViewController, CardRegionViewControllerDeleg
         }
         return view
     }()
-    private let cityField: CardTextFiled = {
-        let view = CardTextFiled()
+    private let cityField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "CITY".localized
         view.textField.textColor = Theme.current.primaryTextColor
@@ -151,8 +151,8 @@ class CardOrderViewController: BaseViewController, CardRegionViewControllerDeleg
         view.isUserInteractionEnabled = true
         return view
     }()
-    private let addressField: CardTextFiled = {
-        let view = CardTextFiled()
+    private let addressField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "SHIP_ADDRESS".localized
         view.textField.textColor = Theme.current.primaryTextColor

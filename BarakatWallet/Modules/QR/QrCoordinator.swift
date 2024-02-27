@@ -27,9 +27,13 @@ class QrCoordinator: Coordinator, QRScannerCodeDelegate {
         self.nav.present(vc, animated: true)
     }
     
+    func qrScannerShowMyQr(_ controller: UIViewController) {
+        controller.present(ProfileQrViewController(client: self.accountInfo.client), animated: true)
+    }
+    
     func qrScanner(_ controller: UIViewController, scanDidComplete result: String) {
         print("result:\(result)")
-        self.parent?.checkQr(qr: result)
+        self.parent?.checkQr(qr: result.replacingOccurrences(of: "TEL:", with: ""))
     }
     
     func qrScannerDidFail(_ controller: UIViewController, error: QRCodeError) {

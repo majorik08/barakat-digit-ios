@@ -83,6 +83,7 @@ final class AppCoordinator: Coordinator {
     
     func showPasscode(account: CoreAccount) {
         APIManager.instance.setToken(token: account.token)
+        self.sendPushToken()
         let coordinator = PasscodeCoordinator(nav: FirstLaunchNavigation(overrideInterfaceStyle: false), account: account, authService: self.authService)
         coordinator.parent = self
         coordinator.start()
@@ -104,5 +105,19 @@ final class AppCoordinator: Coordinator {
             UIView.setAnimationsEnabled(oldState)
         }
         self.window.makeKeyAndVisible()
+        let _ = NotificationManager.instance
+    }
+    
+    private func sendPushToken() {
+        if !Constants.PushTokenSent {
+            APIManager.instance.request(.init(AppMethods.Auth.DeviceUpdate(Constants.Device)), auth: .auth) { response in
+                switch response.result {
+                case .success(_):
+                    Constants.PushTokenSent = true
+                case .failure(_):
+                    break
+                }
+            }
+        }
     }
 }

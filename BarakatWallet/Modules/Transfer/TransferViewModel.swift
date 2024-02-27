@@ -41,9 +41,9 @@ class TransferViewModel {
             APIManager.instance.loadImage(into: nil, filePath: imagePath) { result in
                 if let r = result {
                     let colors = r.getColors(quality: .high)
-                    obs(.success(colors?.primary ?? Theme.current.tintColor))
+                    obs(.success(colors?.primary ?? Theme.current.secondTintColor))
                 } else {
-                    obs(.success(Theme.current.tintColor))
+                    obs(.success(Theme.current.secondTintColor))
                 }
             }
             return Disposables.create()

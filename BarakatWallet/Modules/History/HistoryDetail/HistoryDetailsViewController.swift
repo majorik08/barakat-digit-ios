@@ -285,13 +285,8 @@ class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControlle
     
     func configure() {
         self.sumLabel.text = self.item.amount.balanceText
-        if self.item.status == 0 {
-            self.statusLabel.textColor = .systemGreen
-            self.statusLabel.text = "PAYMENT_SUCCESS".localized
-        } else {
-            self.statusLabel.textColor = .systemRed
-            self.statusLabel.text = "PAYMENT_FAILED".localized
-        }
+        self.statusLabel.textColor = self.item.statusType.color
+        self.statusLabel.text = self.item.statusType.name
         if let serviceId = Int(self.item.service), let service = self.viewModel.accountInfo.getService(serviceID: serviceId) {
             let infoView = HistoryInfoItemView(frame: .zero)
             infoView.titleLabel.text = "HISTORY_TITLE".localized

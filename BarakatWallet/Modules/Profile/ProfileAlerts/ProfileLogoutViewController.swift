@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class ProfileLogoutViewController: BaseViewController {
     
@@ -137,10 +138,17 @@ class ProfileLogoutViewController: BaseViewController {
     }
     
     @objc func goToLogout() {
-        if self.viewModel.logout() {
-            Constants.Username = nil
-            self.coordinator?.logoutFromAccount()
-        }
+        self.showProgressView()
+        self.viewModel.profileService.logout()
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] result in
+                Constants.Username = nil
+                self?.hideProgressView()
+                self?.coordinator?.logoutFromAccount()
+            } onFailure: { [weak self] _ in
+                self?.hideProgressView()
+                self?.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
     }
     
     override func viewWillAppear(_ animated: Bool) {

@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class AboutViewController: BaseViewController {
     
@@ -31,7 +32,6 @@ class AboutViewController: BaseViewController {
         view.font = UIFont.regular(size: 16)
         view.textColor = Theme.current.primaryTextColor
         view.numberOfLines = 0
-        view.text = "ABOUT_TEXT".localized
         return view
     }()
     let nextButton: BaseButtonView = {
@@ -42,8 +42,10 @@ class AboutViewController: BaseViewController {
         view.setTitle("PROFILE_SHARE".localized, for: .normal)
         return view
     }()
+    let viewModel: ProfileViewModel
     
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+    init(viewModel: ProfileViewModel) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
         self.hidesBottomBarWhenPushed = true
     }
@@ -90,6 +92,22 @@ class AboutViewController: BaseViewController {
             self.nextButton.heightAnchor.constraint(equalToConstant: 56),
         ])
         self.nextButton.addTarget(self, action: #selector(self.shareApp), for: .touchUpInside)
+        self.loadDocs()
+    }
+    
+    @objc func loadDocs() {
+        self.showProgressView()
+        self.viewModel.profileService.getDocs()
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] item in
+                guard let self = self else { return }
+                self.textLabel.text = item.aboutApp
+                self.hideProgressView()
+            } onFailure: { [weak self] _ in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
     }
     
     @objc func shareApp() {

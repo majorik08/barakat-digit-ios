@@ -10,14 +10,12 @@ import UIKit
 import PhotosUI
 
 public struct QRScannerConfiguration {
-    public var title: String
-    public var hint: String?
+    public var hint: String
     public var invalidQRCodeAlertTitle: String
     public var invalidQRCodeAlertActionTitle: String
     public var uploadFromPhotosTitle: String
     public var backButtonImage: UIImage?
     public var flashOnImage: UIImage?
-    public var galleryImage: UIImage?
     public var length: CGFloat
     public var color: UIColor
     public var radius: CGFloat
@@ -26,21 +24,19 @@ public struct QRScannerConfiguration {
     public var cancelButtonTitle: String
     public var cancelButtonTintColor: UIColor?
     
-    public init(title: String = "Scan QR Code",
-                hint: String = "Align QR code within frame to scan",
-                uploadFromPhotosTitle: String = "Upload from photos",
-                invalidQRCodeAlertTitle: String = "Invalid QR Code",
-                invalidQRCodeAlertActionTitle: String = "OK",
+    public init(hint: String,
+                uploadFromPhotosTitle: String,
+                invalidQRCodeAlertTitle: String,
+                invalidQRCodeAlertActionTitle: String,
                 backButtonImage: UIImage? = nil,
                 flashOnImage: UIImage? = nil,
-                length: CGFloat = 20.0,
-                color: UIColor = .green,
-                radius: CGFloat = 10.0,
-                thickness: CGFloat = 5.0,
+                length: CGFloat = 40.0,
+                color: UIColor = .white,
+                radius: CGFloat = 24.0,
+                thickness: CGFloat = 4.0,
                 readQRFromPhotos: Bool = true,
-                cancelButtonTitle: String = "Cancel",
+                cancelButtonTitle: String,
                 cancelButtonTintColor: UIColor? = nil) {
-        self.title = title
         self.hint = hint
         self.uploadFromPhotosTitle = uploadFromPhotosTitle
         self.invalidQRCodeAlertTitle = invalidQRCodeAlertTitle
@@ -59,17 +55,16 @@ public struct QRScannerConfiguration {
 
 extension QRScannerConfiguration {
     public static var `default`: QRScannerConfiguration {
-        QRScannerConfiguration(title: "Scan QR Code",
-                               hint: "Align QR code within frame to scan",
-                               uploadFromPhotosTitle: "Upload from photos",
-                               invalidQRCodeAlertTitle: "Invalid QR Code",
+        QRScannerConfiguration(hint: "QR_VIEW_HELP".localized,
+                               uploadFromPhotosTitle: "QR_FROM_PHOTOS".localized,
+                               invalidQRCodeAlertTitle: "QR_INVALID_CODE".localized,
                                invalidQRCodeAlertActionTitle: "OK",
                                backButtonImage: UIImage(name: .camera_close),
                                flashOnImage: UIImage(name: .camera_flash),
-                               length: 20.0,
-                               color: .systemGreen,
-                               radius: 10.0,
-                               thickness: 5.0,
+                               length: 40.0,
+                               color: .white,
+                               radius: 24.0,
+                               thickness: 4.0,
                                readQRFromPhotos: true,
                                cancelButtonTitle: "CANCEL".localized,
                                cancelButtonTintColor: nil)

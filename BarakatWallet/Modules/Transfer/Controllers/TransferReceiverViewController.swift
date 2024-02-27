@@ -36,8 +36,8 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    private let cardNumerField: CardTextFiled = {
-        let view = CardTextFiled()
+    private let cardNumerField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "CARD_NUMBER_RECEIVER".localized
         view.textField.textColor = Theme.current.primaryTextColor
@@ -48,25 +48,28 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.textField.returnKeyType = .done
         return view
     }()
-    private let numberView: CardTextFiled = {
-        let view = PhoneNumberTextField(withPhoneNumberKit: Constants.phoneNumberKit)
-        let filedView = CardTextFiled(textField: view)
+    private let numberView: BasePrefixTextField = {
+        let view = UITextField(frame: .zero)
+        //let view = PhoneNumberTextField(withPhoneNumberKit: Constants.phoneNumberKit)
+        let filedView = BasePrefixTextField(textField: view)
         filedView.topLabel.text = "PHONE_NUMBER_RECEIVER".localized
         filedView.translatesAutoresizingMaskIntoConstraints = false
         filedView.rightImage.image = UIImage(name: .add_number)
-        view.withFlag = false
-        view.withPrefix = true
-        view.withExamplePlaceholder = false
+        filedView.prefixLabel.text = "+992"
+        //view.withFlag = false
+        //view.maxDigits = 9
+        //view.withPrefix = true
+        //view.withExamplePlaceholder = false
         view.leftViewMode = .always
         view.keyboardType = UIKeyboardType.phonePad
         view.borderStyle = .none
-        view.attributedPlaceholder = NSAttributedString(string: "+992 918 00 00 00", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
+        view.attributedPlaceholder = NSAttributedString(string: "918000000", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
         return filedView
     }()
     let selectorView: PaymentServiceSelectView = {
         let view = PaymentServiceSelectView(frame: .zero)
         view.controlView.isHidden = true
-        view.titleView.isHidden = true
+        view.titleView.isHidden = false
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -207,7 +210,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 .filter({ $0.count >= 6 })
                 .flatMap { str in
                     self.selectorView.configure(services: [])
-                    return self.viewModel.loadNumberServices(number: str.digits)
+                    return self.viewModel.loadNumberServices(number: "+992\(str.digits)")
                 }
                 .subscribe { [weak self] services in
                     self?.selectorView.configure(services: services)
@@ -273,7 +276,11 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
     
     func contactPicker(_ picker: CNContactPickerViewController, didSelect contactProperty: CNContactProperty) {
         guard let item = contactProperty.value as? CNPhoneNumber else { return }
-        self.numberView.textField.text = item.stringValue
+        var txt = item.stringValue.digits
+        if txt.starts(with: "992") {
+            txt = txt.replacingOccurrences(of: "992", with: "")
+        }
+        self.numberView.textField.text = txt
         self.numberView.textFieldTopLabel.text = "\(contactProperty.contact.givenName) \(contactProperty.contact.familyName)"
         if self.checkFields() {
             self.view.endEditing(true)
@@ -295,9 +302,9 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         switch self.type {
         case .byNumber:
             guard let service = self.selectorView.selectedService else { return }
-            receiver = .number(number: self.numberView.textField.text ?? "", service: service.service, info: service.accountInfo)
+            receiver = .number(number: "+992\(self.numberView.textField.text?.digits ?? "")", service: service.service, info: service.accountInfo)
         case .byCard:
-            receiver = .card(number: self.cardNumerField.textField.text ?? "", phoneNumber: self.numberView.textField.text ?? "")
+            receiver = .card(number: self.cardNumerField.textField.text ?? "", phoneNumber: "+992\(self.numberView.textField.text?.digits ?? "")")
         }
         self.view.endEditing(true)
         if let delegate = self.delegate {
@@ -333,7 +340,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         } else if textField == self.numberView.textField {
             guard let text = textField.text else { return true }
             let newLength = text.count + string.count - range.length
-            return newLength <= 20
+            return newLength <= 9
         }
         return false
     }
@@ -372,7 +379,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
             }
             var cardNumberWithoutSpaces = ""
             if let text = textField.text {
-                cardNumberWithoutSpaces = self.removeNonDigits(string: text, andPreserveCursorPosition: &targetCursorPosition)
+                cardNumberWithoutSpaces = CardTypes.removeNonDigits(string: text, andPreserveCursorPosition: &targetCursorPosition)
             }
             if cardNumberWithoutSpaces.count > 16 {
                 textField.text = self.previousTextFieldContent
@@ -385,71 +392,18 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 return
             }
             self.checkFields()
-            let cardNumberWithSpaces = self.insertCreditCardSpaces(cardNumberWithoutSpaces, preserveCursorPosition: &targetCursorPosition)
-            textField.text = cardNumberWithSpaces
+            let cardNumberWithSpaces = CardTypes.insertCreditCardSpaces(cardNumberWithoutSpaces, preserveCursorPosition: &targetCursorPosition)
+            textField.text = cardNumberWithSpaces.0
+            self.cardNumerField.rightImage.image = cardNumberWithSpaces.1?.image
             if let targetPosition = textField.position(from: textField.beginningOfDocument, offset: targetCursorPosition) {
                 textField.selectedTextRange = textField.textRange(from: targetPosition, to: targetPosition)
             }
         } else if textField == self.numberView.textField {
             self.numberView.textFieldTopLabel.text = nil
-            if self.checkFields() {
-                if let s = textField as? PhoneNumberTextField, s.isValidNumber {
-                    self.numberView.textField.resignFirstResponder()
-                }
+            self.checkFields()
+            if let t = textField.text, t.count == 9 {
+                self.numberView.textField.resignFirstResponder()
             }
-        }
-    }
-    
-    func removeNonDigits(string: String, andPreserveCursorPosition cursorPosition: inout Int) -> String {
-        var digitsOnlyString = ""
-        let originalCursorPosition = cursorPosition
-        for i in Swift.stride(from: 0, to: string.count, by: 1) {
-            let characterToAdd = string[string.index(string.startIndex, offsetBy: i)]
-            if characterToAdd >= "0" && characterToAdd <= "9" {
-                digitsOnlyString.append(characterToAdd)
-            } else if i < originalCursorPosition {
-                cursorPosition -= 1
-            }
-        }
-        return digitsOnlyString
-    }
-    
-    func insertCreditCardSpaces(_ creditCard: String, preserveCursorPosition cursorPosition: inout Int) -> String {
-        var card: CardTypes? = nil
-        for cardItem in self.cards {
-            if self.regexCheck(pattern: cardItem.pattern, text: creditCard) {
-                card = cardItem
-            }
-        }
-        self.cardNumerField.rightImage.image = card?.image
-        let is464 = card == .DinersClub
-        let is456 = card == .AmericanExpress
-        let is4444 = !(is464 || is456)
-        var stringWithAddedSpaces = ""
-        let cursorPositionInSpacelessString = cursorPosition
-        for i in 0..<creditCard.count {
-            let needs464Spacing = (is464 && (i == 4 || i == 10 || i == 14))
-            let needs456Spacing = (is456 && (i == 4 || i == 9 || i == 15))
-            let needs4444Spacing = (is4444 && i > 0 && (i % 4) == 0)
-            if needs464Spacing || needs456Spacing || needs4444Spacing {
-                stringWithAddedSpaces.append(" ")
-                if i < cursorPositionInSpacelessString {
-                    cursorPosition += 1
-                }
-            }
-            let characterToAdd = creditCard[creditCard.index(creditCard.startIndex, offsetBy:i)]
-            stringWithAddedSpaces.append(characterToAdd)
-        }
-        return stringWithAddedSpaces
-    }
-    
-    func regexCheck(pattern: String, text: String) -> Bool {
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let match = regex.firstMatch(in: text, options: [], range: NSMakeRange(0, text.count))
-            return match != nil
-        } catch {
-            return false
         }
     }
 }

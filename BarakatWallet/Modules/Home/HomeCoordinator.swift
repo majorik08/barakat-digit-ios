@@ -81,7 +81,14 @@ class HomeCoordinator: Coordinator {
     func navigateToTransferByNumberView() {
         let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
         payments.parent = self.parent
-        payments.navigateToTransferByNumberView()
+        payments.navigateToTransferByNumberView(transferParam: nil)
+        self.children.append(payments)
+    }
+    
+    func navigateToTransferByAccounts() {
+        let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
+        payments.parent = self.parent
+        payments.navigateToTransferAccounts(topupCreditCard: nil)
         self.children.append(payments)
     }
     

@@ -53,15 +53,32 @@ class PaymentsCoordinator: Coordinator {
     }
     
     func navigateToServicesList(selectedGroup: AppStructs.PaymentGroup, addFavoriteMode: Bool) {
-        let vc = ServiceListViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), selectedGroup: selectedGroup, addFavoriteMode: addFavoriteMode)
-        vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        if selectedGroup.childGroups.isEmpty {
+            let vc = ServiceListViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), selectedGroup: selectedGroup, addFavoriteMode: addFavoriteMode)
+            vc.coordinator = self
+            self.nav.pushViewController(vc, animated: true)
+        } else {
+            let vc = GroupListViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), selectedGroup: selectedGroup, addFavoriteMode: addFavoriteMode)
+            vc.coordinator = self
+            self.nav.pushViewController(vc, animated: true)
+        }
     }
     
     func navigateToPaymentView(service: AppStructs.PaymentGroup.ServiceItem, merchant: AppStructs.Merchant?, favorite: AppStructs.Favourite?, addFavoriteMode: Bool, transferParam: String?) {
-        let vc = PaymentViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), service: service, merchant: merchant, favorite: favorite, addFavoriteMode: addFavoriteMode)
-        vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        guard let transferType = AppStructs.TransferType(rawValue: service.id) else {
+            let vc = PaymentViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), service: service, merchant: merchant, favorite: favorite, addFavoriteMode: addFavoriteMode)
+            vc.coordinator = self
+            self.nav.pushViewController(vc, animated: true)
+            return
+        }
+        switch transferType {
+        case .transferToPhone:
+            self.navigateToTransferByNumberView(transferParam: transferParam)
+        case .transferToCard:
+            self.navigateToTransferByCardView()
+        case .transferBetweenAccounts:
+            self.navigateToTransferAccounts(topupCreditCard: nil)
+        }
     }
     
     func navigateToHistoryRecipe(item: AppStructs.HistoryItem) {
@@ -71,14 +88,20 @@ class PaymentsCoordinator: Coordinator {
         self.children.append(history)
     }
     
-    func navigateToTransferByNumberView() {
-        let vc = TransferByNumberViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo))
+    func navigateToTransferByNumberView(transferParam: String?) {
+        let vc = TransferByNumberViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), transferParam: transferParam)
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToTransferByCardView() {
+        let vc = TransferByCardViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     
     func navigateToTransferAccounts(topupCreditCard: AppStructs.CreditDebitCard?) {
-        let vc = TransferAccountsViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), topupCreditCard: topupCreditCard)
+        let vc = TransferByAccountsViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), topupCreditCard: topupCreditCard)
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }

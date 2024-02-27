@@ -122,12 +122,8 @@ class HistoryRecipeViewController: BaseViewController {
     }
     
     func configure() {
-        if self.item.status == 0 {
-            self.stampView.payStatusLabel.text = "PAYMENT_SUCCESS".localized.uppercased()
-        } else {
-            self.stampView.payStatusLabel.textColor = .systemRed
-            self.stampView.payStatusLabel.text = "PAYMENT_FAILED".localized.uppercased()
-        }
+        self.stampView.payStatusLabel.textColor = self.item.statusType.color
+        self.stampView.payStatusLabel.text = self.item.statusType.name.uppercased()
         if let serviceId = Int(self.item.service), let service = self.viewModel.accountInfo.getService(serviceID: serviceId) {
             let infoView = HistoryInfoItemView(frame: .zero)
             infoView.titleLabel.text = "HISTORY_TITLE".localized

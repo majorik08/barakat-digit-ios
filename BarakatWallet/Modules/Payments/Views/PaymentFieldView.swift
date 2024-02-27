@@ -217,12 +217,17 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
         self.tag = param.id
         self.topLabel.text = param.name
         self.fieldView.attributedPlaceholder = NSAttributedString(string: param.coment, attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
-        if param.keyboard == 0 {
+        
+        let type = AppStructs.KeyboardViewType(rawValue: param.keyboard) ?? .alphabet
+        switch type {
+        case .nums:
             self.fieldView.keyboardType = .decimalPad
-        } else if param.keyboard == 1 {
-            self.fieldView.keyboardType = .decimalPad
-        } else if param.keyboard == 2 {
-            self.fieldView.keyboardType = .decimalPad
+        case .alphabet:
+            self.fieldView.keyboardType = .alphabet
+        case .numsAndAlphabet:
+            self.fieldView.keyboardType = .default
+        case .phoneNumber:
+            self.fieldView.keyboardType = .phonePad
         }
         if validate {
             self.bottomLabel.text = nil

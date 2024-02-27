@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import MobileCoreServices
+import RxSwift
 
 class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITableViewDataSource, ProfileQrCellDelegate {
   
@@ -108,6 +109,10 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
             self.coordinator?.navigateToEditProfile()
         } else if indexPath.row == 1 {
             self.coordinator?.navigateToSettings()
+        } else if indexPath.row == 2 {
+            self.goToSupport()
+        } else if indexPath.row == 3 {
+            self.coordinator?.navigateToDocs()
         } else if indexPath.row == 4 {
             let activity: UIActivityViewController
             activity = UIActivityViewController(activityItems: ["INVITE".localizedFormat(arguments: Constants.AppName, Constants.AppUrl)], applicationActivities: nil)
@@ -154,6 +159,22 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
         }
     }
     
+    @objc func goToSupport() {
+        self.showProgressView()
+        self.viewModel.profileService.getHelp()
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] item in
+                guard let self = self else { return }
+                self.hideProgressView()
+                guard let number = URL(string: "tel://" + item.callCenter.digits) else { return }
+                UIApplication.shared.open(number, options: [:], completionHandler: nil)
+            } onFailure: { [weak self] _ in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
     @objc func goBack() {
         self.coordinator?.navigateBack()
     }
@@ -175,7 +196,7 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
     }
     
     func didTapMyQr() {
-        
+        self.coordinator?.navigateToMyQr()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

@@ -57,8 +57,8 @@ class TransferSumView: UIView {
         view.clipsToBounds = true
         return view
     }()
-    let topSumField: CurrencyEnterView = {
-        let view = CurrencyEnterView(insets: .init(top: 0, left: 0, bottom: 0, right: 0), aligment: .center)
+    let topSumField: CurrencyField = {
+        let view = CurrencyField(insets: .init(top: 0, left: 0, bottom: 0, right: 0), aligment: .center)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.field.placeholder = "RUB"
         view.currency = .RUB
@@ -66,8 +66,8 @@ class TransferSumView: UIView {
         view.rightView.adjustsFontSizeToFitWidth = false
         return view
     }()
-    let bottomSumField: CurrencyEnterView = {
-        let view = CurrencyEnterView(insets: .init(top: 0, left: 0, bottom: 0, right: 0), aligment: .center)
+    let bottomSumField: CurrencyField = {
+        let view = CurrencyField(insets: .init(top: 0, left: 0, bottom: 0, right: 0), aligment: .center)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.field.placeholder = "TJS"
         view.currency = .TJS
@@ -174,7 +174,7 @@ class TransferSumView: UIView {
         }
     }
     
-    func makeActive(textField: CurrencyEnterView) {
+    func makeActive(textField: CurrencyField) {
         textField.textColor = .white
         if textField == self.topSumField {
             textField.field.attributedPlaceholder = NSAttributedString(string: "RUB", attributes: [NSAttributedString.Key.foregroundColor: UIColor.white])
@@ -183,7 +183,7 @@ class TransferSumView: UIView {
         }
     }
     
-    func makeDisable(textField: CurrencyEnterView) {
+    func makeDisable(textField: CurrencyField) {
         textField.textColor = Theme.current.tintColor
         if textField == self.topSumField {
             textField.field.attributedPlaceholder = NSAttributedString(string: "RUB", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.tintColor])

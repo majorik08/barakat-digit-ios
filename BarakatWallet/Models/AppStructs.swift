@@ -7,6 +7,7 @@
 
 import Foundation
 import RxSwift
+import UIKit
 
 struct AppStructs {
     
@@ -19,6 +20,7 @@ struct AppStructs {
         let latitude: Double
         let longitude: Double
         let platform: String
+        var notifyKey: String
     }
     
     class AccountInfo {
@@ -210,8 +212,14 @@ struct AppStructs {
     enum TransferType: Int {
         case transferToPhone = 101
         case transferToCard = 102
-        case transferToForeign = 103
         case transferBetweenAccounts = 106
+    }
+    
+    enum KeyboardViewType: Int {
+        case nums = 1
+        case alphabet = 2
+        case numsAndAlphabet = 3
+        case phoneNumber = 4
     }
     
     struct CreditDebitCard: Codable, Hashable {
@@ -305,6 +313,40 @@ struct AppStructs {
         let service: String
         let status: Int
         let tran_id: String
+        
+        var statusType: HistoryStatus {
+            return .init(rawValue: self.status) ?? .notVerfied
+        }
+        
+        enum HistoryStatus: Int {
+            case notVerfied = 0
+            case new = 1
+            case inProgress = 2
+            case error = 3
+            case success = 4
+            
+            var name: String {
+                switch self {
+                case .notVerfied:
+                    return "PAYMENT_NOT_VERIFIED".localized
+                case .new:
+                    return "PAYMENT_PENDING".localized
+                case .inProgress:
+                    return "PAYMENT_IN_PROGRESS".localized
+                case .error:
+                    return "PAYMENT_FAILED".localized
+                case .success:
+                    return "PAYMENT_SUCCESS".localized
+                }
+            }
+            var color: UIColor {
+                switch self {
+                case .notVerfied, .new, .inProgress:return UIColor.systemOrange
+                case .error:return UIColor.systemRed
+                case .success:return UIColor.systemGreen
+                }
+            }
+        }
     }
     
     struct EntryItem: Codable, Hashable {
@@ -320,6 +362,7 @@ struct AppStructs {
         let darkImage: String
         let darkListImage: String
         let services: [ServiceItem]
+        let childGroups: [PaymentGroup]
         
         struct ServiceItem: Codable {
             let id: Int
@@ -346,7 +389,7 @@ struct AppStructs {
     }
     
     struct Merchant: Codable {
-        var id: Int
+        var id: Int?
         var merchantAddress: String
         var merchantID: String
         var name: String

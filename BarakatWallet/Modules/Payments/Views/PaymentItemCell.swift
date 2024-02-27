@@ -75,6 +75,12 @@ class PaymentItemCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.iconView.imageView.image = nil
+        self.titleView.text = nil
+    }
+    
     func configure(paymentGroup: AppStructs.PaymentGroup) {
         self.rootView.backgroundColor = Theme.current.plainTableBackColor
         self.iconView.startColor = Theme.current.mainGradientStartColor

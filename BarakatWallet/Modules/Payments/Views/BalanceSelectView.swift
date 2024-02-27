@@ -8,6 +8,10 @@
 import Foundation
 import UIKit
 
+protocol BalanceSelectViewDelegate: AnyObject {
+    func balanceSelected(view: BalanceSelectView)
+}
+
 class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     let titleView: UILabel = {
@@ -47,6 +51,7 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
             return self.accounts.first
         }
     }
+    weak var delegate: BalanceSelectViewDelegate?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -86,6 +91,7 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
         } else {
             self.controlView.setPage(self.controlView.numberOfPages - 1)
         }
+        self.delegate?.balanceSelected(view: self)
     }
     
     func configure(clientBalances: [AppStructs.AccountInfo.BalanceType]) {

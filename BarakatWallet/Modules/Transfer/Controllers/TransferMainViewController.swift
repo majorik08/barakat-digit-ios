@@ -24,6 +24,7 @@ class TransferMainViewController: BaseViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 16)
         view.textColor = Theme.current.primaryTextColor
+        view.textAlignment = .center
         view.text = "Россия --------> Таджикистан"
         return view
     }()
@@ -55,6 +56,7 @@ class TransferMainViewController: BaseViewController {
         view.text = "AUTH_TITLE".localized
         view.numberOfLines = 0
         view.textAlignment = .center
+        view.isHidden = true
         return view
     }()
     let bottomAuthHintLabel: UILabel = {
@@ -65,6 +67,7 @@ class TransferMainViewController: BaseViewController {
         view.text = "AUTH_TITLE_HELP".localized
         view.numberOfLines = 0
         view.textAlignment = .center
+        view.isHidden = true
         return view
     }()
     let loginButton: BaseButtonView = {
@@ -73,6 +76,7 @@ class TransferMainViewController: BaseViewController {
         view.setTitleColor(.white, for: .normal)
         view.radius = 14
         view.setTitle("LOGIN_SIGNIN".localized, for: .normal)
+        view.isHidden = true
         return view
     }()
     weak var coordinator: TransferCoordinator?
@@ -121,6 +125,7 @@ class TransferMainViewController: BaseViewController {
             self.transferCardView.leftAnchor.constraint(equalTo: self.view.centerXAnchor, constant: 30),
             self.transferCardView.widthAnchor.constraint(equalToConstant: 110),
             self.bottomView.leftAnchor.constraint(equalTo: self.view.leftAnchor, constant: 0),
+            self.bottomView.topAnchor.constraint(greaterThanOrEqualTo: self.transferCardView.bottomAnchor),
             self.bottomView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: 0),
             self.bottomView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: 0),
             self.bottomAuthLabel.leftAnchor.constraint(equalTo: self.bottomView.leftAnchor, constant: 24),

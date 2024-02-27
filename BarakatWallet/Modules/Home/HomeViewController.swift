@@ -137,7 +137,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
     }
     
     @objc func plusButtonTapped() {
-        
+        self.coordinator?.navigateToTransferByAccounts()
     }
     
     @objc func searchBarTapped() {

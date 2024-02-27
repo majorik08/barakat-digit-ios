@@ -18,7 +18,56 @@ extension Double {
     }
 }
 
+extension NumberFormatter {
+    convenience init(numberStyle: NumberFormatter.Style) {
+        self.init()
+        self.numberStyle = numberStyle
+    }
+}
+
 extension String {
+    
+    func isLastCharANumber() -> Bool {
+        return self.last?.isNumber ?? false
+    }
+    
+    var numberOfDecimalPoints: Int {
+        let tok = components(separatedBy: Locale.current.decimalSeparator ?? ".")
+        return tok.count - 1
+    }
+    
+    // all numbers including fractions
+    var decimals: String {
+        return components(separatedBy: CharacterSet(charactersIn: "0123456789" + (Locale.current.decimalSeparator ?? ".")).inverted).joined()
+    }
+    
+    // just numbers
+    var numbers: String {
+        return components(separatedBy: CharacterSet(charactersIn: "0123456789").inverted).joined()
+    }
+    
+    var integers: String {
+        return decimals.components(separatedBy: Locale.current.decimalSeparator ?? ".")[0]
+    }
+    
+    var fractions: String? {
+        let split = decimals.components(separatedBy: Locale.current.decimalSeparator ?? ".")
+        if split.count == 2 {
+            return split[1]
+        }
+        return nil
+    }
+    
+    var double: Double? {
+        // uses decimals to get all numerical characters
+        // then calls Double on the string
+        var d = decimals
+        if d.count == 0 {
+            return nil
+        }
+        d = d.replacingOccurrences(of: ",", with: ".")
+        return Double(d) ?? 0
+    }
     
     var digits: String {
         return components(separatedBy: CharacterSet.decimalDigits.inverted).joined(separator: "")

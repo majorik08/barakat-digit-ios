@@ -54,4 +54,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         return true
     }
+    
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        DispatchQueue.main.async {
+            let token = deviceToken.map { data in String(format: "%02.2hhx", data) }.joined()
+            let lastToken = Constants.PushToken
+            if token != lastToken {
+                Constants.PushToken = token
+                Constants.PushTokenSent = false
+            }
+            Logger.log(tag: "AppDelegate", message: "didRegisterForRemoteNotificationsWithDeviceToken: \(token)")
+        }
+    }
+    
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        debugPrint(error)
+    }
+
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        Logger.log(tag: "AppDelegate", message: "didReceiveRemoteNotification:fetchCompletionHandler")
+//        guard let _ = NCPCore.instance.currentAccount else { completionHandler(.newData); return }
+//        if NCPCore.instance.socketStateEvent.value == .synced {
+//            NCPCore.instance.system.websocketPing()
+//            completionHandler(.newData)
+//            return
+//        }
+//        NCPCore.instance.network.connect()
+//        NCPCore.instance.session.exporterWrite(events: [.init(name: "PushNotification", boolValue: nil, intValue: nil, doubleValue: nil, stringValue: "default push", ts: Date())])
+//        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 15.0, execute: {
+//            if UIApplication.shared.applicationState == .background {
+//                NCPCore.instance.network.close(intentionalClose: true)
+//            }
+//            completionHandler(.newData)
+//        })
+    }
 }

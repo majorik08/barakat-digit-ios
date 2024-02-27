@@ -8,50 +8,7 @@
 import Foundation
 import UIKit
 
-extension Locale {
-    func localizedCurrencySymbol(currency:  CurrencyEnum) -> String? {
-        if currency == .TJS {
-            return "сом."
-        } else if currency == .RUB {
-            return "₽"
-        }
-        guard let languageCode = languageCode, let regionCode = regionCode else { return nil }
-        /*
-         Each currency can have a symbol ($, £, ¥),
-         but those symbols may be shared with other currencies.
-         For example, in Canadian and American locales,
-         the $ symbol on its own implicitly represents CAD and USD, respectively.
-         Including the language and region here ensures that
-         USD is represented as $ in America and US$ in Canada.
-        */
-        let components: [String: String] = [
-            NSLocale.Key.languageCode.rawValue: languageCode,
-            NSLocale.Key.countryCode.rawValue: regionCode,
-            NSLocale.Key.currencyCode.rawValue: currency.rawValue,
-        ]
-        let identifier = Locale.identifier(fromComponents: components)
-        return Locale(identifier: identifier).currencySymbol
-    }
-//    func listCountriesAndCurrencies() {
-//        let localeIds = Locale.availableIdentifiers
-//        var countryCurrency = [String: String]()
-//        for localeId in localeIds {
-//            let locale = Locale(identifier: localeId)
-//            if let country = locale.regionCode {
-//                if let currency = locale.currencySymbol {
-//                    countryCurrency[country] = currency
-//                }
-//            }
-//        }
-//        let sorted = countryCurrency.keys.sorted()
-//        for country in sorted {
-//            let currency = countryCurrency[country]!
-//            print("country: \(country), currency: \(currency)")
-//        }
-//    }
-}
-
-class CurrencyEnterView: UIView, UITextFieldDelegate {
+class CurrencyField: UIView, UITextFieldDelegate {
     
     let field: ClosestPositionField = {
         let view = ClosestPositionField()

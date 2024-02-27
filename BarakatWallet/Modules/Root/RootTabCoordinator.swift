@@ -111,7 +111,7 @@ final class RootTabCoordinator: Coordinator {
     
     private func navigateToQrPayment(merchant: AppStructs.Merchant?, serviceId: Int, transferParam: String?) {
         let service: AppStructs.PaymentGroup.ServiceItem
-        if let _ = merchant {
+        if let merchant = merchant, merchant.id != nil {
             service = AppStructs.PaymentGroup.ServiceItem(id: serviceId, name: "QR_OPERATION".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [])
         } else if let _ = transferParam {
             guard let findService = self.accountInfo.getService(serviceID: serviceId) else {

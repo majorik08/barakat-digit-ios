@@ -87,7 +87,11 @@ class TransferCoordinator: Coordinator {
     }
     
     func navigateBack() {
-        self.root.mainNavigation.popViewController(animated: true)
+        if self.root.mainNavigation.viewControllers.count == 1 {
+            self.nav.popViewController(animated: true)
+        } else {
+            self.root.mainNavigation.popViewController(animated: true)
+        }
     }
     
     func navigateToMain() {
@@ -109,13 +113,7 @@ class TransferCoordinator: Coordinator {
     }
     
     func navigateToEnterSum(type: TransferType, receiver: TransferIdentifier, transferData: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult) {
-        let vc = TransferSumViewController(type: type, receiver: receiver, transferData: transferData)
-        vc.coordinator = self
-        self.root.mainNavigation.pushViewController(vc, animated: true)
-    }
-    
-    func navigateToPickSender(type: TransferType, receiver: TransferIdentifier, commision: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult.Commissions, plusAmount: Int, minusAmount: Int, commisionAmout: Int) {
-        let vc = TransferSenderViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), type: type, receiver: receiver, commision: commision, plusAmount: plusAmount, minusAmount: minusAmount, commisionAmout: commisionAmout)
+        let vc = TransferSumViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), type: type, receiver: receiver, transferData: transferData)
         vc.coordinator = self
         self.root.mainNavigation.pushViewController(vc, animated: true)
     }

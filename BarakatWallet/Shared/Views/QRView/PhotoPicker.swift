@@ -62,6 +62,7 @@ class PhotoPicker: NSObject {
 
 extension PhotoPicker: UIImagePickerControllerDelegate {
     
+    
     public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         
         picker.dismiss(animated: true)

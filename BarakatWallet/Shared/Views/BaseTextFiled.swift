@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-class CardTextFiled: UIView {
+class BaseTextFiled: UIView {
     
     let rootView: UIView = {
         let view = UIView(frame: .zero)

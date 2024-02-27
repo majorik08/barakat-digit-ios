@@ -17,8 +17,8 @@ class BalanceView: UIView {
         view.clipsToBounds = true
         view.layer.borderColor = Theme.current.secondTintColor.withAlphaComponent(0.3).cgColor
         view.layer.borderWidth = 0.5
-        view.startColor = Theme.current.cardGradientStartColor
-        view.endColor = Theme.current.cardGradientEndColor
+        view.startColor = Theme.current.mainGradientStartColor
+        view.endColor = Theme.current.mainGradientEndColor
         return view
     }()
     let mainImage: UIImageView = {
@@ -75,6 +75,7 @@ class BalanceView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
         view.image = UIImage(name: .wallet_icon)
+        view.tintColor = .white
         return view
     }()
     

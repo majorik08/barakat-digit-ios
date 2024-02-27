@@ -15,12 +15,10 @@ public protocol QRScannerCodeDelegate: AnyObject {
     func qrScanner(_ controller: UIViewController, scanDidComplete result: String)
     func qrScannerDidFail(_ controller: UIViewController,  error: QRCodeError)
     func qrScannerDidCancel(_ controller: UIViewController)
+    func qrScannerShowMyQr(_ controller: UIViewController)
 }
 
-public class QRCodeScannerController: UIViewController,
-                                      AVCaptureMetadataOutputObjectsDelegate,
-                                      UIImagePickerControllerDelegate,
-                                      UINavigationBarDelegate {
+public class QRCodeScannerController: UIViewController, UIImagePickerControllerDelegate, UINavigationBarDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     public weak var delegate: QRScannerCodeDelegate?
     public var qrScannerConfiguration: QRScannerConfiguration
@@ -34,6 +32,10 @@ public class QRCodeScannerController: UIViewController,
     private let roundButtonHeight: CGFloat = 50.0
     private let roundButtonWidth: CGFloat = 50.0
     var photoPicker: NSObject?
+    
+    
+    
+    private var detector: CIDetector?
     
     //Initialise CaptureDevice
     private lazy var defaultDevice: AVCaptureDevice? = {
@@ -80,15 +82,13 @@ public class QRCodeScannerController: UIViewController,
         }
         return nil
     }()
-    
-    private let dataOutput = AVCaptureMetadataOutput()
     private let captureSession = AVCaptureSession()
     
     //Initialise videoPreviewLayer with capture session
     private lazy var videoPreviewLayer: AVCaptureVideoPreviewLayer = {
         let layer = AVCaptureVideoPreviewLayer(session: self.captureSession)
         layer.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        layer.cornerRadius = 10.0
+        layer.cornerRadius = 20.0
         return layer
     }()
     
@@ -158,21 +158,35 @@ public class QRCodeScannerController: UIViewController,
     
     private func addPhotoPickerButton(frame: CGRect) {
         let photoPickerButton = UIButton(frame: frame)
-        let buttonAttributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14), NSAttributedString.Key.foregroundColor: UIColor.black]
+        let buttonAttributes = [NSAttributedString.Key.font: UIFont.regular(size: 14), NSAttributedString.Key.foregroundColor: UIColor.black]
         let attributedTitle = NSMutableAttributedString(string: qrScannerConfiguration.uploadFromPhotosTitle, attributes: buttonAttributes)
         photoPickerButton.setAttributedTitle(attributedTitle, for: .normal)
         photoPickerButton.center.x = self.view.center.x
         photoPickerButton.backgroundColor = UIColor.white.withAlphaComponent(0.8)
         photoPickerButton.layer.cornerRadius = 18
-        if let galleryImage = qrScannerConfiguration.galleryImage {
-            photoPickerButton.setImage(galleryImage, for: .normal)
-            photoPickerButton.imageEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
-            photoPickerButton.titleEdgeInsets.left = 10
-        }
+//        if let galleryImage = qrScannerConfiguration.galleryImage {
+//            photoPickerButton.setImage(galleryImage, for: .normal)
+//            photoPickerButton.imageEdgeInsets = UIEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
+//            photoPickerButton.titleEdgeInsets.left = 10
+//        }
         photoPickerButton.addTarget(self, action: #selector(showImagePicker), for: .touchUpInside)
         self.view.addSubview(photoPickerButton)
+        let buttonMyQr = UIButton(frame: .init(x: photoPickerButton.frame.minX, y: photoPickerButton.frame.maxY + 10, width: photoPickerButton.frame.width, height: photoPickerButton.frame.height))
+        let buttonAttributes1 = [NSAttributedString.Key.font: UIFont.regular(size: 14), NSAttributedString.Key.foregroundColor: UIColor.white]
+        let attributedTitle1 = NSMutableAttributedString(string: "MY_QR_CODE".localized, attributes: buttonAttributes1)
+        buttonMyQr.setAttributedTitle(attributedTitle1, for: .normal)
+        buttonMyQr.center.x = self.view.center.x
+        buttonMyQr.backgroundColor = .clear
+        buttonMyQr.layer.cornerRadius = 18
+        buttonMyQr.layer.borderWidth = 1
+        buttonMyQr.layer.borderColor = UIColor.white.cgColor
+        buttonMyQr.addTarget(self, action: #selector(showMyQr), for: .touchUpInside)
+        self.view.addSubview(buttonMyQr)
     }
     
+    @objc func showMyQr() {
+        self.delegate?.qrScannerShowMyQr(self)
+    }
     
     @objc private func showImagePicker() {
         if #available(iOS 14, *) {
@@ -284,15 +298,17 @@ public class QRCodeScannerController: UIViewController,
             }
         default: print("Do nothing")
         }
-        
-        if !captureSession.canAddOutput(dataOutput) {
+        let output = AVCaptureVideoDataOutput()
+        self.detector = CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: nil)
+        if !captureSession.canAddOutput(output) {
             delegate?.qrScannerDidFail(self, error: .outoutFailed)
             self.dismiss(animated: true, completion: nil)
             return
         }
-        captureSession.addOutput(dataOutput)
-        dataOutput.metadataObjectTypes = dataOutput.availableMetadataObjectTypes
-        dataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+        output.alwaysDiscardsLateVideoFrames = true
+        output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
+        output.setSampleBufferDelegate(self, queue: DispatchQueue.main)
+        captureSession.addOutput(output)
     }
     
     //Inserts layer to view
@@ -305,26 +321,42 @@ public class QRCodeScannerController: UIViewController,
         addMaskToVideoPreviewLayer()
     }
     
-    // This method get called when Scanning gets complete
-    public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        for data in metadataObjects {
-            let transformed = videoPreviewLayer.transformedMetadataObject(for: data) as? AVMetadataMachineReadableCodeObject
-            if let unwraped = transformed {
-                if view.bounds.contains(unwraped.bounds) {
-                    _delayCount = _delayCount + 1
-                    if _delayCount > delayCount {
-                        if let unwrapedStringValue = unwraped.stringValue {
-                            delegate?.qrScanner(self, scanDidComplete: unwrapedStringValue)
-                        } else {
-                            delegate?.qrScannerDidFail(self, error: .emptyResult)
-                        }
-                        captureSession.stopRunning()
-                        self.dismiss(animated: true, completion: nil)
-                    }
+    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        if let imageBuf = CMSampleBufferGetImageBuffer(sampleBuffer), let image = Optional(CIImage(cvImageBuffer: imageBuf)), let features = self.detector?.features(in: image) as? [CIQRCodeFeature], features.count > 0 {
+            let first = features.first!
+            _delayCount = _delayCount + 1
+            if _delayCount > delayCount {
+                if let unwrapedStringValue = first.messageString {
+                    delegate?.qrScanner(self, scanDidComplete: unwrapedStringValue)
+                } else {
+                    delegate?.qrScannerDidFail(self, error: .emptyResult)
                 }
+                captureSession.stopRunning()
+                self.dismiss(animated: true, completion: nil)
             }
         }
     }
+    
+    // This method get called when Scanning gets complete
+//    public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+//        for data in metadataObjects {
+//            let transformed = videoPreviewLayer.transformedMetadataObject(for: data) as? AVMetadataMachineReadableCodeObject
+//            if let unwraped = transformed {
+//                if view.bounds.contains(unwraped.bounds) {
+//                    _delayCount = _delayCount + 1
+//                    if _delayCount > delayCount {
+//                        if let unwrapedStringValue = unwraped.stringValue {
+//                            delegate?.qrScanner(self, scanDidComplete: unwrapedStringValue)
+//                        } else {
+//                            delegate?.qrScannerDidFail(self, error: .emptyResult)
+//                        }
+//                        captureSession.stopRunning()
+//                        self.dismiss(animated: true, completion: nil)
+//                    }
+//                }
+//            }
+//        }
+//    }
 }
 
 extension QRCodeScannerController: UIAdaptivePresentationControllerDelegate {
@@ -377,8 +409,8 @@ extension QRCodeScannerController {
     
     private func addMaskToVideoPreviewLayer() {
         let qrFrameWidth: CGFloat = self.view.frame.size.width / 1.5
-        let scanFrameWidth: CGFloat  = self.view.frame.size.width / 1.8
-        let scanFrameHeight: CGFloat = self.view.frame.size.width / 1.8
+        let scanFrameWidth: CGFloat  = self.view.frame.size.width / 1.5
+        let scanFrameHeight: CGFloat = self.view.frame.size.width / 1.5
         let screenHeight: CGFloat = self.view.frame.size.height / 2
         let roundViewFrame = CGRect(origin: CGPoint(x: self.view.frame.midX - scanFrameWidth/2,
                                                     y: self.view.frame.midY - screenHeight/2 + (qrFrameWidth-scanFrameWidth)/2),
@@ -386,7 +418,7 @@ extension QRCodeScannerController {
         let maskLayer = CAShapeLayer()
         maskLayer.frame = view.bounds
         maskLayer.fillColor = UIColor(white: 0.0, alpha: 0.5).cgColor
-        let path = UIBezierPath(roundedRect: roundViewFrame, byRoundingCorners: [.allCorners], cornerRadii: CGSize(width: 10, height: 10))
+        let path = UIBezierPath(roundedRect: roundViewFrame, byRoundingCorners: [.allCorners], cornerRadii: CGSize(width: self.qrScannerConfiguration.radius, height: self.qrScannerConfiguration.radius))
         path.append(UIBezierPath(rect: view.bounds))
         maskLayer.path = path.cgPath
         maskLayer.fillRule = CAShapeLayerFillRule.evenOdd
@@ -395,10 +427,9 @@ extension QRCodeScannerController {
     }
     
     private func addHintTextLayer(maskLayer: CAShapeLayer) {
-        guard let hint = qrScannerConfiguration.hint else { return }
         let hintTextLayer = CATextLayer()
         hintTextLayer.fontSize = 18.0
-        hintTextLayer.string = hint
+        hintTextLayer.string = self.qrScannerConfiguration.hint
         hintTextLayer.alignmentMode = CATextLayerAlignmentMode.center
         hintTextLayer.contentsScale = UIScreen.main.scale
         hintTextLayer.frame = CGRect(x: spaceFactor,

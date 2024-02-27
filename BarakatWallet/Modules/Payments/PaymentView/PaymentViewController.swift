@@ -65,6 +65,9 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     let merchant: AppStructs.Merchant?
     weak var coordinator: PaymentsCoordinator? = nil
     
+    var verifyResult: AppMethods.Payments.TransactionVerify.VerifyResult? = nil
+    var verifyKey: String? = nil
+    
     init(viewModel: PaymentsViewModel, service: AppStructs.PaymentGroup.ServiceItem, merchant: AppStructs.Merchant?, favorite: AppStructs.Favourite?, addFavoriteMode: Bool) {
         self.viewModel = viewModel
         self.addFavoriteMode = addFavoriteMode
@@ -272,9 +275,9 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
             }.disposed(by: self.viewModel.disposeBag)
     }
     
-    func commitPayment(viewToRemove: UIView, amount: Double, balance: AppStructs.AccountInfo.BalanceType, result: AppMethods.Payments.TransactionVerify.VerifyResult, enteredCode: String) {
+    func commitPayment(viewToRemove: UIView, amount: Double, balance: AppStructs.AccountInfo.BalanceType, result: AppMethods.Payments.TransactionVerify.VerifyResult, key: String, enteredCode: String) {
         self.showProgressView()
-        self.viewModel.service.commitPayment(tranID: result.tranID, code: enteredCode, key: result.verifyKey)
+        self.viewModel.service.commitPayment(tranID: result.tranID, code: enteredCode, key: key)
             .observe(on: MainScheduler.instance)
             .subscribe { [weak self] _ in
                 guard let self = self else { return }
@@ -291,6 +294,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     func configureConfirm(amount: Double, balance: AppStructs.AccountInfo.BalanceType, result: AppMethods.Payments.TransactionVerify.VerifyResult, params: [String]) {
         self.navigationController?.navigationBar.isHidden = true
         self.setStatusBarStyle(dark: false)
+        self.verifyResult = result
         let confirmView = PaymentConfirmView(amount: amount, balance: balance, result: result, service: self.service, params: params, bottomInset: self.view.safeAreaInsets.bottom)
         confirmView.delegate = self
         confirmView.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
@@ -343,9 +347,21 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     
     func confirmViewNext(view: PaymentConfirmView) {
         if view.result.isCheckVerify {
-            self.configureCode(amount: view.amount, balance: view.balance, result: view.result)
+            self.showProgressView()
+            self.viewModel.service.verifySendCode(tranID: view.result.tranID)
+                .observe(on: MainScheduler.instance)
+                .subscribe { [weak self] item in
+                    guard let self = self else { return }
+                    self.hideProgressView()
+                    self.verifyKey = item.verifyKey
+                    self.configureCode(amount: view.amount, balance: view.balance, result: view.result)
+                } onFailure: { [weak self] _ in
+                    guard let self = self else { return }
+                    self.hideProgressView()
+                    self.showServerErrorAlert()
+                }.disposed(by: self.viewModel.disposeBag)
         } else {
-            self.commitPayment(viewToRemove:view, amount: view.amount, balance: view.balance, result: view.result, enteredCode: "")
+            self.commitPayment(viewToRemove:view, amount: view.amount, balance: view.balance, result: view.result, key: "", enteredCode: "")
         }
         view.removeFromSuperview()
     }
@@ -353,10 +369,11 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     func codeViewClose(view: PaymentCodeView) {
         self.navigationController?.navigationBar.isHidden = false
         self.setStatusBarStyle(dark: nil)
+        self.verifyKey = nil
     }
     
     func codeViewNext(view: PaymentCodeView, enteredCode: String) {
-        self.commitPayment(viewToRemove: view, amount: view.amount, balance: view.balance, result: view.result, enteredCode: enteredCode)
+        self.commitPayment(viewToRemove: view, amount: view.amount, balance: view.balance, result: view.result, key: self.verifyKey ?? "", enteredCode: enteredCode)
     }
     
     func resultViewClose(view: PaymentResultView, close: Bool, addFav: Bool, repeatPay: Bool, recipe: Bool) {

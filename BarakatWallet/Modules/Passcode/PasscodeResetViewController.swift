@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class PasscodeResetViewController: BaseViewController {
     
@@ -67,9 +68,9 @@ class PasscodeResetViewController: BaseViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    
     weak var coordinator: PasscodeCoordinator?
     let viewModel: PasscodeViewModel
+    var help: AppMethods.App.GetHelp.GetHelpResult? = nil
     
     init(viewModel: PasscodeViewModel) {
         self.viewModel = viewModel
@@ -125,52 +126,53 @@ class PasscodeResetViewController: BaseViewController {
             self.buttonsStackView.rightAnchor.constraint(equalTo: self.view.rightAnchor, constant: -Theme.current.mainPaddings),
             self.buttonsStackView.bottomAnchor.constraint(lessThanOrEqualTo: self.view.bottomAnchor, constant: -30),
         ])
-        self.buttonsStackView.addArrangedSubview(self.getButton(type: .facebook))
-        self.buttonsStackView.addArrangedSubview(self.getButton(type: .instagram))
-        self.buttonsStackView.addArrangedSubview(self.getButton(type: .telegram))
-        self.buttonsStackView.addArrangedSubview(self.getButton(type: .linkedin))
         self.callButton.addTarget(self, action: #selector(self.makeCall(_:)), for: .touchUpInside)
         self.smsButton.addTarget(self, action: #selector(self.sendRecoverySms(_:)), for: .touchUpInside)
+        self.getHelp()
     }
     
-    enum SocialNets: Int { case facebook = 1, instagram = 2, telegram = 3, linkedin = 4 }
+    func getHelp() {
+        self.showProgressView()
+        self.viewModel.authService.getHelp()
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] item in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.help = item
+                self.setHelp(help: item)
+            } onFailure: { [weak self] _ in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
+    }
     
-    func getButton(type: SocialNets) -> BaseButtonView {
+    func setHelp(help: AppMethods.App.GetHelp.GetHelpResult) {
+        for item in help.socials {
+            self.buttonsStackView.addArrangedSubview(self.getButton(type: item))
+        }
+    }
+    
+    func getButton(type: AppMethods.App.GetHelp.GetHelpResult.Socials) -> BaseButtonView {
         let button = BaseButtonView(frame: .zero)
+        button.tag = type.id
         button.circle = true
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tintColor = Theme.current.whiteColor
         button.heightAnchor.constraint(equalTo: button.widthAnchor, multiplier: 1).isActive = true
         button.addTarget(self, action: #selector(self.socialTapped(_:)), for: .touchUpInside)
-        switch type {
-        case .facebook:
-            button.setImage(UIImage(name: .facebook_icon), for: .normal)
-        case .instagram:
-            button.setImage(UIImage(name: .instagram_icon), for: .normal)
-        case .telegram:
-            button.setImage(UIImage(name: .telegram_icon), for: .normal)
-        case .linkedin:
-            button.setImage(UIImage(name: .linkedin_icon), for: .normal)
-        }
+        button.imageView?.loadImage(filePath: Theme.current.dark ? type.darkLogo : type.logo)
         return button
     }
     
     @objc func socialTapped(_ sender: BaseButtonView) {
-        guard let type = SocialNets(rawValue: sender.tag) else { return }
-        switch type {
-        case .facebook:
-            UIApplication.shared.open(URL(string: Constants.FacebookUrl)!)
-        case .instagram:
-            UIApplication.shared.open(URL(string: Constants.InstagramUrl)!)
-        case .telegram:
-            UIApplication.shared.open(URL(string: Constants.TelegramUrl)!)
-        case .linkedin:
-            UIApplication.shared.open(URL(string: Constants.LinkedinUrl)!)
-        }
+        guard let soc = self.help?.socials, let item = soc.first(where: { $0.id == sender.tag }), let url = URL(string: item.link) else { return }
+        UIApplication.shared.open(url)
     }
     
     @objc func makeCall(_ sender: UIButton) {
-        guard let number = URL(string: "tel://" + Constants.SupportNumber) else { return }
+        guard let result = self.help else { return }
+        guard let number = URL(string: "tel://+" + result.callCenter.digits) else { return }
         UIApplication.shared.open(number, options: [:], completionHandler: nil)
     }
     

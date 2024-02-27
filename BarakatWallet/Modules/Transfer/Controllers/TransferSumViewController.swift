@@ -7,8 +7,9 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
-class TransferSumViewController: BaseViewController, UITabBarControllerDelegate, TransferSumViewControllerDelegate, UITextFieldDelegate {
+class TransferSumViewController: BaseViewController, UITabBarControllerDelegate, TransferSumViewControllerDelegate, UITextFieldDelegate, TransferConfirmViewDelegate, WalletWebViewControllerDelegate {
  
     lazy var topBar: TransferTopView = {
         let view = TransferTopView(frame: .zero)
@@ -45,8 +46,8 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
     private let cardReceiverView: TransferCardView = {
         let view = TransferCardView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.rootView.startColor = UIColor(red: 0.66, green: 0.81, blue: 0.93, alpha: 1.00)
-        view.rootView.endColor = UIColor(red: 0.90, green: 0.96, blue: 0.98, alpha: 1.00)
+        view.rootView.startColor = UIColor(red: 0.49, green: 0.88, blue: 0.89, alpha: 1.00)
+        view.rootView.endColor = UIColor(red: 0.77, green: 0.98, blue: 0.98, alpha: 1.00)
         view.titleLabel.text = "TRANSFER_RECEIVER".localized
         //view.logoImageView.image = UIImage(name: .card_milli)
         view.iconView.layer.borderColor = Theme.current.tintColor.cgColor
@@ -57,8 +58,8 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
     private let cardNumberReceiverView: TransferCardNumberView = {
         let view = TransferCardNumberView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.rootView.startColor = UIColor(red: 0.66, green: 0.81, blue: 0.93, alpha: 1.00)
-        view.rootView.endColor = UIColor(red: 0.90, green: 0.96, blue: 0.98, alpha: 1.00)
+        view.rootView.startColor = UIColor(red: 0.49, green: 0.88, blue: 0.89, alpha: 1.00)
+        view.rootView.endColor = UIColor(red: 0.77, green: 0.98, blue: 0.98, alpha: 1.00)
         view.titleLabel.text = "TRANSFER_RECEIVER".localized
         //view.logoImageView.image = UIImage(name: .main_logo)
         view.iconView.layer.borderColor = Theme.current.tintColor.cgColor
@@ -77,12 +78,14 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
     var type: TransferType
     var receiver: TransferIdentifier
     var transferData: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult
+    let viewModel: TransferViewModel
     weak var coordinator: TransferCoordinator?
     
-    init(type: TransferType, receiver: TransferIdentifier, transferData: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult) {
+    init(viewModel: TransferViewModel, type: TransferType, receiver: TransferIdentifier, transferData: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult) {
         self.type = type
         self.receiver = receiver
         self.transferData = transferData
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -190,7 +193,7 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
     }
     
     @objc func goToPickReceiver() {
-        self.coordinator?.navigateToPickReceiver(type: self.type, delegate: self)
+        self.coordinator?.navigateBack()
     }
     
     func receiverPicked(receiver: TransferIdentifier) {
@@ -205,7 +208,7 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
             self.cardReceiverView.logoImageView.image = CardTypes.getCardType(creditCard: number.digits)?.image
         case .number(number: let number, service: let service, info: let info):
             self.cardNumberReceiverView.subTitleLabel.text = info
-            self.cardNumberReceiverView.numberLabel.text = number
+            self.cardNumberReceiverView.numberLabel.text = number.formatedPrefix()
             self.cardNumberReceiverView.accountLabel.text = service.name
             self.cardNumberReceiverView.logoImageView.loadImage(filePath: Theme.current.dark ? service.darkImage : service.image)
         }
@@ -219,47 +222,57 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
         if textField == self.sumRootView.topSumField.field {
             let value = self.sumRootView.topSumField.updateTextField()
             let doubleVal = value.amount
-            let convertToSom = doubleVal * self.transferData.rate.sale
-            let somDecimal = Decimal(convertToSom)
-            let somInt = somDecimal.intValue(currency: .TJS)
-            if let com = self.setGetCommision(sumInSomoni: somInt) {
-                let getSum = somInt - com
+            let decimalVal = Decimal(doubleVal)
+            let intVal = decimalVal.intValue(currency: .RUB)
+            if let comSomInt = self.setGetCommision(sumInRub: intVal) {
+                let convertToSom = doubleVal * self.transferData.rate.sale
+                let somDecimal = Decimal(convertToSom)
+                let somInt = somDecimal.intValue(currency: .TJS)
+                let getSum = somInt - comSomInt
                 let getSumDecimal = getSum.decimalValue(currency: .TJS)
                 self.sumRootView.bottomSumField.startingValue = NSDecimalNumber(decimal:getSumDecimal).doubleValue
                 self.sumRootView.bottomSumField.textFieldDidChange()
                 self.nextButton.isEnabled = true
             } else {
+                self.sumRootView.bottomSumField.startingValue = 0.0
+                self.sumRootView.bottomSumField.textFieldDidChange()
                 self.nextButton.isEnabled = false
             }
         } else if textField == self.sumRootView.bottomSumField.field {
             let value = self.sumRootView.bottomSumField.updateTextField()
             let doubleVal = value.amount
-            let somDecimal = Decimal(doubleVal)
-            let somInt = somDecimal.intValue(currency: .TJS)
-            if let com = self.setGetCommision(sumInSomoni: somInt) {
-                let getSum = somInt + com
-                let getSumDecimal = getSum.decimalValue(currency: .TJS)
-                let convertToRub = getSumDecimal / Decimal(self.transferData.rate.sale)
+            let decimalVal = Decimal(doubleVal)
+            let intVal = decimalVal.intValue(currency: .TJS)
+            let convertToRubDecimal = decimalVal / Decimal(self.transferData.rate.sale)
+            let convertToRubInt = convertToRubDecimal.intValue(currency: .RUB)
+            if let comSomInt = self.setGetCommision(sumInRub: convertToRubInt) {
+                let outSumSom = intVal + comSomInt
+                let convertToRub = outSumSom.decimalValue(currency: .TJS) / Decimal(self.transferData.rate.sale)
                 self.sumRootView.topSumField.startingValue = NSDecimalNumber(decimal:convertToRub).doubleValue
                 self.sumRootView.topSumField.textFieldDidChange()
                 self.nextButton.isEnabled = true
             } else {
+                self.sumRootView.topSumField.startingValue = 0.0
+                self.sumRootView.topSumField.textFieldDidChange()
                 self.nextButton.isEnabled = false
             }
         }
     }
     
-    private func setGetCommision(sumInSomoni: Int) -> Int? {
-        if let com = self.transferData.commissions.first(where: { $0.minValue <= sumInSomoni && ($0.maxValue == -1 || $0.maxValue >= sumInSomoni) }) {
+    private func setGetCommision(sumInRub: Int) -> Int? {
+        if let com = self.transferData.commissions.first(where: { Int($0.minValue) <= sumInRub && ($0.maxValue == -1 || Int($0.maxValue) >= sumInRub) }) {
             if com.calcMethod == 1 {
-                let c = (com.commissionValue * sumInSomoni) / 100
-                self.sumRootView.transferTaxView.titleLabel.text = c.formattedAmount(.TJS)
+                let comRublDecimal = (Decimal(com.commissionValue) * sumInRub.decimalValue(currency: .RUB)) / 100
+                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
+                self.sumRootView.transferTaxView.titleLabel.text = comSomDecimal.formattedAmount(.TJS)
                 self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(com.commissionValue)%"
-                return c
+                return comSomDecimal.intValue(currency: .TJS)
             } else {
-                self.sumRootView.transferTaxView.titleLabel.text = com.commissionValue.formattedAmount(.TJS)
-                self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(com.commissionValue.formattedAmount(.TJS))"
-                return com.commissionValue
+                let comRublDecimal = Decimal(com.commissionValue)
+                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
+                self.sumRootView.transferTaxView.titleLabel.text = comSomDecimal.formattedAmount(.TJS)
+                self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(comSomDecimal.formattedAmount(.TJS))"
+                return comSomDecimal.intValue(currency: .TJS)
             }
         }
         return nil
@@ -269,18 +282,106 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
         let value = self.sumRootView.topSumField.updateTextField()
         let doubleVal = value.amount
         let decimalVal = Decimal(doubleVal)
-        let convertToSom = doubleVal * self.transferData.rate.sale
-        let somDecimal = Decimal(convertToSom)
-        let somInt = somDecimal.intValue(currency: .TJS)
-        if let com = self.transferData.commissions.first(where: { $0.minValue <= somInt && ($0.maxValue == -1 || $0.maxValue >= somInt) }) {
+        let intVal = decimalVal.intValue(currency: .RUB)
+        if let com = self.transferData.commissions.first(where: { Int($0.minValue) <= intVal && ($0.maxValue == -1 || Int($0.maxValue) >= intVal) }) {
             if com.calcMethod == 1 {
-                let commisionValue = (com.commissionValue * somInt) / 100
-                let getSumValue = somInt - commisionValue
-                self.coordinator?.navigateToPickSender(type: self.type, receiver: self.receiver, commision: com, plusAmount: getSumValue, minusAmount: decimalVal.intValue(currency: .RUB), commisionAmout: commisionValue)
+                let comRublDecimal = (Decimal(com.commissionValue) * decimalVal) / 100
+                let afterCom = decimalVal - comRublDecimal
+                
+                let convertToSom = afterCom * Decimal(self.transferData.rate.sale)
+                let getSum = convertToSom.intValue(currency: .TJS)
+                
+                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
+                let comSomInt = comSomDecimal.intValue(currency: .TJS)
+                
+                self.configureConfirmView(type: self.type, receiver: self.receiver, commision: com, plusAmount: getSum, minusAmount: intVal, commisionAmout: comSomInt)
             } else {
-                let getSumValue = somInt - com.commissionValue
-                self.coordinator?.navigateToPickSender(type: self.type, receiver: self.receiver, commision: com, plusAmount: getSumValue, minusAmount: decimalVal.intValue(currency: .RUB), commisionAmout: com.commissionValue)
+                let comRublDecimal = Decimal(com.commissionValue)
+                let afterCom = decimalVal - comRublDecimal
+                
+                let convertToSom = afterCom * Decimal(self.transferData.rate.sale)
+                let getSum = convertToSom.intValue(currency: .TJS)
+                
+                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
+                let comSomInt = comSomDecimal.intValue(currency: .TJS)
+               
+                self.configureConfirmView(type: self.type, receiver: self.receiver, commision: com, plusAmount: getSum, minusAmount: intVal, commisionAmout: comSomInt)
             }
         }
+    }
+    
+    private func configureConfirmView(type: TransferType, receiver: TransferIdentifier, commision: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult.Commissions, plusAmount: Int, minusAmount: Int, commisionAmout: Int) {
+        self.view.endEditing(true)
+        let confirmView = TransferConfirmView(bottomInset: self.view.safeAreaInsets.bottom, showSender: false)
+        confirmView.delegate = self
+        confirmView.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
+        switch receiver {
+        case .card(let number, _):
+            confirmView.receiverView.subTitleLabel.text = number
+            confirmView.receiverView.itemIcon.image = CardTypes.getCardType(creditCard: number.digits)?.image
+            confirmView.receiverView.typeIcon.image = UIImage(name: .card_icon)
+            confirmView.receiverView.typeIcon.tintColor = .white
+            confirmView.receiverView.typeIcon.layer.borderColor = Theme.current.tintColor.cgColor
+            confirmView.receiverView.typeIcon.backgroundColor = Theme.current.tintColor
+            confirmView.receiverInfoView.infoLabel.text = CardTypes.getBankName(number: number.digits)
+            confirmView.receiverCurrencyView.infoLabel.text = "TJS"
+        case .number(let number, let service, let info):
+            confirmView.receiverView.subTitleLabel.text = number.formatedPrefix()
+            confirmView.receiverView.itemIcon.loadImage(filePath: Theme.current.dark ? service.darkImage : service.image)
+            confirmView.receiverView.typeIcon.image = UIImage(name: .wallet_inset)
+            confirmView.receiverView.typeIcon.tintColor = Theme.current.tintColor
+            confirmView.receiverView.typeIcon.layer.borderColor = Theme.current.tintColor.cgColor
+            confirmView.receiverView.typeIcon.backgroundColor = Theme.current.plainTableCellColor
+            confirmView.receiverInfoView.infoLabel.text = info
+            confirmView.receiverCurrencyView.infoLabel.text = "TJS"
+        }
+        confirmView.sumPlusView.infoLabel.text = plusAmount.formattedAmount(.TJS)
+        confirmView.sumMinusView.infoLabel.text = minusAmount.formattedAmount(.RUB)
+        if commision.calcMethod == 1 {
+            confirmView.sumComView.infoLabel.text = commisionAmout.formattedAmount(.TJS)
+            confirmView.sumComView.titleLabel.text = "\("HISTORY_FEE".localized) \(commision.commissionValue)%"
+        } else {
+            confirmView.sumComView.infoLabel.text = commisionAmout.formattedAmount(.TJS)
+            let comRublDecimal = Decimal(commision.commissionValue)
+            let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
+            confirmView.sumComView.titleLabel.text = "\("HISTORY_FEE".localized) \(comSomDecimal.formattedAmount(.TJS))"
+        }
+        self.view.addSubview(confirmView)
+        NSLayoutConstraint.activate([
+            confirmView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            confirmView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            confirmView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            confirmView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+        ])
+        confirmView.animateView()
+    }
+    
+    func confirmViewClose(view: TransferConfirmView) { }
+    
+    func confirmViewNext(view: TransferConfirmView) {
+        let value = self.sumRootView.topSumField.updateTextField()
+        let doubleVal = value.amount
+        let decimalVal = Decimal(doubleVal)
+        self.showProgressView()
+        self.viewModel.service.sendTransfer(accountFrom: "", accountTo: self.receiver.account.digits, accountType: self.receiver.accountType, amountCurrency: decimalVal.intValue(currency: .RUB), phoneNumber: "+\(self.receiver.phoneNumber.digits)", serviceID: self.receiver.serviceId)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] result in
+                guard let self = self, let url = URL(string: result.formURL) else { return }
+                self.hideProgressView()
+                self.openWebAction(url: url)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func openWebAction(url: URL) {
+        let view = WalletWebViewController(url: url, delegate: self)
+        self.present(BaseNavigationController(rootViewController: view, title: nil, image: nil, tag: -1), animated: true, completion: nil)
+    }
+    
+    func getUpdatedIntent(result: Bool) {
+        self.coordinator?.navigateToResult(result: result)
     }
 }

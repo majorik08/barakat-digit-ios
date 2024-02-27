@@ -176,7 +176,50 @@ enum CardTypes: String {
         return stringWithAddedSpaces
     }
     
-    private static func regexCheck(pattern: String, text: String) -> Bool {
+    static func removeNonDigits(string: String, andPreserveCursorPosition cursorPosition: inout Int) -> String {
+        var digitsOnlyString = ""
+        let originalCursorPosition = cursorPosition
+        for i in Swift.stride(from: 0, to: string.count, by: 1) {
+            let characterToAdd = string[string.index(string.startIndex, offsetBy: i)]
+            if characterToAdd >= "0" && characterToAdd <= "9" {
+                digitsOnlyString.append(characterToAdd)
+            } else if i < originalCursorPosition {
+                cursorPosition -= 1
+            }
+        }
+        return digitsOnlyString
+    }
+    
+    static func insertCreditCardSpaces(_ creditCard: String, preserveCursorPosition cursorPosition: inout Int) -> (String, CardTypes?) {
+        let cards: [CardTypes] = [.AmericanExpress, .DinersClub, .MasterCard, .Viza, .UnionPay, .kortimilli]
+        var card: CardTypes? = nil
+        for cardItem in cards {
+            if self.regexCheck(pattern: cardItem.pattern, text: creditCard) {
+                card = cardItem
+            }
+        }
+        let is464 = card == .DinersClub
+        let is456 = card == .AmericanExpress
+        let is4444 = !(is464 || is456)
+        var stringWithAddedSpaces = ""
+        let cursorPositionInSpacelessString = cursorPosition
+        for i in 0..<creditCard.count {
+            let needs464Spacing = (is464 && (i == 4 || i == 10 || i == 14))
+            let needs456Spacing = (is456 && (i == 4 || i == 9 || i == 15))
+            let needs4444Spacing = (is4444 && i > 0 && (i % 4) == 0)
+            if needs464Spacing || needs456Spacing || needs4444Spacing {
+                stringWithAddedSpaces.append(" ")
+                if i < cursorPositionInSpacelessString {
+                    cursorPosition += 1
+                }
+            }
+            let characterToAdd = creditCard[creditCard.index(creditCard.startIndex, offsetBy:i)]
+            stringWithAddedSpaces.append(characterToAdd)
+        }
+        return (stringWithAddedSpaces, card)
+    }
+    
+    static func regexCheck(pattern: String, text: String) -> Bool {
         do {
             let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
             let match = regex.firstMatch(in: text, options: [], range: NSMakeRange(0, text.count))

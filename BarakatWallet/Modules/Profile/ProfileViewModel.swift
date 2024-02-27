@@ -89,10 +89,6 @@ class ProfileViewModel {
         }).disposed(by: self.disposeBag)
     }
     
-    func logout() -> Bool {
-        return self.profileService.logout()
-    }
-    
     func account() -> CoreAccount? {
         return self.profileService.getAccount()
     }

@@ -12,7 +12,9 @@ import RxSwift
 class FirstLaunchViewController: BaseViewController, StoriesViewDelegate {
     
     lazy var topViewMaxHeight: CGFloat = {
-        return UIScreen.main.bounds.height * 0.4
+        let width = (UIScreen.main.bounds.width - (2 * Theme.current.mainPaddings)) / 4
+        let topBar: CGFloat = 200 + width
+        return UIApplication.statusBarHeight + topBar
     }()
     var topBar: LaunchTopView!
     let transferButton: BaseButtonView = {
@@ -29,6 +31,7 @@ class FirstLaunchViewController: BaseViewController, StoriesViewDelegate {
         view.setTitleColor(.white, for: .normal)
         view.radius = 14
         view.setTitle("LOGIN_SIGNIN".localized, for: .normal)
+        //view.isHidden = true
         return view
     }()
     let versionLabel: UILabel = {

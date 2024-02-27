@@ -29,7 +29,25 @@ enum Environment {
 struct Constants {
     
     static var Device: AppStructs.Device {
-        return AppStructs.Device(APIKey: Self.ApiKey, appVersion: Self.Version, deviceID: Self.DeviceId, deviceName: Self.DeviceName, language: Self.Language ?? "ru", latitude: 0, longitude: 0, platform: Self.Platform)
+        return AppStructs.Device(APIKey: Self.ApiKey, appVersion: Self.Version, deviceID: Self.DeviceId, deviceName: Self.DeviceName, language: Self.Language ?? "ru", latitude: 0, longitude: 0, platform: Self.Platform, notifyKey: Self.PushToken)
+    }
+    
+    static var PushToken: String {
+        set {
+            Constants.SharedDefaults.set(newValue, forKey: "ios_push")
+        }
+        get {
+            return Constants.SharedDefaults.string(forKey: "ios_push") ?? ""
+        }
+    }
+    
+    static var PushTokenSent: Bool {
+        set {
+            Constants.SharedDefaults.set(newValue, forKey: "ios_push_sent")
+        }
+        get {
+            return Constants.SharedDefaults.bool(forKey: "ios_push_sent")
+        }
     }
     
     static var DeviceBioData: Data? {
@@ -97,7 +115,7 @@ struct Constants {
     }
     
     static var AppName: String {
-        return "Barakat Digit"
+        return "Barakat digit"
     }
     
     static var Theme: String {
@@ -185,11 +203,11 @@ struct Constants {
     }
     
     static var DarkGlobalColor: UIColor {
-        return UIColor(red: 0.00, green: 0.67, blue: 1.00, alpha: 1.00)
+        return UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 1.00)
     }
     
     static var LighGlobalColor: UIColor {
-        return UIColor(red: 0.00, green: 0.67, blue: 1.00, alpha: 1.00)
+        return UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 1.00)
     }
     
     static var phoneNumberKit = PhoneNumberKit()

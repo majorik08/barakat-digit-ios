@@ -31,17 +31,17 @@ class HistoryItemCell: UITableViewCell {
         view.numberOfLines = 1
         view.adjustsFontSizeToFitWidth = true
         view.minimumScaleFactor = 0.8
+        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         return view
     }()
     let detailView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.bold(size: 16)
+        view.font = UIFont.regular(size: 16)
         view.textColor = Theme.current.primaryTextColor
         view.numberOfLines = 1
-        view.adjustsFontSizeToFitWidth = true
-        view.minimumScaleFactor = 0.8
         view.textAlignment = .right
+        view.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
         return view
     }()
     
@@ -89,9 +89,20 @@ class HistoryItemCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.titleView.text = nil
+        self.detailView.text = nil
+        self.iconView.image = nil
+    }
+    
     func configure(history: AppStructs.HistoryItem, service: AppStructs.PaymentGroup.ServiceItem?) {
         self.titleView.textColor = Theme.current.primaryTextColor
-        self.detailView.textColor = Theme.current.primaryTextColor
+        if history.amount < 0 {
+            self.detailView.textColor = Theme.current.primaryTextColor
+        } else {
+            self.detailView.textColor = Theme.current.tintColor
+        }
         if let service = service {
             self.titleView.text = service.name
             self.iconView.loadImage(filePath: Theme.current.dark ? service.darkListImage : service.listImage)

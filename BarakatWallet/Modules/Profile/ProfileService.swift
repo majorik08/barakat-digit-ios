@@ -20,9 +20,13 @@ protocol ProfileService: Service {
     
     func updateDevice(device: AppStructs.Device)
     
-    func logout() -> Bool
+    func logout() -> Single<Bool>
     
     func getAccount() -> CoreAccount?
+    
+    func getDocs() -> Single<AppMethods.App.GetDocs.GetDocsResult>
+    
+    func getHelp() -> Single<AppMethods.App.GetHelp.GetHelpResult>
 }
 
 final class ProfileServiceImpl: ProfileService {
@@ -87,13 +91,54 @@ final class ProfileServiceImpl: ProfileService {
         }
     }
     
+    func getDocs() -> Single<AppMethods.App.GetDocs.GetDocsResult> {
+        return Single<AppMethods.App.GetDocs.GetDocsResult>.create { single in
+            APIManager.instance.request(.init(AppMethods.App.GetDocs(.init())), auth: .auth) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
+    func getHelp() -> RxSwift.Single<AppMethods.App.GetHelp.GetHelpResult> {
+        return Single<AppMethods.App.GetHelp.GetHelpResult>.create { single in
+            APIManager.instance.request(.init(AppMethods.App.GetHelp(.init())), auth: .auth) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
     func updateDevice(device: AppStructs.Device) {
         APIManager.instance.request(.init(AppMethods.Auth.DeviceUpdate(device)), auth: .auth) { _ in }
     }
     
-    func logout() -> Bool {
-        guard let first = CoreAccount.accounts().first else { return false }
-        return CoreAccount.logout(account: first)
+    func logout() -> Single<Bool> {
+        return Single<Bool>.create { single in
+            APIManager.instance.request(.init(AppMethods.Client.Logout(.init())), auth: .auth) { response in
+                switch response.result {
+                case .success(_):
+                    guard let first = CoreAccount.accounts().first else {
+                        single(.success(true))
+                        return
+                    }
+                    single(.success(CoreAccount.logout(account: first)))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
     }
     
     func getAccount() -> CoreAccount? {

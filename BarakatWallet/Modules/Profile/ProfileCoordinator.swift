@@ -21,6 +21,9 @@ class ProfileCoordinator: Coordinator {
     var authService: AccountService {
         return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
     }
+    var profileService: ProfileService {
+        return ProfileServiceImpl(accountInfo: self.accountInfo)
+    }
     
     init(nav: BaseNavigationController, accountInfo: AppStructs.AccountInfo) {
         self.nav = nav
@@ -28,7 +31,7 @@ class ProfileCoordinator: Coordinator {
     }
     
     func start() {
-        let vc = ProfileMainViewController(viewModel: ProfileViewModel(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
+        let vc = ProfileMainViewController(viewModel: ProfileViewModel(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
@@ -42,7 +45,7 @@ class ProfileCoordinator: Coordinator {
     }
     
     func navigateToEditProfile() {
-        let vc = ProfileEditViewController(viewModel: ProfileViewModel(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
+        let vc = ProfileEditViewController(viewModel: ProfileViewModel(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
@@ -55,26 +58,26 @@ class ProfileCoordinator: Coordinator {
     }
     
     func navigateToSettings() {
-        let vc = ProfileSettingsViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
+        let vc = ProfileSettingsViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     
     func presentLogout() {
-        let vc = ProfileLogoutViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
+        let vc = ProfileLogoutViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         vc.coordinator = self
         self.nav.present(vc, animated: true)
     }
     
     func presentLanguage(delegate: AlertViewControllerDelegate?) {
-        let vc = LanguageViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
+        let vc = LanguageViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         vc.coordinator = self
         vc.delegate = delegate
         self.nav.present(vc, animated: true)
     }
     
     func presentTheme(delegate: AlertViewControllerDelegate?) {
-        let vc = ThemeViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: ProfileServiceImpl(accountInfo: self.accountInfo), identifyService: self.identifyService))
+        let vc = ThemeViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         vc.coordinator = self
         vc.delegate = delegate
         self.nav.present(vc, animated: true)
@@ -87,17 +90,22 @@ class ProfileCoordinator: Coordinator {
         self.nav.present(vc, animated: true)
     }
     
+    func navigateToMyQr() {
+        let vc = ProfileQrViewController(client: self.accountInfo.client)
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
     func logoutFromAccount() {
         self.parent?.parent?.parent?.showLogin()
     }
     
     func navigateToAboutApp() {
-        let vc = AboutViewController(nibName: nil, bundle: nil)
+        let vc = AboutViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         self.nav.pushViewController(vc, animated: true)
     }
     
     func navigateToDocs() {
-        let vc = ProfilePrivacyViewController(nibName: nil, bundle: nil)
+        let vc = ProfilePrivacyViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         self.nav.pushViewController(vc, animated: true)
     }
     

@@ -135,7 +135,7 @@ class TransferConfirmView: UIView {
     }()
     weak var delegate: TransferConfirmViewDelegate?
 
-    init(bottomInset: CGFloat) {
+    init(bottomInset: CGFloat, showSender: Bool = true) {
         super.init(frame: .zero)
         self.backgroundColor = .clear
         self.translatesAutoresizingMaskIntoConstraints = false
@@ -155,6 +155,8 @@ class TransferConfirmView: UIView {
         self.containerView.addSubview(self.nextButton)
         let rootHeight = self.containerView.heightAnchor.constraint(equalTo: self.scrollView.heightAnchor)
         rootHeight.priority = UILayoutPriority(rawValue: 250)
+        self.senderView.isHidden = !showSender
+        let senderHeight: CGFloat = showSender ? 50 : 0
         NSLayoutConstraint.activate([
             self.bgView.leftAnchor.constraint(equalTo: self.leftAnchor),
             self.bgView.topAnchor.constraint(equalTo: self.topAnchor),
@@ -184,7 +186,7 @@ class TransferConfirmView: UIView {
             self.senderView.leftAnchor.constraint(equalTo: self.containerView.leftAnchor, constant: Theme.current.mainPaddings),
             self.senderView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 20),
             self.senderView.rightAnchor.constraint(equalTo: self.containerView.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.senderView.heightAnchor.constraint(equalToConstant: 50),
+            self.senderView.heightAnchor.constraint(equalToConstant: senderHeight),
             self.receiverView.leftAnchor.constraint(equalTo: self.containerView.leftAnchor, constant: Theme.current.mainPaddings),
             self.receiverView.topAnchor.constraint(equalTo: self.senderView.bottomAnchor, constant: 20),
             self.receiverView.rightAnchor.constraint(equalTo: self.containerView.rightAnchor, constant: -Theme.current.mainPaddings),

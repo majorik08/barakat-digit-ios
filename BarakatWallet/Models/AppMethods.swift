@@ -318,6 +318,16 @@ struct AppMethods {
                 var id: Int
             }
         }
+        struct Logout: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "logout"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+        }
     }
     
     struct Transfers {
@@ -354,9 +364,9 @@ struct AppMethods {
                 
                 struct Commissions: Codable {
                     let calcMethod: Int
-                    let commissionValue: Int
-                    let maxValue: Int
-                    let minValue: Int
+                    let commissionValue: Double
+                    let maxValue: Double
+                    let minValue: Double
                 }
             }
         }
@@ -424,6 +434,22 @@ struct AppMethods {
                 let isCheckVerify: Bool
                 let timeTran: String
                 let tranID: String
+            }
+        }
+        struct TransactionSendCode: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "services/send/verify/trainId"
+            public static var result: TransactionSendCodeResult.Type = TransactionSendCodeResult.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+                self.url = "services/send/verify/\(params.tranID)"
+            }
+            public struct Params: Codable {
+                let tranID: String
+            }
+            public struct TransactionSendCodeResult: Codable {
                 let verifyKey: String
             }
         }
@@ -554,12 +580,56 @@ struct AppMethods {
         }
         struct GetRates: EndpointRequestType {
             static var method: HTTPMethod = .get
-            var url: String = "clients/rates"
+            var url: String = "/services/rates"
             public static var result: [AppStructs.CurrencyRate].Type = [AppStructs.CurrencyRate].self
             public var params: EmptyParams
             
             public init(_ params: EmptyParams) {
                 self.params = params
+            }
+        }
+        struct GetDocs: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "/clients/docs"
+            public static var result: GetDocsResult.Type = GetDocsResult.self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+            
+            struct GetDocsResult: Codable {
+                let aboutApp: String
+                let documents: [Document]
+                
+                struct Document: Codable {
+                    let fileAddress: String
+                    let id: Int
+                    let name: String
+                }
+            }
+        }
+        struct GetHelp: EndpointRequestType {
+            static var method: HTTPMethod = .get
+            var url: String = "/clients/help"
+            public static var result: GetHelpResult.Type = GetHelpResult.self
+            public var params: EmptyParams
+            
+            public init(_ params: EmptyParams) {
+                self.params = params
+            }
+            
+            struct GetHelpResult: Codable {
+                let callCenter: String
+                let socials: [Socials]
+                
+                struct Socials: Codable {
+                    let darkLogo: String
+                    let id: Int
+                    let name: String
+                    let link: String
+                    let logo: String
+                }
             }
         }
     }

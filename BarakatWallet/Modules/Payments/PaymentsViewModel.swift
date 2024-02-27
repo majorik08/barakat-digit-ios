@@ -20,8 +20,6 @@ class PaymentsViewModel {
     let didAddFavorite = PublishSubject<Void>()
     
     let didLoadServiceInfo = PublishSubject<String>()
-    let didPaymentVerified = PublishSubject<AppMethods.Payments.TransactionVerify.VerifyResult>()
-    let didPaymentCommit = PublishSubject<Void>()
     
     let didLoadPaymentsError = PublishSubject<String>()
     let didAddFavoriteError = PublishSubject<String>()
@@ -34,10 +32,17 @@ class PaymentsViewModel {
     }
     
     var sumParam: AppStructs.PaymentGroup.ServiceItem.Params {
-        return .init(id: -999, name: "SUMMA".localized, coment: "SUMMA_HINT".localized, keyboard: 0, mask: "", maxLen: 10, minLen: 1, param: 0, prefix: "")
+        return .init(id: -999, name: "SUMMA".localized, coment: "SUMMA_HINT".localized, keyboard: 1, mask: "", maxLen: 10, minLen: 1, param: 0, prefix: "")
     }
     var messageParam: AppStructs.PaymentGroup.ServiceItem.Params {
-        return .init(id: -998, name: "MESSAGE_FOR_RECEIVER".localized, coment: "MESSAGE".localized, keyboard: 0, mask: "", maxLen: 255, minLen: 0, param: 0, prefix: "")
+        return .init(id: -998, name: "MESSAGE_FOR_RECEIVER".localized, coment: "MESSAGE".localized, keyboard: 3, mask: "", maxLen: 255, minLen: 0, param: 0, prefix: "")
+    }
+    
+    var transferToCardService: AppStructs.PaymentGroup.ServiceItem {
+        return .init(id: AppStructs.TransferType.transferToCard.rawValue, name: "TRANSFER_TO_CARD_OPERATION".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [])
+    }
+    var transferAccountsService: AppStructs.PaymentGroup.ServiceItem {
+        return .init(id: AppStructs.TransferType.transferBetweenAccounts.rawValue, name: "BEETWIN_ACCOUNT_TRANSFER".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [])
     }
     
     init(service: PaymentsService, historyService: HistoryService, accountInfo: AppStructs.AccountInfo) {
@@ -78,34 +83,6 @@ class PaymentsViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe { result in
                 self.didLoadServiceInfo.onNext(result)
-        } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadPaymentsError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadPaymentsError.onNext(error.localizedDescription)
-            }
-        }.disposed(by: self.disposeBag)
-    }
-    
-    func verifyPayment(account: String, accountType: AppStructs.AccountType, amount: Double, comment: String, params: [String], serviceID: Int) {
-        self.service.verifyPayment(account: account, accountType: accountType, amount: amount, comment: comment, params: params, serviceID: serviceID)
-            .observe(on: MainScheduler.instance)
-            .subscribe { result in
-                self.didPaymentVerified.onNext(result)
-        } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadPaymentsError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadPaymentsError.onNext(error.localizedDescription)
-            }
-        }.disposed(by: self.disposeBag)
-    }
-    
-    func commitPayment(tranID: String, code: String, key: String) {
-        self.service.commitPayment(tranID: tranID, code: code, key: key)
-            .observe(on: MainScheduler.instance)
-            .subscribe { result in
-                self.didPaymentCommit.onNext(())
         } onFailure: { error in
             if let error = error as? NetworkError {
                 self.didLoadPaymentsError.onNext((error.message ?? error.error) ?? error.localizedDescription)

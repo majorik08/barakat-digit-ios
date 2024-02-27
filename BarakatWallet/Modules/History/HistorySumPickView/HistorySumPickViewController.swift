@@ -62,8 +62,8 @@ class HistorySumPickViewController: BaseViewController {
         view.backgroundColor = .clear
         return view
     }()
-    let fromSumView: CardTextFiled = {
-        let view = CardTextFiled()
+    let fromSumView: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text =  "FROM".localized
         view.textField.attributedPlaceholder = NSAttributedString(string: "SUMMA".localized, attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
@@ -72,8 +72,8 @@ class HistorySumPickViewController: BaseViewController {
         view.textField.returnKeyType = .done
         return view
     }()
-    let toSumView: CardTextFiled = {
-        let view = CardTextFiled()
+    let toSumView: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "TO".localized
         view.textField.attributedPlaceholder = NSAttributedString(string: "SUMMA".localized, attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])

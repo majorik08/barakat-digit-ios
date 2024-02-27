@@ -38,8 +38,8 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    let cardNumerField: CardTextFiled = {
-        let view = CardTextFiled()
+    let cardNumerField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text =  "SENDER_CARD_NUMBER".localized
         view.textField.textColor = Theme.current.primaryTextColor
@@ -51,8 +51,8 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
         //view.textField.textContentType = UITextContentType.creditCardNumber
         return view
     }()
-    let cardDateField: CardTextFiled = {
-        let view = CardTextFiled()
+    let cardDateField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "CARD_DATE".localized
         view.textField.attributedPlaceholder = NSAttributedString(string: "12/24", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
@@ -61,8 +61,8 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
         view.textField.returnKeyType = .done
         return view
     }()
-    let cardCvvField: CardTextFiled = {
-        let view = CardTextFiled()
+    let cardCvvField: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "CVC/CVV"
         view.textField.attributedPlaceholder = NSAttributedString(string: "123", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
@@ -72,8 +72,8 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
         view.textField.enablesReturnKeyAutomatically = true
         return view
     }()
-    let cardPhoneNumber: CardTextFiled = {
-        let view = CardTextFiled()
+    let cardPhoneNumber: BaseTextFiled = {
+        let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.topLabel.text = "NAME_IN_CARD".localized
         view.textField.attributedPlaceholder = NSAttributedString(string: "NAME_IN_CARD".localized, attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
