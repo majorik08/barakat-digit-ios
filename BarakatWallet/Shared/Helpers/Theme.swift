@@ -20,7 +20,8 @@ public class Theme {
     public var lightStatusBar: Bool = false
     public var searchBarTint: UIColor? = nil
     public var tintColor: UIColor = UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 1.00)
-    public var secondTintColor: UIColor = UIColor(red: 0.98, green: 0.73, blue: 0.28, alpha: 1.00)
+    public var secondTintColor: UIColor = UIColor(red: 0.58, green: 0.88, blue: 0.89, alpha: 1.00)
+    public var thirdColor: UIColor = UIColor(red: 0.98, green: 0.73, blue: 0.28, alpha: 1.00)
     public var grayColor: UIColor = UIColor(red: 0.969, green: 0.973, blue: 0.98, alpha: 1)
     public var shadowColor: UIColor = UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 0.38)
     public var borderColor: UIColor = UIColor(red: 0.49, green: 0.88, blue: 0.89, alpha: 1.00)

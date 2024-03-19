@@ -205,15 +205,29 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     func configure() {
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
         let sorted = self.service.params.sorted(by: { $0.param < $1.param })
-        for param in sorted {
+        for param in sorted.enumerated() {
             let fieldView = PaymentFieldView(frame: .zero)
             fieldView.delegate = self
-            fieldView.configure(param: param, validate: true)
+            var paramValue: String? = nil
+            if let f = self.favorite, f.params.count > param.offset {
+                paramValue = f.params[param.offset]
+            }
+            fieldView.configure(param: param.element, value: paramValue, validate: true)
             self.stackView.addArrangedSubview(fieldView)
         }
         let fieldView = PaymentFieldView(frame: .zero)
-        fieldView.configure(param: self.viewModel.sumParam, validate: false)
+        var amountValue: String? = nil
+        if let f = self.favorite, f.amount > 0 {
+            amountValue = String(f.amount)
+        }
+        fieldView.configure(param: self.viewModel.sumParam, value: amountValue, validate: false)
         self.stackView.addArrangedSubview(fieldView)
+        
+        if let a = self.favorite?.account, !a.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                self.balanceView.scrollToItem(account: a)
+            }
+        }
     }
     
     func addClientInfo(info: String) {

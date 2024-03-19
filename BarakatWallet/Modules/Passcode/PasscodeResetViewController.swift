@@ -9,8 +9,8 @@ import Foundation
 import UIKit
 import RxSwift
 
-class PasscodeResetViewController: BaseViewController {
-    
+class PasscodeResetViewController: BaseViewController, VerifyCodeViewControllerDelegate {
+ 
     let topTitleView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -70,10 +70,12 @@ class PasscodeResetViewController: BaseViewController {
     }()
     weak var coordinator: PasscodeCoordinator?
     let viewModel: PasscodeViewModel
+    let key: String
     var help: AppMethods.App.GetHelp.GetHelpResult? = nil
     
-    init(viewModel: PasscodeViewModel) {
+    init(viewModel: PasscodeViewModel, key: String) {
         self.viewModel = viewModel
+        self.key = key
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -84,6 +86,7 @@ class PasscodeResetViewController: BaseViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.isHidden = false
+        self.setStatusBarStyle(dark: nil)
     }
     
     override func viewDidLoad() {
@@ -127,7 +130,7 @@ class PasscodeResetViewController: BaseViewController {
             self.buttonsStackView.bottomAnchor.constraint(lessThanOrEqualTo: self.view.bottomAnchor, constant: -30),
         ])
         self.callButton.addTarget(self, action: #selector(self.makeCall(_:)), for: .touchUpInside)
-        self.smsButton.addTarget(self, action: #selector(self.sendRecoverySms(_:)), for: .touchUpInside)
+        self.smsButton.addTarget(self, action: #selector(self.sendRecoverySms), for: .touchUpInside)
         self.getHelp()
     }
     
@@ -176,7 +179,46 @@ class PasscodeResetViewController: BaseViewController {
         UIApplication.shared.open(number, options: [:], completionHandler: nil)
     }
     
-    @objc func sendRecoverySms(_ sender: UIButton) {
-        
+    @objc func sendRecoverySms() {
+        self.showProgressView()
+        self.viewModel.authService.resetPin(key: self.key)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] r in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.coordinator?.navigateToConfirm(phoneNumber: r.wallet, key: self.key, delegate: self)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let error = error as? NetworkError {
+                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+                } else {
+                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+                }
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func verify(code: String, key: String, wallet: String) {
+        self.showProgressView()
+        self.viewModel.authService.resetPinConfirm(key: key, code: code)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] _ in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.coordinator?.navigateToSetPasscode(key: key, exist: false, wallet: wallet)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let error = error as? NetworkError {
+                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+                } else {
+                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+                }
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func resendCode(key: String, completion: @escaping (String) -> Void) {
+        self.sendRecoverySms()
+        self.coordinator?.navigateBack()
     }
 }

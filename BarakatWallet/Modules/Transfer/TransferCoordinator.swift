@@ -55,21 +55,12 @@ protocol TransferSumViewControllerDelegate: AnyObject {
     func receiverPicked(receiver: TransferIdentifier)
 }
 
-protocol TransferCoordinatorDelegate: AnyObject {
-    func backToLogin()
-}
-
 class TransferCoordinator: Coordinator {
   
     var children: [Coordinator] = []
     let nav: BaseNavigationController
-    lazy var root = BeforeAuthRootViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), coordinator: self)
+    weak var parent: Coordinator? = nil
     
-    weak var delegate: TransferCoordinatorDelegate?
-    
-    var loginService: LoginService {
-        return ENVIRONMENT.isMock ? LoginServiceMockImpl() : LoginServiceImpl()
-    }
     var bannerService: BannerService {
         return ENVIRONMENT.isMock ? BannerServiceMockImpl() : BannerServiceImpl()
     }
@@ -83,44 +74,48 @@ class TransferCoordinator: Coordinator {
     }
     
     func start() {
-        self.nav.pushViewController(self.root, animated: true)
+        self.navigateToTypePick()
     }
     
     func navigateBack() {
-        if self.root.mainNavigation.viewControllers.count == 1 {
-            self.nav.popViewController(animated: true)
+        if let p = self.parent as? BeforeAuthCoordinator, self.nav.viewControllers.count == 1 {
+            p.nav.popViewController(animated: true)
         } else {
-            self.root.mainNavigation.popViewController(animated: true)
+            self.nav.popViewController(animated: true)
         }
     }
     
     func navigateToMain() {
-        self.root.mainNavigation.popToRootViewController(animated: true)
+        self.nav.popToRootViewController(animated: true)
     }
     
     func navigateToLogin() {
-        self.delegate?.backToLogin()
+        if let p = self.parent as? BeforeAuthCoordinator {
+            p.goToLogin()
+        }
     }
     
-    func navigateToTransfer() {
-        self.nav.pushViewController(self.root, animated: true)
+    func navigateToTypePick() {
+        let vc = TransferMainViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService))
+        vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
     }
     
     func navigateToPickReceiver(type: TransferType, delegate: TransferSumViewControllerDelegate?) {
         let vc = TransferReceiverViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), type: type, delegate: delegate)
         vc.coordinator = self
-        self.root.mainNavigation.pushViewController(vc, animated: true)
+        self.nav.pushViewController(vc, animated: true)
     }
     
     func navigateToEnterSum(type: TransferType, receiver: TransferIdentifier, transferData: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult) {
         let vc = TransferSumViewController(viewModel: .init(service: self.transferService, bannerService: self.bannerService), type: type, receiver: receiver, transferData: transferData)
         vc.coordinator = self
-        self.root.mainNavigation.pushViewController(vc, animated: true)
+        self.nav.pushViewController(vc, animated: true)
     }
     
     func navigateToResult(result: Bool) {
         let vc = TransferResultViewController(result: result)
         vc.coordinator = self
-        self.root.mainNavigation.pushViewController(vc, animated: true)
+        self.nav.pushViewController(vc, animated: true)
     }
 }

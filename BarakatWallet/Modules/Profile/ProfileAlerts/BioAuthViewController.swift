@@ -8,6 +8,10 @@
 import Foundation
 import UIKit
 
+protocol BioAuthViewControllerDelegate: AnyObject {
+    func didDismisAlert(accountInfo: AppStructs.AccountInfo)
+}
+
 class BioAuthViewController: BaseViewController {
     
     let bgView: GradientView = {
@@ -71,11 +75,13 @@ class BioAuthViewController: BaseViewController {
         return view
     }()
     var authType: LocalAuthBiometricAuthentication
+    var accountInfo: AppStructs.AccountInfo
     weak var coordinator: ProfileCoordinator?
-    weak var delegate: AlertViewControllerDelegate?
+    weak var delegate: BioAuthViewControllerDelegate?
     
-    init(authType: LocalAuthBiometricAuthentication) {
+    init(authType: LocalAuthBiometricAuthentication, accountInfo: AppStructs.AccountInfo) {
         self.authType = authType
+        self.accountInfo = accountInfo
         super.init(nibName: nil, bundle: nil)
         self.modalTransitionStyle = .crossDissolve
         self.modalPresentationStyle = .overFullScreen
@@ -180,7 +186,7 @@ class BioAuthViewController: BaseViewController {
             self.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
         }, completion: {(finished: Bool) -> Void in
             self.dismiss(animated: true)
-            self.delegate?.didDismisAlert()
+            self.delegate?.didDismisAlert(accountInfo: self.accountInfo)
         })
     }
 }

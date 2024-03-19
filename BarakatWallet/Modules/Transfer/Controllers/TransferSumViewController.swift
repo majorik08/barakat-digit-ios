@@ -75,6 +75,7 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
     private var nextButtonBottom: NSLayoutConstraint!
     private var previousTextFieldContent: String?
     private var previousSelection: UITextRange?
+    private var lastRublEntered: Bool = true
     var type: TransferType
     var receiver: TransferIdentifier
     var transferData: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult
@@ -220,17 +221,21 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
     
     @objc func reformatAsCardNumber(textField: UITextField) {
         if textField == self.sumRootView.topSumField.field {
+            self.lastRublEntered = false
             let value = self.sumRootView.topSumField.updateTextField()
-            let doubleVal = value.amount
-            let decimalVal = Decimal(doubleVal)
-            let intVal = decimalVal.intValue(currency: .RUB)
-            if let comSomInt = self.setGetCommision(sumInRub: intVal) {
-                let convertToSom = doubleVal * self.transferData.rate.sale
-                let somDecimal = Decimal(convertToSom)
-                let somInt = somDecimal.intValue(currency: .TJS)
-                let getSum = somInt - comSomInt
-                let getSumDecimal = getSum.decimalValue(currency: .TJS)
-                self.sumRootView.bottomSumField.startingValue = NSDecimalNumber(decimal:getSumDecimal).doubleValue
+            let decimalRubVal = Decimal(value.amount)
+            if let com = self.getCommisionForRub(sumInRub: decimalRubVal) {
+                let comInSom = com.comRubValue * Decimal(self.transferData.rate.sale)
+                //print("decimalRubVal:\(decimalRubVal), comRubValue: \(com.comRubValue)")
+                if com.commision.calcMethod == 1 {
+                    self.sumRootView.transferTaxView.titleLabel.text = comInSom.formattedAmount(.TJS)
+                    self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(com.commision.commissionValue)%"
+                } else {
+                    self.sumRootView.transferTaxView.titleLabel.text = comInSom.formattedAmount(.TJS)
+                    self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(comInSom.formattedAmount(.TJS))"
+                }
+                let somValueDecimal = (decimalRubVal - com.comRubValue) * Decimal(self.transferData.rate.sale)
+                self.sumRootView.bottomSumField.startingValue = NSDecimalNumber(decimal:somValueDecimal).doubleValue
                 self.sumRootView.bottomSumField.textFieldDidChange()
                 self.nextButton.isEnabled = true
             } else {
@@ -239,16 +244,22 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
                 self.nextButton.isEnabled = false
             }
         } else if textField == self.sumRootView.bottomSumField.field {
+            self.lastRublEntered = false
             let value = self.sumRootView.bottomSumField.updateTextField()
-            let doubleVal = value.amount
-            let decimalVal = Decimal(doubleVal)
-            let intVal = decimalVal.intValue(currency: .TJS)
-            let convertToRubDecimal = decimalVal / Decimal(self.transferData.rate.sale)
-            let convertToRubInt = convertToRubDecimal.intValue(currency: .RUB)
-            if let comSomInt = self.setGetCommision(sumInRub: convertToRubInt) {
-                let outSumSom = intVal + comSomInt
-                let convertToRub = outSumSom.decimalValue(currency: .TJS) / Decimal(self.transferData.rate.sale)
-                self.sumRootView.topSumField.startingValue = NSDecimalNumber(decimal:convertToRub).doubleValue
+            let decimalSomVal = Decimal(value.amount)
+            let sumInRubDecimal = decimalSomVal / Decimal(self.transferData.rate.sale)
+            //print("sumInRubDecimal:\(sumInRubDecimal), decimalSomVal: \(decimalSomVal)")
+            if let com = self.getCommisionForSom(sumInRub: sumInRubDecimal) {
+                let comInSom = com.comRubValue * Decimal(self.transferData.rate.sale)
+                if com.commision.calcMethod == 1 {
+                    self.sumRootView.transferTaxView.titleLabel.text = comInSom.formattedAmount(.TJS)
+                    self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(com.commision.commissionValue)%"
+                } else {
+                    self.sumRootView.transferTaxView.titleLabel.text = comInSom.formattedAmount(.TJS)
+                    self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(comInSom.formattedAmount(.TJS))"
+                }
+                let rubl = sumInRubDecimal + com.comRubValue
+                self.sumRootView.topSumField.startingValue = NSDecimalNumber(decimal:rubl).doubleValue
                 self.sumRootView.topSumField.textFieldDidChange()
                 self.nextButton.isEnabled = true
             } else {
@@ -259,53 +270,57 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
         }
     }
     
-    private func setGetCommision(sumInRub: Int) -> Int? {
-        if let com = self.transferData.commissions.first(where: { Int($0.minValue) <= sumInRub && ($0.maxValue == -1 || Int($0.maxValue) >= sumInRub) }) {
+    private func getCommisionForRub(sumInRub: Decimal) -> (commision: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult.Commissions, comRubValue: Decimal)? {
+        if let com = self.transferData.commissions.first(where: { Decimal($0.minValue) <= sumInRub && ($0.maxValue == -1 || Decimal($0.maxValue) >= sumInRub) }) {
             if com.calcMethod == 1 {
-                let comRublDecimal = (Decimal(com.commissionValue) * sumInRub.decimalValue(currency: .RUB)) / 100
-                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
-                self.sumRootView.transferTaxView.titleLabel.text = comSomDecimal.formattedAmount(.TJS)
-                self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(com.commissionValue)%"
-                return comSomDecimal.intValue(currency: .TJS)
+                let comValueRub = sumInRub * (Decimal(com.commissionValue) / 100)
+                return (com, comValueRub)
             } else {
-                let comRublDecimal = Decimal(com.commissionValue)
-                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
-                self.sumRootView.transferTaxView.titleLabel.text = comSomDecimal.formattedAmount(.TJS)
-                self.sumRootView.transferTaxView.subTitleLabel.text = "\("HISTORY_FEE".localized) \(comSomDecimal.formattedAmount(.TJS))"
-                return comSomDecimal.intValue(currency: .TJS)
+                let comValueRub = Decimal(com.commissionValue)
+                return (com, comValueRub)
             }
         }
         return nil
     }
     
-    @objc func goToConfirm() {
-        let value = self.sumRootView.topSumField.updateTextField()
-        let doubleVal = value.amount
-        let decimalVal = Decimal(doubleVal)
-        let intVal = decimalVal.intValue(currency: .RUB)
-        if let com = self.transferData.commissions.first(where: { Int($0.minValue) <= intVal && ($0.maxValue == -1 || Int($0.maxValue) >= intVal) }) {
+    private func getCommisionForSom(sumInRub: Decimal) -> (commision: AppMethods.Transfers.GetTransgerData.GetTransgerDataResult.Commissions, comRubValue: Decimal)? {
+        if let com = self.transferData.commissions.first(where: { Decimal($0.minValue) <= sumInRub && ($0.maxValue == -1 || Decimal($0.maxValue) >= sumInRub) }) {
             if com.calcMethod == 1 {
-                let comRublDecimal = (Decimal(com.commissionValue) * decimalVal) / 100
-                let afterCom = decimalVal - comRublDecimal
-                
-                let convertToSom = afterCom * Decimal(self.transferData.rate.sale)
-                let getSum = convertToSom.intValue(currency: .TJS)
-                
-                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
-                let comSomInt = comSomDecimal.intValue(currency: .TJS)
-                
-                self.configureConfirmView(type: self.type, receiver: self.receiver, commision: com, plusAmount: getSum, minusAmount: intVal, commisionAmout: comSomInt)
+                let dk: Decimal = 100 - Decimal(com.commissionValue)
+                let rub = (sumInRub * 100) / dk
+                let comValueRub = rub * (Decimal(com.commissionValue) / 100)
+                return (com, comValueRub)
             } else {
-                let comRublDecimal = Decimal(com.commissionValue)
-                let afterCom = decimalVal - comRublDecimal
-                
-                let convertToSom = afterCom * Decimal(self.transferData.rate.sale)
-                let getSum = convertToSom.intValue(currency: .TJS)
-                
-                let comSomDecimal = comRublDecimal * Decimal(self.transferData.rate.sale)
-                let comSomInt = comSomDecimal.intValue(currency: .TJS)
-               
-                self.configureConfirmView(type: self.type, receiver: self.receiver, commision: com, plusAmount: getSum, minusAmount: intVal, commisionAmout: comSomInt)
+                let comValueRub = Decimal(com.commissionValue)
+                return (com, comValueRub)
+            }
+        }
+        return nil
+    }
+    
+    
+    @objc func goToConfirm() {
+        if self.lastRublEntered {
+            let value = self.sumRootView.topSumField.updateTextField()
+            let decimalRubVal = Decimal(value.amount)
+            if let com = self.getCommisionForRub(sumInRub: decimalRubVal) {
+                let comInSom = com.comRubValue * Decimal(self.transferData.rate.sale)
+                let somValueDecimal = (decimalRubVal - com.comRubValue) * Decimal(self.transferData.rate.sale)
+                let rublValue = (decimalRubVal - com.comRubValue)
+                if rublValue > 0 {
+                    self.configureConfirmView(type: self.type, receiver: self.receiver, commision: com.commision, plusAmount: somValueDecimal.intValue(currency: .TJS), minusAmount: rublValue.intValue(currency: .RUB), commisionAmout: comInSom.intValue(currency: .TJS))
+                }
+            }
+        } else {
+            let value = self.sumRootView.bottomSumField.updateTextField()
+            let decimalSomVal = Decimal(value.amount)
+            let sumInRubDecimal = decimalSomVal / Decimal(self.transferData.rate.sale)
+            if let com = self.getCommisionForSom(sumInRub: sumInRubDecimal) {
+                let comInSom = com.comRubValue * Decimal(self.transferData.rate.sale)
+                let rublValueDecimal = sumInRubDecimal + com.comRubValue
+                if rublValueDecimal > 0 {
+                    self.configureConfirmView(type: self.type, receiver: self.receiver, commision: com.commision, plusAmount: decimalSomVal.intValue(currency: .TJS), minusAmount: rublValueDecimal.intValue(currency: .RUB), commisionAmout: comInSom.intValue(currency: .TJS))
+                }
             }
         }
     }

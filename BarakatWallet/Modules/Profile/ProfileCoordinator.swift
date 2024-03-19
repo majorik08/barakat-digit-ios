@@ -19,7 +19,7 @@ class ProfileCoordinator: Coordinator {
         return ENVIRONMENT.isMock ? IdentifyServiceImpl() : IdentifyServiceImpl()
     }
     var authService: AccountService {
-        return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
+        return ENVIRONMENT.isMock ? AccountServiceImpl() : AccountServiceImpl()
     }
     var profileService: ProfileService {
         return ProfileServiceImpl(accountInfo: self.accountInfo)
@@ -83,8 +83,8 @@ class ProfileCoordinator: Coordinator {
         self.nav.present(vc, animated: true)
     }
     
-    func presentBioAuth(auth: LocalAuthBiometricAuthentication, delegate: AlertViewControllerDelegate?) {
-        let vc = BioAuthViewController(authType: auth)
+    func presentBioAuth(auth: LocalAuthBiometricAuthentication, delegate: BioAuthViewControllerDelegate?) {
+        let vc = BioAuthViewController(authType: auth, accountInfo: self.accountInfo)
         vc.coordinator = self
         vc.delegate = delegate
         self.nav.present(vc, animated: true)
@@ -112,7 +112,7 @@ class ProfileCoordinator: Coordinator {
     func navigateToChangePasscode(account: CoreAccount) {
         let passcode = PasscodeCoordinator(nav: self.nav, account: account, authService: self.authService)
         passcode.parent = self
-        passcode.navigateToSetPasscode()
+        passcode.navigateToChangePasscode(account: account)
         self.children.append(passcode)
     }
 }

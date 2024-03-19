@@ -212,15 +212,15 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
             self.lastNameField.fieldView.isEnabled = true
             self.surNameField.fieldView.isEnabled = true
             self.docBirthdayField.fieldView.isEnabled = true
-            self.maleButton.isEnabled = true
-            self.femaleButton.isEnabled = true
+            self.maleButton.isUserInteractionEnabled = true
+            self.femaleButton.isUserInteractionEnabled = true
         case .onlineIdentified, .identified:
             self.firstNameField.fieldView.isEnabled = false
             self.lastNameField.fieldView.isEnabled = false
             self.surNameField.fieldView.isEnabled = false
             self.docBirthdayField.fieldView.isEnabled = false
-            self.maleButton.isEnabled = false
-            self.femaleButton.isEnabled = false
+            self.maleButton.isUserInteractionEnabled = false
+            self.femaleButton.isUserInteractionEnabled = false
         }
         self.maleButton.addTarget(self, action: #selector(self.maleFemaleChanged(_:)), for: .touchUpInside)
         self.femaleButton.addTarget(self, action: #selector(self.maleFemaleChanged(_:)), for: .touchUpInside)

@@ -25,7 +25,7 @@ class HomeCoordinator: Coordinator {
         return ENVIRONMENT.isMock ? RatesServiceMockImpl() : RatesServiceImpl()
     }
     var accountService: AccountService {
-        return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
+        return ENVIRONMENT.isMock ? AccountServiceImpl() : AccountServiceImpl()
     }
     var cardService: CardService {
         return CardServiceImpl(accountInfo: self.accountInfo)

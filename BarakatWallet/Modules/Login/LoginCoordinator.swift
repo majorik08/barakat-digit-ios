@@ -8,20 +8,18 @@
 import Foundation
 import UIKit
 
-class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINavigationControllerDelegate {
+class LoginCoordinator: NSObject, Coordinator, UINavigationControllerDelegate {
     
     var children: [Coordinator] = []
     let nav: BaseNavigationController
-    let loginService: LoginService
-    
+    let authService: AccountService
     var bannerService: BannerService {
         return ENVIRONMENT.isMock ? BannerServiceMockImpl() : BannerServiceImpl()
     }
-    
     weak var parent: AppCoordinator? = nil
     
-    init(nav: BaseNavigationController, loginService: LoginService) {
-        self.loginService = loginService
+    init(nav: BaseNavigationController, authService: AccountService) {
+        self.authService = authService
         self.nav = nav
         self.nav.navigationBar.isHidden = true
     }
@@ -32,16 +30,12 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
         self.nav.pushViewController(vc, animated: true)
     }
     
-    func backToLogin() {
-        self.navigateToLogin()
-    }
-    
     func navigateBack() {
         self.nav.popViewController(animated: true)
     }
     
     func navigateToLogin() {
-        let vc = LoginViewController(viewModel: LoginViewModel(service: self.loginService))
+        let vc = LoginViewController(viewModel: LoginViewModel(service: self.authService))
         vc.hidesBottomBarWhenPushed = true
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
@@ -55,21 +49,25 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
     }
     
     func navigateToTransfer() {
-        let transfer = TransferCoordinator(nav: self.nav)
-        transfer.delegate = self
-        transfer.navigateToTransfer()
+        let beforeAuth = BeforeAuthCoordinator(nav: self.nav)
+        beforeAuth.parent = self
+        beforeAuth.start()
         self.nav.delegate = self
-        self.children.append(transfer)
+        self.children.append(beforeAuth)
     }
     
-    func navigateToValidate(phoneNumber: String, key: String) {
-        let vc = VerifyCodeViewController(viewModel: .init(service: self.loginService, phoneNumber: phoneNumber, key: key))
+    func navigateToValidate(phoneNumber: String, key: String, delegate: VerifyCodeViewControllerDelegate?) {
+        let vc = VerifyCodeViewController(viewModel: .init(service: self.authService, phoneNumber: phoneNumber, key: key))
+        vc.delegate = delegate
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
     
-    func navigateToSetPin(account: CoreAccount) {
-        self.parent?.showPasscode(account: account)
+    func navigateToSetPin(key: String, exist: Bool, wallet: String) {
+        let coor = PasscodeCoordinator(nav: self.nav, account: nil, authService: self.authService)
+        coor.parent = self.parent
+        coor.navigateToSetPasscode(key: key, exist: exist, wallet: wallet)
+        self.children.append(coor)
     }
     
     func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
@@ -77,7 +75,7 @@ class LoginCoordinator: NSObject, Coordinator, TransferCoordinatorDelegate, UINa
         if navigationController.viewControllers.contains(fromViewController) {
             return
         }
-        if let vvc = fromViewController as? TransferMainViewController {
+        if let vvc = fromViewController as? BeforeAuthRootViewController {
             self.childDidFinish(vvc.coordinator)
         }
     }

@@ -70,6 +70,7 @@ class MainCardListCell: UICollectionViewCell, UICollectionViewDelegate, UICollec
     }
     
     func configure(cards: [AppStructs.CreditDebitCard]) {
+        self.titleView.text = "CARDS".localized
         self.titleView.textColor = Theme.current.primaryTextColor
         self.cards = cards
         self.collectionView.reloadData()
@@ -262,6 +263,7 @@ class MainCardCell: UICollectionViewCell {
             let last4 = String(card.pan.suffix(4))
             self.cardNumberView.text = "•• \(last4)"
         } else {
+            self.addCardLabel.text = "ADD_CARD".localized
             self.rootView.endColor = .clear
             self.rootView.startColor = .clear
             self.rootView.backgroundColor = Theme.current.plainTableCellColor

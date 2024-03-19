@@ -149,6 +149,10 @@ class ProfileTopBar: UIView {
         self.cornerView.endColor = Theme.current.mainGradientEndColor
     }
     
+    func languageChanged() {
+        self.titleLabel.text = "WALLET_NUMBER".localized
+    }
+    
     private func updateShadow() {
         if self.shadowLayer == nil {
             self.shadowLayer = CALayer()
@@ -251,6 +255,7 @@ class StatusView: UIControl {
     }
     
     func configure(limits: AppStructs.ClientInfo.Limit) {
+        self.titleLabel.text = "ID_STATUS".localized
         switch limits.identifyed {
         case .noIdentified:
             self.iconView.imageView.image = UIImage(name: .status_one)

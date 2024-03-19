@@ -116,6 +116,9 @@ class ProfileQrCell: UITableViewCell {
     }
     
     func configure(clientInfo: AppStructs.ClientInfo) {
+        self.myqrButton.setTitle("MY_QR_CODE".localized, for: .normal)
+        self.shareButton.nameView.text = "SHARE".localized
+        self.downloadButton.nameView.text = "DOWNLOAD".localized
         self.qrView.image = UIImage.generateAppQRCode(from: clientInfo.wallet)
         self.myqrButton.setTitleColor(Theme.current.tintColor, for: .normal)
         self.myqrButton.backgroundColor = Theme.current.plainTableBackColor

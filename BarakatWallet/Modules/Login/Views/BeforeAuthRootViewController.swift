@@ -8,13 +8,72 @@
 import Foundation
 import UIKit
 
-class BeforeAuthRootViewController: BaseTabBarController, UITabBarControllerDelegate {
-    
+final class BeforeAuthCoordinator: Coordinator {
+ 
     enum MainItems: Int {
         case main = 1, history = 2, qr = 3, payments = 4, cards = 5
     }
-    weak var coordinator: TransferCoordinator?
-    public var items: [MainItems] = [.main, .history, .qr, .payments, .cards]
+    weak var parent: LoginCoordinator? = nil
+    var children: [Coordinator] = []
+    var tabBar: BeforeAuthRootViewController
+    let nav: BaseNavigationController
+    
+    lazy var transferCoordinator: TransferCoordinator = {
+        return TransferCoordinator(nav: BaseNavigationController(title: "MAIN".localized, image: UIImage(name: .tab_home), tag: MainItems.main.rawValue, overrideInterfaceStyle: true))
+    }()
+    
+    init(nav: BaseNavigationController) {
+        self.nav = nav
+        self.tabBar = BeforeAuthRootViewController()
+        self.tabBar.coordinator = self
+    }
+    
+    func goToLogin() {
+        self.nav.popViewController(animated: true)
+        self.parent?.navigateToLogin()
+    }
+    
+    func start() {
+        let items: [MainItems] = [.main, .history, .payments, .cards]
+        var vcs: [UIViewController] = []
+        for item in items {
+            switch item {
+            case .main:
+                self.transferCoordinator.parent = self
+                self.transferCoordinator.start()
+                vcs.append(self.transferCoordinator.nav)
+            case .history:
+                let vc = BaseViewController(nibName: nil, bundle: nil)
+                vc.tabBarItem.title = "HISTORY".localized
+                vc.tabBarItem.image = UIImage(name: .tab_history)
+                vc.tabBarItem.tag = item.rawValue
+                vcs.append(vc)
+            case .qr:
+                let vc = BaseViewController(nibName: nil, bundle: nil)
+                vc.tabBarItem.title = nil
+                vc.tabBarItem.image = UIImage(name: .tab_qr)
+                vc.tabBarItem.tag = item.rawValue
+                vcs.append(vc)
+            case .payments:
+                let vc = BaseViewController(nibName: nil, bundle: nil)
+                vc.tabBarItem.title = "PAYMENTS".localized
+                vc.tabBarItem.image = UIImage(name: .tab_payments)
+                vc.tabBarItem.tag = item.rawValue
+                vcs.append(vc)
+            case .cards:
+                let vc = BaseViewController(nibName: nil, bundle: nil)
+                vc.tabBarItem.title = "CARDS".localized
+                vc.tabBarItem.image = UIImage(name: .tab_cards)
+                vc.tabBarItem.tag = item.rawValue
+                vcs.append(vc)
+            }
+        }
+        self.tabBar.setViewControllers(vcs, animated: false)
+        self.nav.pushViewController(self.tabBar, animated: true)
+    }
+}
+
+class BeforeAuthRootViewController: BaseTabBarController, UITabBarControllerDelegate {
     
     private var tabShadowView: UIView = {
         let view = UIView(frame: .zero)
@@ -26,14 +85,9 @@ class BeforeAuthRootViewController: BaseTabBarController, UITabBarControllerDele
         view.clipsToBounds = true
         return view
     }()
-    let viewModel: TransferViewModel
-    let mainNavigation: BaseNavigationController
+    weak var coordinator: BeforeAuthCoordinator?
     
-    init(viewModel: TransferViewModel, coordinator: TransferCoordinator?) {
-        self.viewModel = viewModel
-        self.coordinator = coordinator
-        self.mainNavigation = BaseNavigationController(title: "MAIN".localized, image: UIImage(name: .tab_home), tag: MainItems.main.rawValue, overrideInterfaceStyle: true)
-        self.mainNavigation.navigationBar.isHidden = true
+    init() {
         super.init(overrideInterfaceStyle: true)
         self.hidesBottomBarWhenPushed = false
     }
@@ -62,44 +116,6 @@ class BeforeAuthRootViewController: BaseTabBarController, UITabBarControllerDele
         self.tabBar.addSubview(self.tabShapeView)
         self.updateShadow()
         self.updateShapeView()
-        self.setViewControllers(self.items.map({ self.getContrller(item: $0) }), animated: false)
-    }
-    
-    func getContrller(item: MainItems) -> UIViewController {
-        switch item {
-        case .main:
-            let v = TransferMainViewController(viewModel: self.viewModel)
-            v.tabBarItem.title = "MAIN".localized
-            v.tabBarItem.image = UIImage(name: .tab_home)
-            v.tabBarItem.tag = item.rawValue
-            v.coordinator = self.coordinator
-            self.mainNavigation.pushViewController(v, animated: false)
-            return self.mainNavigation
-        case .history:
-            let vc = BaseViewController(nibName: nil, bundle: nil)
-            vc.tabBarItem.title = "HISTORY".localized
-            vc.tabBarItem.image = UIImage(name: .tab_history)
-            vc.tabBarItem.tag = item.rawValue
-            return vc
-        case .qr:
-            let vc = BaseViewController(nibName: nil, bundle: nil)
-            vc.tabBarItem.title = nil
-            vc.tabBarItem.image = UIImage(name: .tab_qr)
-            vc.tabBarItem.tag = item.rawValue
-            return vc
-        case .payments:
-            let vc = BaseViewController(nibName: nil, bundle: nil)
-            vc.tabBarItem.title = "PAYMENTS".localized
-            vc.tabBarItem.image = UIImage(name: .tab_payments)
-            vc.tabBarItem.tag = item.rawValue
-            return vc
-        case .cards:
-            let vc = BaseViewController(nibName: nil, bundle: nil)
-            vc.tabBarItem.title = "CARDS".localized
-            vc.tabBarItem.image = UIImage(name: .tab_cards)
-            vc.tabBarItem.tag = item.rawValue
-            return vc
-        }
     }
     
     private func updateShadow() {
@@ -137,7 +153,7 @@ class BeforeAuthRootViewController: BaseTabBarController, UITabBarControllerDele
     }
     
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        if viewController.tabBarItem.tag != MainItems.main.rawValue {
+        if viewController.tabBarItem.tag != BeforeAuthCoordinator.MainItems.main.rawValue {
             self.showErrorAlert(title: "", message: "FOR_FULL_ACCESS_JOIN".localized)
         }
         return false

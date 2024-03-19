@@ -136,6 +136,8 @@
 		04AD6CD12AE934F3003148EA /* TransferSumView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AD6CD02AE934F3003148EA /* TransferSumView.swift */; };
 		04AD6CD52AE958E6003148EA /* TransferResultViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AD6CD42AE958E6003148EA /* TransferResultViewController.swift */; };
 		04AD6CD72AE95D64003148EA /* VerticalButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AD6CD62AE95D64003148EA /* VerticalButtonView.swift */; };
+		04B0CC4F2BAA214B0025364F /* Atributika in Frameworks */ = {isa = PBXBuildFile; productRef = 04B0CC4E2BAA214B0025364F /* Atributika */; };
+		04B0CC512BAA214B0025364F /* AtributikaViews in Frameworks */ = {isa = PBXBuildFile; productRef = 04B0CC502BAA214B0025364F /* AtributikaViews */; };
 		04B1613C2B298F6D00BC496E /* Montserrat-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04B1613A2B298F6D00BC496E /* Montserrat-SemiBoldItalic.ttf */; };
 		04B1613D2B298F6D00BC496E /* Montserrat-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04B1613B2B298F6D00BC496E /* Montserrat-SemiBold.ttf */; };
 		04B161402B298F8100BC496E /* Montserrat-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04B1613E2B298F8100BC496E /* Montserrat-Medium.ttf */; };
@@ -186,7 +188,6 @@
 		04C0DCAF2AEA489000B964B9 /* HomeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C0DCAE2AEA489000B964B9 /* HomeCoordinator.swift */; };
 		04C0DCB12AEA489D00B964B9 /* RootTabCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C0DCB02AEA489D00B964B9 /* RootTabCoordinator.swift */; };
 		04C0DCB32AEA494000B964B9 /* LoginCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C0DCB22AEA494000B964B9 /* LoginCoordinator.swift */; };
-		04C0DCB52AEA495700B964B9 /* LoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C0DCB42AEA495700B964B9 /* LoginService.swift */; };
 		04C0DCB82AEA4E3D00B964B9 /* TransferService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C0DCB72AEA4E3D00B964B9 /* TransferService.swift */; };
 		04C0DCBA2AEA4E4600B964B9 /* TransferViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C0DCB92AEA4E4600B964B9 /* TransferViewModel.swift */; };
 		04C0DCBC2AEA4E5400B964B9 /* TransferCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C0DCBB2AEA4E5400B964B9 /* TransferCoordinator.swift */; };
@@ -446,7 +447,6 @@
 		04C0DCAE2AEA489000B964B9 /* HomeCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCoordinator.swift; sourceTree = "<group>"; };
 		04C0DCB02AEA489D00B964B9 /* RootTabCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabCoordinator.swift; sourceTree = "<group>"; };
 		04C0DCB22AEA494000B964B9 /* LoginCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginCoordinator.swift; sourceTree = "<group>"; };
-		04C0DCB42AEA495700B964B9 /* LoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginService.swift; sourceTree = "<group>"; };
 		04C0DCB72AEA4E3D00B964B9 /* TransferService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferService.swift; sourceTree = "<group>"; };
 		04C0DCB92AEA4E4600B964B9 /* TransferViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferViewModel.swift; sourceTree = "<group>"; };
 		04C0DCBB2AEA4E5400B964B9 /* TransferCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferCoordinator.swift; sourceTree = "<group>"; };
@@ -527,7 +527,9 @@
 				046E8DA72B0F3AE40061006B /* JTAppleCalendar in Frameworks */,
 				0406A1132AE8304D00273C47 /* PhoneNumberKit in Frameworks */,
 				0417F60C2B6EC6710082A65E /* Toast in Frameworks */,
+				04B0CC512BAA214B0025364F /* AtributikaViews in Frameworks */,
 				04F7899A2AE7F049005B8E68 /* MBProgressHUD in Frameworks */,
+				04B0CC4F2BAA214B0025364F /* Atributika in Frameworks */,
 				04F789A72AE7F0B5005B8E68 /* RxRelay in Frameworks */,
 				04F789A02AE7F06C005B8E68 /* Alamofire in Frameworks */,
 				04F789C52AE82EC7005B8E68 /* KeychainSwift in Frameworks */,
@@ -810,7 +812,6 @@
 				04DCB2712AE4DE6100E818B2 /* Views */,
 				04C0DCCC2AEAAF0000B964B9 /* LoginView */,
 				04C0DCCD2AEAAFC100B964B9 /* VerifyView */,
-				04C0DCB42AEA495700B964B9 /* LoginService.swift */,
 				04C0DCB22AEA494000B964B9 /* LoginCoordinator.swift */,
 			);
 			path = Login;
@@ -1362,6 +1363,8 @@
 				046E8DA62B0F3AE40061006B /* JTAppleCalendar */,
 				0417F60B2B6EC6710082A65E /* Toast */,
 				045BED702B7FB0FE0063919D /* QRCode */,
+				04B0CC4E2BAA214B0025364F /* Atributika */,
+				04B0CC502BAA214B0025364F /* AtributikaViews */,
 			);
 			productName = BarakatWallet;
 			productReference = 043D7CB82ACE7C0800B89AA5 /* BarakatWallet.app */;
@@ -1402,6 +1405,7 @@
 				046E8DA52B0F3AE40061006B /* XCRemoteSwiftPackageReference "JTAppleCalendar" */,
 				0417F60A2B6EC6710082A65E /* XCRemoteSwiftPackageReference "toast-swift" */,
 				045BED6D2B7FB0AB0063919D /* XCRemoteSwiftPackageReference "QRCode" */,
+				04B0CC4D2BAA214B0025364F /* XCRemoteSwiftPackageReference "Atributika" */,
 			);
 			productRefGroup = 043D7CB92ACE7C0800B89AA5 /* Products */;
 			projectDirPath = "";
@@ -1491,7 +1495,6 @@
 				04C51A2F2B0E030600EC4A73 /* BannerView.swift in Sources */,
 				04AD6CD72AE95D64003148EA /* VerticalButtonView.swift in Sources */,
 				04F7898B2AE7EA1F005B8E68 /* PaddingLabel.swift in Sources */,
-				04C0DCB52AEA495700B964B9 /* LoginService.swift in Sources */,
 				04B95AFD2AF24C9B00CCCF7E /* PaymentsService.swift in Sources */,
 				04FD91362AF3D2C5002C292E /* PaymentItemCell.swift in Sources */,
 				04A855D22AF934EC007A724A /* PassportInfoView.swift in Sources */,
@@ -1828,8 +1831,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = BarakatWallet/BarakatWallet.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = J7LWLRNUYW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BarakatWallet/Info.plist;
@@ -1842,14 +1846,15 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.8;
+				MARKETING_VERSION = 1.0.11;
 				PRODUCT_BUNDLE_IDENTIFIER = tj.barakat.digit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1863,8 +1868,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = BarakatWallet/BarakatWallet.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = J7LWLRNUYW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BarakatWallet/Info.plist;
@@ -1877,14 +1883,15 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.8;
+				MARKETING_VERSION = 1.0.11;
 				PRODUCT_BUNDLE_IDENTIFIER = tj.barakat.digit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1937,6 +1944,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 8.0.0;
+			};
+		};
+		04B0CC4D2BAA214B0025364F /* XCRemoteSwiftPackageReference "Atributika" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/psharanda/Atributika";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.5;
 			};
 		};
 		04DCB27E2AE5221A00E818B2 /* XCRemoteSwiftPackageReference "PhoneNumberKit" */ = {
@@ -2001,6 +2016,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 046E8DA52B0F3AE40061006B /* XCRemoteSwiftPackageReference "JTAppleCalendar" */;
 			productName = JTAppleCalendar;
+		};
+		04B0CC4E2BAA214B0025364F /* Atributika */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04B0CC4D2BAA214B0025364F /* XCRemoteSwiftPackageReference "Atributika" */;
+			productName = Atributika;
+		};
+		04B0CC502BAA214B0025364F /* AtributikaViews */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04B0CC4D2BAA214B0025364F /* XCRemoteSwiftPackageReference "Atributika" */;
+			productName = AtributikaViews;
 		};
 		04F789992AE7F049005B8E68 /* MBProgressHUD */ = {
 			isa = XCSwiftPackageProductDependency;

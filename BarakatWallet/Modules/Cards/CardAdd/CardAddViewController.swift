@@ -41,7 +41,7 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
     let cardNumerField: BaseTextFiled = {
         let view = BaseTextFiled()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.topLabel.text =  "SENDER_CARD_NUMBER".localized
+        view.topLabel.text =  "CARD_NUMBER".localized
         view.textField.textColor = Theme.current.primaryTextColor
         view.textField.minimumFontSize = 14
         view.textField.adjustsFontSizeToFitWidth = true
@@ -257,7 +257,8 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
             let newLength = text.count + string.count - range.length
             return newLength <= 3
         } else if textField == self.cardPhoneNumber.textField {
-            return true
+            let newText = "\((textField.text ?? ""))\(string)"
+            return self.checkName(text: newText.uppercased())
         }
         return false
     }
@@ -288,7 +289,7 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
             self.nextButton.isEnabled = false
             return false
         }
-        guard let phone = self.cardPhoneNumber.textField.text, phone.count >= 6 else {
+        guard let phone = self.cardPhoneNumber.textField.text, self.checkName(text: phone) else {
             self.nextButton.isEnabled = false
             return false
         }
@@ -309,11 +310,6 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
             if cardNumberWithoutSpaces.count > 16 {
                 textField.text = self.previousTextFieldContent
                 textField.selectedTextRange = self.previousSelection
-                if self.checkFields() {
-                    self.cardNumerField.textField.resignFirstResponder()
-                } else {
-                    self.cardDateField.textField.becomeFirstResponder()
-                }
                 return
             }
             let cardNumberWithSpaces = self.insertCreditCardSpaces(cardNumberWithoutSpaces, preserveCursorPosition: &targetCursorPosition)
@@ -388,7 +384,19 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
                 }
             }
         } else if textField == self.cardPhoneNumber.textField {
-            self.cardView.cardHolderView.text = textField.text ?? ""
+            var targetCursorPosition = 0
+            if let startPosition = textField.selectedTextRange?.start {
+                targetCursorPosition = textField.offset(from: textField.beginningOfDocument, to: startPosition)
+            }
+            var cardNumberWithoutSpaces = ""
+            if let text = textField.text {
+                cardNumberWithoutSpaces = text.uppercased()
+            }
+            self.cardView.cardHolderView.text = cardNumberWithoutSpaces
+            textField.text = cardNumberWithoutSpaces
+            if let targetPosition = textField.position(from: textField.beginningOfDocument, offset: targetCursorPosition) {
+                textField.selectedTextRange = textField.textRange(from: targetPosition, to: targetPosition)
+            }
             let _ = self.checkFields()
         }
     }
@@ -473,5 +481,12 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
             }
         }
         return false
+    }
+    
+    private func checkName(text: String) -> Bool {
+        let allowedCharacter = CharacterSet(charactersIn: "ABCDEFGHIJKLKMNOPQRSTUVWXYZ ")
+        let characterSet = CharacterSet(charactersIn: text)
+        let words = text.components(separatedBy: " ").count
+        return allowedCharacter.isSuperset(of: characterSet) && words <= 2
     }
 }

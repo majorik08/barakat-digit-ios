@@ -37,12 +37,8 @@ final class AppCoordinator: Coordinator {
     init(window : UIWindow) {
         self.window = window
     }
-    
-    var loginService: LoginService {
-        return ENVIRONMENT.isMock ? LoginServiceMockImpl() : LoginServiceImpl()
-    }
     var authService: AccountService {
-        return ENVIRONMENT.isMock ? AccountServiceMockImpl() : AccountServiceImpl()
+        return ENVIRONMENT.isMock ? AccountServiceImpl() : AccountServiceImpl()
     }
     
     func startWithCheck() {
@@ -67,7 +63,7 @@ final class AppCoordinator: Coordinator {
     }
     
     func showLogin() {
-        let login = LoginCoordinator(nav: FirstLaunchNavigation(overrideInterfaceStyle: false), loginService: self.loginService)
+        let login = LoginCoordinator(nav: FirstLaunchNavigation(overrideInterfaceStyle: false), authService: self.authService)
         login.parent = self
         login.start()
         self.window.rootViewController = login.nav

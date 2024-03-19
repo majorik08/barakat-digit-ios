@@ -9,6 +9,11 @@ import Foundation
 import UIKit
 import RxCocoa
 
+protocol VerifyCodeViewControllerDelegate: AnyObject {
+    func verify(code: String, key: String, wallet: String)
+    func resendCode(key:String, completion: @escaping (_ key: String) -> Void)
+}
+
 class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
     
     let backButton: UIButton = {
@@ -84,6 +89,7 @@ class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
     var timer: Timer? = nil
     let viewModel: VerifyViewModel
     weak var coordinator: LoginCoordinator?
+    weak var delegate: VerifyCodeViewControllerDelegate?
     
     init(viewModel: VerifyViewModel) {
         self.viewModel = viewModel
@@ -151,17 +157,7 @@ class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
         self.continueButton.rx.tap.bind { [weak self] in
             guard let self = self else { return }
             let code = self.codeField.text ?? ""
-            self.showProgressView()
-            self.viewModel.verifyTapped(device: Constants.Device, code: code)
-        }.disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didVerifyError.subscribe { [weak self] message in
-            self?.hideProgressView()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
-        }.disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didSignIn.subscribe { [weak self] account in
-            guard let self = self else { return }
-            self.hideProgressView()
-            self.coordinator?.navigateToSetPin(account: account)
+            self.delegate?.verify(code: code, key: self.viewModel.key, wallet: self.viewModel.phoneNumber)
         }.disposed(by: self.viewModel.disposeBag)
         self.timerHint.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.resendCode)))
         self.viewModel.isSendActive.bind(to: self.continueButton.rx.isEnabled).disposed(by: self.viewModel.disposeBag)
@@ -169,9 +165,18 @@ class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
         self.codeField.becomeFirstResponder()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.isHidden = true
+        self.setStatusBarStyle(dark: nil)
+    }
+    
     @objc func resendCode() {
         if self.viewModel.waitTime <= 0 {
-            
+            self.delegate?.resendCode(key: self.viewModel.key, completion: { key in
+                self.viewModel.waitTime = 30
+                self.viewModel.key = key
+            })
         }
     }
     
@@ -186,8 +191,6 @@ class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
                                             [NSAttributedString.Key.foregroundColor : Theme.current.tintColor,
                                              NSAttributedString.Key.underlineStyle: NSUnderlineStyle.single.rawValue])
             self.timerHint.attributedText = attr
-            self.timer?.invalidate()
-            self.timer = nil
         }
     }
     
@@ -200,7 +203,9 @@ class VerifyCodeViewController: BaseViewController, KeyPadViewDelegate {
         if digit == "<" {
             self.codeField.deleteBackward()
         } else {
-            self.codeField.insertText(digit)
+            if self.codeField.text?.count ?? 0 < 5 {
+                self.codeField.insertText(digit)
+            }
         }
     }
 }

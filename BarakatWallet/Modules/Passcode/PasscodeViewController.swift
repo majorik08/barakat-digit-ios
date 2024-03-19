@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import LocalAuthentication
+import RxSwift
 
 public enum LocalAuthBiometricAuthentication {
     case touchId
@@ -73,8 +74,8 @@ public struct LocalAuth {
     }
 }
 
-class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
-    
+class PasscodeViewController: BaseViewController, KeyPadViewDelegate, VerifyCodeViewControllerDelegate {
+   
     let avatarView: AvatarImageView = {
         let view = AvatarImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -128,7 +129,6 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     }()
     weak var coordinator: PasscodeCoordinator?
     let hapticFeedback = HapticFeedback()
-    let viewModel: PasscodeViewModel
     let waitInterval: Int32 = 60
     var newBioData: Data? = nil
     var authWithBio: Bool = false
@@ -144,9 +144,13 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         }
     }
     var hashButtonImage: UIImage? = nil
+    let account: CoreAccount
+    let authService: AccountService
+    let disposeBag = DisposeBag()
     
-    init(viewModel: PasscodeViewModel) {
-        self.viewModel = viewModel
+    init(account: CoreAccount, authService: AccountService) {
+        self.account = account
+        self.authService = authService
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -198,20 +202,11 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             self.keyPadView.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.9),
             self.keyPadView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
-        self.passcodeDotView.totalDotCount = self.viewModel.account.pin?.count ?? 4
+        self.passcodeDotView.totalDotCount = String(self.account.pin).count
         self.passcodeDotView.inputDotCount = 0
         self.keyPadView.delegate = self
         self.updateInvalidAttempts()
         self.setGreetingsText()
-        self.viewModel.didLogin.subscribe(onNext: { [weak self] info in
-            Constants.Username = info.client.firstName
-            self?.hideProgressView()
-            self?.coordinator?.authSuccess(accountInfo: info)
-        }).disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didLoginFailed.subscribe(onNext: { [weak self] message in
-            self?.hideProgressView()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
-        }).disposed(by: self.viewModel.disposeBag)
         if self.authWithBio {
             self.auth()
         }
@@ -244,7 +239,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     func keyTapped(digit: String) {
         self.hapticFeedback.tap()
         if digit == "." {
-            self.coordinator?.navigateToResetPasscode()
+            self.coordinator?.navigateToResetPasscode(key: self.account.getKey() ?? "", wallet: self.account.wallet)
         } else if digit == "<" {
             if self.dialedNumbersDisplayString.isEmpty {
                 if self.authWithBio {
@@ -256,7 +251,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             self.passcodeDotView.inputDotCount = self.dialedNumbersDisplayString.count
         } else {
             let text = self.dialedNumbersDisplayString + digit
-            if text.count > self.viewModel.account.pin?.count ?? 4 {
+            if text.count > String(self.account.pin).count {
                 return
             }
             if let _ = text.rangeOfCharacter(from: self.validDigitsSet.inverted) {
@@ -270,7 +265,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             } else {
                 self.dialedNumbersDisplayString += digit
                 self.passcodeDotView.inputDotCount = text.count
-                if text.count == self.viewModel.account.pin?.count ?? 4 {
+                if text.count == String(self.account.pin).count {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         self.checkPasscode(str: self.dialedNumbersDisplayString)
                     }
@@ -285,7 +280,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     }
     
     private func shouldWaitBeforeNextAttempt() -> Bool {
-        if let attempts = self.viewModel.account.lockState.unlockAttemts {
+        if let attempts = self.account.lockState.unlockAttemts {
             if attempts.count >= 6 {
                 var bootTimestamp: Int32 = 0
                 let uptime = self.getDeviceUptimeSeconds(&bootTimestamp)
@@ -320,14 +315,13 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
     }
     
     public func unlock() {
-        self.viewModel.account.lockState.unlockAttemts = nil
-        self.viewModel.account.lockState.isManuallyLocked = false
+        self.account.lockState.unlockAttemts = nil
+        self.account.lockState.isManuallyLocked = false
         var bootTimestamp: Int32 = 0
         let uptime = self.getDeviceUptimeSeconds(&bootTimestamp)
         let timestamp = MonotonicTimestamp(bootTimestamp: bootTimestamp, uptime: Int32(uptime))
-        self.viewModel.account.lockState.applicationActivityTimestamp = timestamp
-        self.viewModel.updateLockState(state: self.viewModel.account.lockState)
-        self.showProgressView()
+        self.account.lockState.applicationActivityTimestamp = timestamp
+        CoreAccount.updateLockState(accountId: self.account.accountId, state: self.account.lockState)
         self.dialedNumbersDisplayString = ""
         self.passcodeDotView.inputDotCount = 0
         if self.authWithBio {
@@ -335,23 +329,22 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
         } else {
             self.keyPadView.updateHashButtonImage(image: nil)
         }
-        self.viewModel.pinChechSuccess()
     }
     
     public func failedUnlockAttempt() {
-        var unlockAttemts = self.viewModel.account.lockState.unlockAttemts ?? UnlockAttempts(count: 0, timestamp: MonotonicTimestamp(bootTimestamp: 0, uptime: 0))
+        var unlockAttemts = self.account.lockState.unlockAttemts ?? UnlockAttempts(count: 0, timestamp: MonotonicTimestamp(bootTimestamp: 0, uptime: 0))
         unlockAttemts.count += 1
         var bootTimestamp: Int32 = 0
         let uptime = self.getDeviceUptimeSeconds(&bootTimestamp)
         let timestamp = MonotonicTimestamp(bootTimestamp: bootTimestamp, uptime: Int32(uptime))
         unlockAttemts.timestamp = timestamp
-        self.viewModel.account.lockState.unlockAttemts = unlockAttemts
-        self.viewModel.updateLockState(state: self.viewModel.account.lockState)
+        self.account.lockState.unlockAttemts = unlockAttemts
+        CoreAccount.updateLockState(accountId: self.account.accountId, state: self.account.lockState)
         self.updateInvalidAttempts()
     }
     
     func updateInvalidAttempts() {
-        if let unlockAttemts = self.viewModel.account.lockState.unlockAttemts {
+        if let unlockAttemts = self.account.lockState.unlockAttemts {
             if unlockAttemts.count >= 6 && self.shouldWaitBeforeNextAttempt() {
                 self.timerHint.isHidden = false
                 self.timer?.invalidate()
@@ -378,23 +371,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             self.dialedNumbersDisplayString = ""
             self.passcodeDotView.inputDotCount = 0
         } else {
-            if self.viewModel.account.pin == str {
-                if let newBioData = self.newBioData {
-                    Constants.DeviceBioData = newBioData
-                }
-                self.unlock()
-            } else {
-                self.failedUnlockAttempt()
-                self.passcodeDotView.shakeAnimate()
-                self.hapticFeedback.error()
-                self.dialedNumbersDisplayString = ""
-                self.passcodeDotView.inputDotCount = 0
-                if self.authWithBio {
-                    self.keyPadView.updateHashButtonImage(image: UIImage(name: .face_icon))
-                } else {
-                    self.keyPadView.updateHashButtonImage(image: nil)
-                }
-            }
+            self.signIn(pin: str)
         }
     }
     
@@ -403,22 +380,104 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate {
             if res {
                 DispatchQueue.main.async {
                     guard let newData = data else {
-                        self.passcodeDotView.inputDotCount = self.viewModel.account.pin?.count ?? 0
-                        self.unlock()
+                        self.passcodeDotView.inputDotCount = String(self.account.pin).count
+                        self.signIn(pin: self.account.pin)
                         return
                     }
                     if let old = Constants.DeviceBioData {
                         if old == newData {
-                            self.unlock()
+                            self.signIn(pin: self.account.pin)
                         } else {
                             self.newBioData = LocalAuth.evaluatedPolicyDomainState
                         }
                     } else {
                         Constants.DeviceBioData = LocalAuth.evaluatedPolicyDomainState
-                        self.unlock()
+                        self.signIn(pin: self.account.pin)
                     }
                 }
             }
+        }
+    }
+    
+    func pinCheckSuccess() {
+        self.authService.getClientInfo().flatMap { info -> Single<AppStructs.AccountInfo> in
+            return self.authService.getAccount().flatMap { account in
+                let accountInfo = AppStructs.AccountInfo(accounts: account, client: info)
+                return .just(accountInfo)
+            }
+        }.observe(on: MainScheduler.instance).subscribe { [weak self] accountInfo in
+            guard let self = self else { return }
+            self.hideProgressView()
+            self.coordinator?.authSuccess(accountInfo: accountInfo)
+        } onFailure: { [weak self] error in
+            guard let self = self else { return }
+            self.hideProgressView()
+            if let error = error as? NetworkError {
+                self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+            } else {
+                self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+            }
+        }.disposed(by: self.disposeBag)
+    }
+    
+    private func signIn(pin: String) {
+        self.showProgressView()
+        self.authService.signIn(pin: pin).observe(on: MainScheduler.instance).subscribe { [weak self] result in
+            guard let self = self else { return }
+            if let newBioData = self.newBioData {
+                Constants.DeviceBioData = newBioData
+            }
+            self.unlock()
+            if result.smsSign {
+                self.hideProgressView()
+                self.coordinator?.navigateToConfirm(phoneNumber: self.account.wallet, key: self.account.getKey() ?? "", delegate: self)
+            } else {
+                self.pinCheckSuccess()
+            }
+        } onFailure: { [weak self] error in
+            guard let self = self else { return }
+            self.hideProgressView()
+            self.failedUnlockAttempt()
+            self.passcodeDotView.shakeAnimate()
+            self.hapticFeedback.error()
+            self.dialedNumbersDisplayString = ""
+            self.passcodeDotView.inputDotCount = 0
+            if self.authWithBio {
+                self.keyPadView.updateHashButtonImage(image: UIImage(name: .face_icon))
+            } else {
+                self.keyPadView.updateHashButtonImage(image: nil)
+            }
+            if let error = error as? NetworkError {
+                self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+            } else {
+                self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+            }
+        }.disposed(by: self.disposeBag)
+    }
+    
+    func verify(code: String, key: String, wallet: String) {
+        self.showProgressView()
+        self.authService.signInConfirm(code: code)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] accountInfo in
+                guard let self = self else { return }
+                self.pinCheckSuccess()
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let error = error as? NetworkError {
+                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+                } else {
+                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+                }
+            }.disposed(by: self.disposeBag)
+    }
+    
+    func resendCode(key: String, completion: @escaping (String) -> Void) {
+        if self.dialedNumbersDisplayString.isEmpty {
+            self.signIn(pin: self.account.pin)
+        } else {
+            self.signIn(pin: self.dialedNumbersDisplayString)
         }
     }
 }

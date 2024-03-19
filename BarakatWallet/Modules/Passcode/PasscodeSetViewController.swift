@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import RxCocoa
+import RxSwift
 
 extension UITextInput {
     var selectedRange: NSRange? {
@@ -18,14 +19,14 @@ extension UITextInput {
     }
 }
 
-class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertViewControllerDelegate {
+class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, BioAuthViewControllerDelegate, VerifyCodeViewControllerDelegate {
     
     let backButton: UIButton = {
         let view = UIButton(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.setImage(UIImage(name: .back_arrow), for: .normal)
         view.tintColor = Theme.current.primaryTextColor
-        view.isHidden = true
+        view.isHidden = false
         return view
     }()
     let label: UILabel = {
@@ -34,6 +35,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
         view.textColor = Theme.current.tintColor
         view.translatesAutoresizingMaskIntoConstraints = false
         view.text = "ENTER_PIN".localized
+        view.numberOfLines = 0
         return view
     }()
     let numberHint: UILabel = {
@@ -104,7 +106,8 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.navigationController?.navigationBar.isHidden = false
+        self.navigationController?.navigationBar.isHidden = true
+        self.setStatusBarStyle(dark: nil)
     }
     
     override func viewDidLoad() {
@@ -161,7 +164,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
         }.disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLogin.subscribe(onNext: { [weak self] info in
             self?.hideProgressView()
-            self?.coordinator?.authSuccess(accountInfo: info)
+            self?.showBioAuth(accountInfo: info)
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLoginFailed.subscribe(onNext: { [weak self] message in
             self?.hideProgressView()
@@ -173,11 +176,17 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
     func keyTapped(digit: String) {
         if digit == "." {
             switch self.viewModel.startFor {
-            case .setup:return
-            case .change(_):
-                self.coordinator?.navigateToResetPasscode()
-            case .check(_):
-                self.coordinator?.navigateToResetPasscode()
+            case .setup(let key, let exist, let w):
+                if exist {
+                    self.coordinator?.navigateToResetPasscode(key: key, wallet: w)
+                }
+            case .change(let acc):
+                switch self.viewModel.setupStep {
+                case .check:
+                    self.coordinator?.navigateToResetPasscode(key: acc.getKey() ?? "", wallet: acc.wallet)
+                case .first:break
+                case .second(_):break
+                }
             }
         } else {
             self.hapticFeedback.tap()
@@ -193,7 +202,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
                 return
             }
             switch self.viewModel.startFor {
-            case .setup:
+            case .setup(_, _, _):
                 switch self.viewModel.setupStep {
                 case .check, .first:
                     if text.count > self.viewModel.passcodeMaxLength {
@@ -208,7 +217,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
             case .change(let old):
                 switch self.viewModel.setupStep {
                 case .check:
-                    if text.count > old.count {
+                    if text.count > String(old.pin).count {
                         return
                     }
                 case .first:
@@ -221,10 +230,6 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
                         return
                     }
                 }
-            case .check(let pin):
-                if text.count > pin.count {
-                    return
-                }
             }
             self.dialedNumbersDisplayString = text
             self.passcodeDotView.inputDotCount = text.count
@@ -234,41 +239,33 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
     
     func setInfo() {
         switch self.viewModel.startFor {
-        case .setup:
+        case .setup(_, let exist, _):
             self.dialedNumbersDisplayString = ""
             self.passcodeDotView.totalDotCount = 4
             self.passcodeDotView.inputDotCount = 0
-            self.label.text = "PASSCODE_ENTER_NEW".localized
+            if exist {
+                self.label.text = "ENTER_PIN".localized
+                self.keyPadView.starButtonText = "ENTER_PIN_HINT".localized
+            } else {
+                self.label.text = "PASSCODE_GEN".localized
+            }
         case .change(let old):
             self.keyPadView.starButtonText = "ENTER_PIN_HINT".localized
             self.dialedNumbersDisplayString = ""
-            self.passcodeDotView.totalDotCount = old.count
+            self.passcodeDotView.totalDotCount = String(old.pin).count
             self.passcodeDotView.inputDotCount = 0
             self.label.text = "PASSCODE_OLD_ENTER".localized
-        case .check(pin: let pin):
-            self.keyPadView.starButtonText = "ENTER_PIN_HINT".localized
-            self.dialedNumbersDisplayString = ""
-            self.passcodeDotView.totalDotCount = pin.count
-            self.passcodeDotView.inputDotCount = 0
-            self.label.text = "ENTER_PIN".localized
         }
     }
     
     func next(text: String) {
         switch self.viewModel.startFor {
-        case .check(let pin):
-            if pin == text {
-                self.viewModel.pinChechSuccess()
-            } else {
-                self.passcodeDotView.shakeAnimate()
-                self.dialedNumbersDisplayString = ""
-                self.passcodeDotView.totalDotCount = pin.count
-                self.passcodeDotView.inputDotCount = 0
-            }
         case .change(let old):
             switch self.viewModel.setupStep {
             case .check:
-                if old == text {
+                if String(old.pin) == text {
+                    self.keyPadView.starButtonText = nil
+                    self.keyPadView.collection.reloadData()
                     self.viewModel.setupStep = .first
                     self.passcodeDotView.slideInFromLeft()
                     self.label.slideInFromLeft()
@@ -278,7 +275,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
                     self.label.text = "PASSCODE_ENTER_NEW".localized
                 } else {
                     self.passcodeDotView.shakeAnimate()
-                    self.passcodeDotView.totalDotCount = old.count
+                    self.passcodeDotView.totalDotCount = String(old.pin).count
                     self.passcodeDotView.inputDotCount = 0
                     self.dialedNumbersDisplayString = ""
                     self.label.text = "PASSCODE_OLD_ENTER".localized
@@ -293,9 +290,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
                 self.label.text = "PASSCODE_RENTER".localized
             case .second(let new):
                 if new == text {
-                    self.viewModel.changePin(pin: text)
-                    self.showProgressView()
-                    self.viewModel.pinChechSuccess()
+                    self.changePin(key: old.getKey() ?? "")
                 } else {
                     self.viewModel.setupStep = .first
                     self.passcodeDotView.slideInFromLeft()
@@ -307,42 +302,98 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, AlertVi
                     self.showErrorAlert(title: "ERROR".localized, message: "PASSCODE_DONT_MATCH".localized)
                 }
             }
-        case .setup:
-            switch self.viewModel.setupStep {
-            case .check:break
-            case .first:
-                self.viewModel.setupStep = .second(new: text)
-                self.passcodeDotView.slideInFromLeft()
-                self.label.slideInFromLeft()
-                self.dialedNumbersDisplayString = ""
-                self.passcodeDotView.totalDotCount = text.count
-                self.passcodeDotView.inputDotCount = 0
-                self.label.text = "PASSCODE_RENTER".localized
-            case .second(new: let new):
-                if new == text {
-                    self.viewModel.changePin(pin: text)
-                    if let auth = LocalAuth.biometricAuthentication {
-                        self.coordinator?.presentBioAuth(auth: auth, delegate: self)
-                    } else {
-                        self.showProgressView()
-                        self.viewModel.pinChechSuccess()
-                    }
-                } else {
-                    self.viewModel.setupStep = .first
+        case .setup(let key, let exist, let wallet):
+            if exist {
+                let digits = self.dialedNumbersDisplayString.digits
+                guard digits.count >= self.viewModel.passcodeMinLength, digits.count <= self.viewModel.passcodeMaxLength else { return }
+                self.showProgressView()
+                self.viewModel.checkPin(pin: digits, key: key, wallet: wallet)
+            } else {
+                switch self.viewModel.setupStep {
+                case .check: break
+                case .first:
+                    self.viewModel.setupStep = .second(new: text)
                     self.passcodeDotView.slideInFromLeft()
                     self.label.slideInFromLeft()
                     self.dialedNumbersDisplayString = ""
-                    self.passcodeDotView.totalDotCount = 4
+                    self.passcodeDotView.totalDotCount = text.count
                     self.passcodeDotView.inputDotCount = 0
-                    self.label.text = "PASSCODE_ENTER_NEW".localized
-                    self.showErrorAlert(title: "ERROR".localized, message: "PASSCODE_DONT_MATCH".localized)
+                    self.label.text = "PASSCODE_RENTER".localized
+                case .second(new: let new):
+                    let digits = new.digits
+                    if new == text {
+                        self.showProgressView()
+                        self.viewModel.checkPin(pin: digits, key: key, wallet: wallet)
+                    } else {
+                        self.viewModel.setupStep = .first
+                        self.passcodeDotView.slideInFromLeft()
+                        self.label.slideInFromLeft()
+                        self.dialedNumbersDisplayString = ""
+                        self.passcodeDotView.totalDotCount = 4
+                        self.passcodeDotView.inputDotCount = 0
+                        self.label.text = "PASSCODE_GEN".localized
+                        self.showErrorAlert(title: "ERROR".localized, message: "PASSCODE_DONT_MATCH".localized)
+                    }
                 }
             }
         }
     }
     
-    func didDismisAlert() {
+    func showBioAuth(accountInfo: AppStructs.AccountInfo) {
+        if let auth = LocalAuth.biometricAuthentication {
+            self.coordinator?.presentBioAuth(auth: auth, accountInfo: accountInfo, delegate: self)
+        } else {
+            self.coordinator?.authSuccess(accountInfo: accountInfo)
+        }
+    }
+    
+    func didDismisAlert(accountInfo: AppStructs.AccountInfo) {
+        self.coordinator?.authSuccess(accountInfo: accountInfo)
+    }
+    
+    func changePin(key: String) {
         self.showProgressView()
-        self.viewModel.pinChechSuccess()
+        self.viewModel.authService.resetPin(key: key)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] r in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.coordinator?.navigateToConfirm(phoneNumber: r.wallet, key: key, delegate: self)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let error = error as? NetworkError {
+                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+                } else {
+                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+                }
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func verify(code: String, key: String, wallet: String) {
+        self.showProgressView()
+        self.viewModel.authService.resetPinConfirm(key: key, code: code)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] _ in
+                guard let self = self else { return }
+                self.viewModel.checkPin(pin: self.dialedNumbersDisplayString, key: key, wallet: wallet)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let error = error as? NetworkError {
+                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+                } else {
+                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+                }
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func resendCode(key: String, completion: @escaping (String) -> Void) {
+        switch self.viewModel.startFor {
+        case .setup(_, _, _):break
+        case .change(let account):
+            self.changePin(key: account.getKey() ?? "")
+            self.coordinator?.navigateBack()
+        }
     }
 }

@@ -118,7 +118,8 @@ class PaymentsViewController: BaseViewController, UITableViewDelegate, UITableVi
     override func languageChanged() {
         super.languageChanged()
         self.navigationItem.title = "PAYMENTS".localized
-        self.tableView.reloadData()
+        self.searchController.searchBar.placeholder = "SEARCH".localized
+        self.viewModel.loadPayments()
     }
     
     @objc private func reloadPaymentAndTransfers() {
@@ -148,7 +149,6 @@ class PaymentsViewController: BaseViewController, UITableViewDelegate, UITableVi
                 return false
             }
             self.searchItems.append(contentsOf: transfers)
-            print("count: \(self.searchItems.count)")
             self.tableView.reloadData()
         } else {
             self.searchItems.removeAll()

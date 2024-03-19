@@ -11,17 +11,8 @@ import RxSwift
 class PasscodeViewModel {
     
     enum StartFor {
-        case setup
-        case change(old: String)
-        case check(pin: String)
-        
-        var passcode: String {
-            switch self {
-            case .setup: return ""
-            case .change(old: let old): return old
-            case .check(pin: let pin): return pin
-            }
-        }
+        case setup(key: String, exist: Bool, wallet: String)
+        case change(account: CoreAccount)
     }
     enum SetupSteps {
         case check
@@ -43,39 +34,79 @@ class PasscodeViewModel {
     var startFor: StartFor
     var setupStep: SetupSteps
     let passcodeMinLength: Int = 4
-    let passcodeMaxLength: Int = 8
+    let passcodeMaxLength: Int = 4
     let validDigitsSet: CharacterSet = {
         return CharacterSet(charactersIn: "0".unicodeScalars.first! ... "9".unicodeScalars.first!)
     }()
     
     let disposeBag = DisposeBag()
-    let account: CoreAccount
     let authService: AccountService
     
     let didLogin = PublishSubject<AppStructs.AccountInfo>()
+    let didCodeNeeed = PublishSubject<Bool>()
     let didLoginFailed = PublishSubject<String>()
     
-    init(authService: AccountService, account: CoreAccount, startFor: StartFor) {
-        self.account = account
+    init(authService: AccountService, startFor: StartFor) {
         self.authService = authService
         self.startFor = startFor
         switch startFor {
-        case .setup:
-            self.setupStep = .first
+        case .setup(_, let exist, _):
+            self.setupStep = exist ? .check : .first
         case .change(_):
-            self.setupStep = .check
-        case .check(_):
             self.setupStep = .check
         }
     }
     
-    func changePin(pin: String) {
-        self.account.pin = pin
-        CoreAccount.update(account: self.account)
+    func checkPin(pin: String, key: String, wallet: String) {
+        self.authService.registerPin(key: key, pin: pin, wallet: wallet).flatMap { account -> Single<AppStructs.AccountInfo> in
+            APIManager.instance.setToken(token: account.token)
+            return self.authService.getClientInfo().flatMap { info in
+                return self.authService.getAccount().flatMap { account in
+                    let accountInfo = AppStructs.AccountInfo(accounts: account, client: info)
+                    return .just(accountInfo)
+                }
+            }
+        }.observe(on: MainScheduler.instance).subscribe { accountInfo in
+            self.didLogin.onNext(accountInfo)
+        } onFailure: { error in
+            if let error = error as? NetworkError {
+                self.didLoginFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
+            } else {
+                self.didLoginFailed.onNext(error.localizedDescription)
+            }
+        }.disposed(by: self.disposeBag)
     }
     
-    func pinChechSuccess() {
-        self.authService.getClientInfo().flatMap { info -> Single<AppStructs.AccountInfo> in
+    func signIn(pin: String) {
+        self.authService.signIn(pin: pin).subscribe { result in
+            if result.smsSign {
+                self.didCodeNeeed.onNext(true)
+            } else {
+                self.login()
+            }
+        } onFailure: { error in
+            if let error = error as? NetworkError {
+                self.didLoginFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
+            } else {
+                self.didLoginFailed.onNext(error.localizedDescription)
+            }
+        }.disposed(by: self.disposeBag)
+    }
+    
+    func signInConfirm(code: String)  {
+        self.authService.signInConfirm(code: code).subscribe { _ in
+            self.login()
+        } onFailure: { error in
+            if let error = error as? NetworkError {
+                self.didLoginFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
+            } else {
+                self.didLoginFailed.onNext(error.localizedDescription)
+            }
+        }.disposed(by: self.disposeBag)
+    }
+    
+    private func login() {
+        self.authService.getClientInfo().flatMap { info in
             return self.authService.getAccount().flatMap { account in
                 let accountInfo = AppStructs.AccountInfo(accounts: account, client: info)
                 return .just(accountInfo)
@@ -89,9 +120,5 @@ class PasscodeViewModel {
                 self.didLoginFailed.onNext(error.localizedDescription)
             }
         }.disposed(by: self.disposeBag)
-    }
-    
-    func updateLockState(state: LockState) {
-        CoreAccount.updateLockState(accountId: self.account.accountId, state: state)
     }
 }

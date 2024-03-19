@@ -82,6 +82,12 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
         fatalError("init(coder:) has not been implemented")
     }
     
+    func scrollToItem(account: String) {
+        if let a = self.accounts.firstIndex(where: { $0.account == account }) {
+            self.collectionView.scrollToItem(at: .init(item: a, section: 0), at: .centeredHorizontally, animated: true)
+        }
+    }
+    
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let witdh = scrollView.frame.width - (scrollView.contentInset.left + scrollView.contentInset.right)
         let index = scrollView.contentOffset.x / witdh

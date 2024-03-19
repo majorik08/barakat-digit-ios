@@ -10,7 +10,7 @@ import RxSwift
 
 final class LoginViewModel {
     
-    private let service: LoginService
+    let service: AccountService
     
     let disposeBag = DisposeBag()
     let phoneNumber = BehaviorSubject(value: "")
@@ -20,7 +20,7 @@ final class LoginViewModel {
     let didSendError = PublishSubject<String>()
     let isSendActive = PublishSubject<Bool>()
     
-    init(service: LoginService) {
+    init(service: AccountService) {
         self.service = service
         let validNumber = self.phoneNumber.map({ $0.count > 7 }).share(replay: 1)
         let validCheck = self.privacyCheck.share(replay: 1)
@@ -29,7 +29,7 @@ final class LoginViewModel {
     }
     
     func signInTapped(device: AppStructs.Device, number: String) {
-        self.service.sendCode(device: device, number: number)
+        self.service.register(device: device, number: number)
             .observe(on: MainScheduler.instance)
             .subscribe { [weak self] key in
                 self?.didSendCode.onNext(key)

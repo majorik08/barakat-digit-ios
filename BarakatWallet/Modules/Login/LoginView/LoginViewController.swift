@@ -8,9 +8,12 @@
 import Foundation
 import UIKit
 import PhoneNumberKit
+import RxSwift
+import Atributika
+import AtributikaViews
 
-class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPickerDelegate {
-    
+class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPickerDelegate, VerifyCodeViewControllerDelegate {
+  
     let backButton: UIButton = {
         let view = UIButton(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -47,8 +50,8 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    let phoneNumberField: PhoneNumberTextField = {
-        let view = PhoneNumberTextField(withPhoneNumberKit: Constants.phoneNumberKit)
+    let phoneNumberField: UITextField = {
+        let view = UITextField(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 18)
         view.borderStyle = .none
@@ -56,8 +59,7 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
         view.keyboardType = .numberPad
         view.textColor = Theme.current.primaryTextColor
         view.inputView = UIView(backgroundColor: .clear)
-        view.attributedPlaceholder = NSAttributedString(string: "918-00-00-00", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
-        view.partialFormatter.defaultRegion = Constants.defaultRegionCode()
+        view.attributedPlaceholder = NSAttributedString(string: "918000000", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
         return view
     }()
     let countryCodeLable: UILabel = {
@@ -88,14 +90,19 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
         view.isSelected = true
         return view
     }()
-    let privacyHint: UILabel = {
-        let view = UILabel(frame: .zero)
+    let privacyHint: AttributedLabel = {
+        let view = AttributedLabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 14)
         view.textColor = Theme.current.primaryTextColor
-        view.text = "PRIVACY_LOGIN".localized
+        view.disabledLinkAttributes = Attrs().foregroundColor(.lightGray).attributes
+        view.linkHighlightViewFactory = RoundedRectLinkHighlightViewFactory()
+        let a = Attrs().font(UIFont.regular(size: 14)).foregroundColor(Theme.current.tintColor)
+        let str = "PRIVACY_LOGIN".localized.style(tags: ["a": a]).attributedString
+        view.attributedText = str
         view.numberOfLines = 0
         view.lineBreakMode = .byWordWrapping
+        view.isUserInteractionEnabled = true
         return view
     }()
     let keyPadView: KeyPadView = {
@@ -114,7 +121,6 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
     var selectedCountry: CountryPicker.Country? {
         didSet {
             if let country = self.selectedCountry {
-                self.phoneNumberField.partialFormatter.defaultRegion = country.countryCode
                 let flag = CountryPicker.flag(country: country.countryCode)
                 self.countryCodeLable.text = flag + " \(country.countryPhoneCode)"
             }
@@ -195,14 +201,10 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
             self.continueButton.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             self.continueButton.heightAnchor.constraint(equalToConstant: 56),
         ])
-        if let country = CountryPicker.getCurrentCountry(ISO: self.phoneNumberField.partialFormatter.defaultRegion, language: Constants.Language ?? "en") {
-            self.selectedCountry = country
-        } else {
-            self.selectedCountry = CountryPicker.Country(countryName: "Tajikistan", countryCode: "TJ", countryPhoneCode: "+992", countryFullCode: "TJK")
-        }
         self.countyView.addTapGestureRecognizerr {
             self.coordinator?.navigateToSelectCountry(delegate: self)
         }
+        self.privacyHint.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.openPrivacy)))
         self.selectedCountry = CountryPicker.Country(countryName: "Tajikistan", countryCode: "TJ", countryPhoneCode: "+992", countryFullCode: "TJK")
         self.keyPadView.delegate = self
         self.backButton.rx.tap.subscribe { [weak self] _ in
@@ -227,7 +229,7 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
             guard let self = self else { return }
             self.hideProgressView()
             let phoneNumber = "+\("\(self.selectedCountry?.countryPhoneCode ?? "") \(self.phoneNumberField.text!)".digits)"
-            self.coordinator?.navigateToValidate(phoneNumber: phoneNumber, key: key)
+            self.coordinator?.navigateToValidate(phoneNumber: phoneNumber, key: key, delegate: self)
         }.disposed(by: self.viewModel.disposeBag)
         self.viewModel.isSendActive.bind(to: self.continueButton.rx.isEnabled).disposed(by: self.viewModel.disposeBag)
         self.phoneNumberField.becomeFirstResponder()
@@ -241,19 +243,71 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.isHidden = true
         self.setStatusBarStyle(dark: nil)
+    }
+    
+    @objc func openPrivacy() {
+        guard let u = URL(string: Constants.PrivacyUrl) else { return }
+        UIApplication.shared.open(u)
     }
     
     func keyTapped(digit: String) {
         if digit == "<" {
             self.phoneNumberField.deleteBackward()
         } else {
-            self.phoneNumberField.insertText(digit)
+            if self.selectedCountry?.countryCode == "TJ" {
+                if self.phoneNumberField.text?.count ?? 0 < 9 {
+                    self.phoneNumberField.insertText(digit)
+                }
+            } else {
+                if self.phoneNumberField.text?.count ?? 0 < 15 {
+                    self.phoneNumberField.insertText(digit)
+                }
+            }
         }
         self.phoneNumberField.text = self.phoneNumberField.text
     }
     
     func onSelected(type: CountryPicker.Country) {
         self.selectedCountry = type
+    }
+    
+    func verify(code: String, key: String, wallet: String) {
+        self.showProgressView()
+        self.viewModel.service.registerConfirm(device: Constants.Device, code: code, key: key)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] result in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.coordinator?.navigateToSetPin(key: result.key, exist: result.walletExist, wallet: wallet)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let error = error as? NetworkError {
+                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+                } else {
+                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+                }
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func resendCode(key: String, completion: @escaping (String) -> Void) {
+        self.showProgressView()
+        self.viewModel.service.registerResend(key: key)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] result in
+                guard let self = self else { return }
+                self.successProgress(text: "")
+                completion(result.key)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                if let error = error as? NetworkError {
+                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
+                } else {
+                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
+                }
+            }.disposed(by: self.viewModel.disposeBag)
     }
 }

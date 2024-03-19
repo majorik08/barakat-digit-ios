@@ -39,12 +39,12 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         return view
     }()
     lazy var topViewMinHeight: CGFloat = {
-        let topBar: CGFloat = 146
+        let topBar: CGFloat = 120
         return UIApplication.statusBarHeight + topBar
     }()
     lazy var topViewMaxHeight: CGFloat = {
         let width = (UIScreen.main.bounds.width - (2 * Theme.current.mainPaddings)) / 4
-        let topBar: CGFloat = 146 + width
+        let topBar: CGFloat = 120 + width
         return UIApplication.statusBarHeight + topBar
     }()
     private var heightAnchor: NSLayoutConstraint!
@@ -175,6 +175,16 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.view.backgroundColor = Theme.current.plainTableBackColor
         self.collectionView.reloadData()
         self.topBar.themeChanged(newTheme: newTheme)
+    }
+    
+    override func languageChanged() {
+        super.languageChanged()
+        self.collectionView.reloadData()
+        self.topBar.configure(viewModel: self.viewModel)
+        self.topBar.languageChanged()
+        self.viewModel.loadServices()
+        self.viewModel.loadStoriesList()
+        self.viewModel.loadShowcaseList()
     }
     
     func didTapStoriesItem(stories: [AppStructs.Stories], index: Int) {
@@ -319,7 +329,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
             let height = (itemWidth - 10) * 0.63
             return .init(width: collectionView.frame.width, height: height + 48)
         } else if indexPath.section == 1 {
-            return .init(width: collectionView.frame.width, height: 80)
+            return .init(width: collectionView.frame.width, height: 88)
         } else if indexPath.section == 2 || indexPath.section == 3 {
             let itemWidth = ((self.view.frame.width - insets) / 4)
             let height = (itemWidth - 10) - 2

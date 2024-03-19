@@ -197,7 +197,7 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, validate: Bool) {
+    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, value: String?, validate: Bool) {
         self.param = param
 //        let coms = param.prefix.split(separator: ",")
 //        if coms.count == 1 {
@@ -217,7 +217,6 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
         self.tag = param.id
         self.topLabel.text = param.name
         self.fieldView.attributedPlaceholder = NSAttributedString(string: param.coment, attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
-        
         let type = AppStructs.KeyboardViewType(rawValue: param.keyboard) ?? .alphabet
         switch type {
         case .nums:
@@ -234,6 +233,9 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
             self.bottomLabel.textColor = .systemRed
             self.fieldView.delegate = self
             self.fieldView.addTarget(self, action: #selector(self.reformatAsNeeded(textField:)), for: .editingDidEnd)
+        }
+        if let value = value {
+            self.fieldView.text = value
         }
     }
     

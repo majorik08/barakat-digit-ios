@@ -104,12 +104,12 @@ class MainRatesCell: UICollectionViewCell {
     }
     
     func configure(rates: [AppStructs.CurrencyRate]) {
+        self.titleView.text = "RATES_LIST".localized
+        self.allButton.setTitle("CONVERTOR".localized, for: .normal)
         self.emptyView.isHidden = !rates.isEmpty
         self.titleView.textColor = Theme.current.primaryTextColor
         self.rootView.backgroundColor = Theme.current.plainTableCellColor
-        self.rateView.rateTitle.textColor = Theme.current.primaryTextColor
-        self.rateView.rateBuy.textColor = Theme.current.primaryTextColor
-        self.rateView.rateSell.textColor = Theme.current.primaryTextColor
+        self.rateView.configure()
         self.rateView.stackView.arrangedSubviews.forEach { v in
             v.removeFromSuperview()
         }
@@ -198,6 +198,15 @@ class RateView: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func configure() {
+        self.rateTitle.textColor = Theme.current.primaryTextColor
+        self.rateBuy.textColor = Theme.current.primaryTextColor
+        self.rateSell.textColor = Theme.current.primaryTextColor
+        self.rateTitle.text = "RATE_CURRENCY".localized
+        self.rateBuy.text = "RATE_CURRENCY_BUY".localized
+        self.rateSell.text = "RATE_CURRENCY_SELL".localized
     }
     
     class RateItemView: UIView {

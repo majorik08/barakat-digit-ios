@@ -12,7 +12,7 @@ import RxSwift
 import RxCocoa
 import ContactsUI
 
-class TransferByNumberViewController: BaseViewController, CNContactPickerDelegate, PaymentServiceSelectViewDelegate, TransferConfirmViewDelegate, PaymentViewsDelegate, AddFavoriteViewControllerDelegate, BalanceSelectViewDelegate, CurrencyFormatFieldDelegate {
+class TransferByNumberViewController: BaseViewController, CNContactPickerDelegate, PaymentServiceSelectViewDelegate, TransferConfirmViewDelegate, PaymentViewsDelegate, AddFavoriteViewControllerDelegate, BalanceSelectViewDelegate, CurrencyFormatFieldDelegate, UITextFieldDelegate {
    
     private let scrollView: UIScrollView = {
         let view = UIScrollView(frame: .zero)
@@ -34,19 +34,17 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    private let numberView: BaseTextFiled = {
-        let view = PhoneNumberTextField(withPhoneNumberKit: Constants.phoneNumberKit)
-        let filedView = BaseTextFiled(textField: view)
+    private let numberView: BasePrefixTextField = {
+        let view = UITextField(frame: .zero)
+        let filedView = BasePrefixTextField(textField: view)
         filedView.topLabel.text = "PHONE_NUMBER".localized
         filedView.translatesAutoresizingMaskIntoConstraints = false
         filedView.rightImage.image = UIImage(name: .add_number)
-        view.withFlag = false
-        view.withPrefix = true
-        view.withExamplePlaceholder = true
+        filedView.prefixLabel.text = "+992"
         view.leftViewMode = .always
         view.keyboardType = UIKeyboardType.phonePad
         view.borderStyle = .none
-        view.attributedPlaceholder = NSAttributedString(string: "+992 918 00 00 00", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
+        view.attributedPlaceholder = NSAttributedString(string: "918000000", attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
         return filedView
     }()
     private let selectorView: PaymentServiceSelectView = {
@@ -151,8 +149,10 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         self.nextButton.addTarget(self, action: #selector(self.nextTapped), for: .touchUpInside)
         self.numberView.rightImage.isUserInteractionEnabled = true
         self.numberView.rightImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.contactPick)))
+        self.numberView.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
+        self.numberView.textField.delegate = self
         self.sumView.configure(param: self.viewModel.sumParam, validate: false)
-        self.commentView.configure(param: self.viewModel.messageParam, validate: false)
+        self.commentView.configure(param: self.viewModel.messageParam, value: nil, validate: false)
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
         let validNumber = self.numberView.textField.rx.text.orEmpty
         validNumber
@@ -161,7 +161,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
             .filter({ $0.count >= 6 })
             .flatMap { str in
                 self.selectorView.configure(services: [])
-                return self.viewModel.loadNumberServices(number: str.digits)
+                return self.viewModel.loadNumberServices(number: "+992\(str.digits)")
             }
             .subscribe { [weak self] services in
                 self?.selectorView.configure(services: services)
@@ -170,7 +170,11 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
                 
             }.disposed(by: self.viewModel.disposeBag)
         if let ph = self.phoneNumber {
-            self.numberView.textField.text = "+\(ph.digits)"
+            if ph.starts(with: "+992") {
+                self.numberView.textField.text = ph.replacingOccurrences(of: "+992", with: "")
+            } else {
+                self.numberView.textField.text = ph.digits
+            }
             self.numberView.textField.sendActions(for: .editingChanged)
         }
     }
@@ -217,7 +221,11 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
     
     func contactPicker(_ picker: CNContactPickerViewController, didSelect contactProperty: CNContactProperty) {
         guard let item = contactProperty.value as? CNPhoneNumber else { return }
-        self.numberView.textField.text = item.stringValue
+        var txt = item.stringValue.digits
+        if txt.starts(with: "992") {
+            txt = txt.replacingOccurrences(of: "992", with: "")
+        }
+        self.numberView.textField.text = txt
         self.numberView.textFieldTopLabel.text = "\(contactProperty.contact.givenName) \(contactProperty.contact.familyName)"
         self.numberView.textField.sendActions(for: .editingChanged)
         if self.checkFields() {
@@ -235,6 +243,25 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
     
     func currencyFieldDidChanged() {
         self.checkFields()
+    }
+    
+    @objc func reformatAsCardNumber(textField: UITextField) {
+        if textField == self.numberView.textField {
+            self.numberView.textFieldTopLabel.text = nil
+            self.checkFields()
+            if let t = textField.text, t.count == 9 {
+                self.numberView.textField.resignFirstResponder()
+            }
+        }
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        if textField == self.numberView.textField {
+            guard let text = textField.text else { return true }
+            let newLength = text.count + string.count - range.length
+            return newLength <= 9
+        }
+        return false
     }
     
     @discardableResult
@@ -260,7 +287,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         guard let selectedService = self.selectorView.selectedService else { return }
         let comment = self.commentView.fieldView.text ?? ""
         let sum = self.sumView.textField.value ?? 0.0
-        let phoneNumber = self.numberView.textField.text?.digits ?? ""
+        let phoneNumber = "+992\(self.numberView.textField.text?.digits ?? "")"
         self.showProgressView()
         self.viewModel.service.verifyPayment(account: selectedBalance.account, accountType: selectedBalance.accountType, amount: sum, comment: comment, params: [phoneNumber], serviceID: selectedService.service.id)
             .observe(on: MainScheduler.instance)
@@ -453,7 +480,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
     
     func addFavorite(name: String) {
         guard let service = self.selectorView.selectedService else { return }
-        let phoneNumber = self.numberView.textField.text?.digits ?? ""
+        let phoneNumber = "+992\(self.numberView.textField.text?.digits ?? "")"
         let comment = self.commentView.fieldView.text ?? ""
         let sum = self.sumView.textField.value ?? 0.0
         let balance = self.balanceView.selectedBalance

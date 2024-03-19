@@ -12,7 +12,8 @@ protocol AlertViewControllerDelegate: AnyObject {
     func didDismisAlert()
 }
 
-class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UITableViewDataSource, AlertViewControllerDelegate {
+class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UITableViewDataSource, AlertViewControllerDelegate, BioAuthViewControllerDelegate {
+
     
     let tableView: UITableView = {
         let view = UITableView(frame: .zero, style: .plain)
@@ -86,6 +87,10 @@ class ProfileSettingsViewController: BaseViewController, UITableViewDelegate, UI
     }
     
     func didDismisAlert() {
+        
+    }
+    
+    func didDismisAlert(accountInfo: AppStructs.AccountInfo) {
         self.tableView.reloadData()
     }
     

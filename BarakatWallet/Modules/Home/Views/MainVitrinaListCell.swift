@@ -143,6 +143,8 @@ class MainVitrinaListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
     }
     
     func configure(items: [AppStructs.Showcase]) {
+        self.titleView.text = "SHOWCASE".localized
+        self.allButton.setTitle("ALL".localized, for: .normal)
         self.emptyView.isHidden = !items.isEmpty
         self.showcases = items
         self.titleView.textColor = Theme.current.primaryTextColor

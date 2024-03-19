@@ -128,6 +128,13 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
         self.tableView.reloadData()
     }
     
+    override func languageChanged() {
+        super.languageChanged()
+        self.tableView.reloadData()
+        self.topBar.languageChanged()
+        self.topBar.statusView.configure(limits: self.viewModel.accountInfo.client.limit)
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         self.topBar.statusView.roundCorners(corners: [.bottomLeft, .topRight], radius: 12, thickness: 1.5, color: Theme.current.secondTintColor)

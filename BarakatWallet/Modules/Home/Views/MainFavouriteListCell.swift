@@ -154,6 +154,8 @@ class MainFavouriteListCell: UICollectionViewCell, UICollectionViewDelegate, UIC
     }
     
     func configure(items: [AppStructs.Favourite], viewModel: HomeViewModel) {
+        self.titleView.text = "FAVOURITE_SERVICES".localized
+        self.allButton.setTitle("ALL".localized, for: .normal)
         self.favorites = items
         self.viewModel = viewModel
         self.titleView.textColor = Theme.current.primaryTextColor
@@ -303,6 +305,7 @@ class MainFavouriteCell: UICollectionViewCell {
             }
             self.subTitleView.text = item.0.params.first ?? ""
         } else {
+            self.addLabelView.text = "ADD_FAV".localized
             self.addLabelView.isHidden = false
             self.addImageView.isHidden = false
             self.titleView.isHidden = true

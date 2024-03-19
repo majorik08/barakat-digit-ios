@@ -213,6 +213,7 @@ struct AppStructs {
         case transferToPhone = 101
         case transferToCard = 102
         case transferBetweenAccounts = 106
+        case transferFromForeign = 107
     }
     
     enum KeyboardViewType: Int {

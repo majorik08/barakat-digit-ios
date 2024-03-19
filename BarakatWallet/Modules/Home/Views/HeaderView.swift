@@ -125,6 +125,10 @@ class CustomSearchBar: UIView {
         self.isUserInteractionEnabled = true
     }
     
+    func languageChanged() {
+        self.searchField.attributedPlaceholder = NSAttributedString(string: "SEARCH".localized, attributes: [.foregroundColor: UIColor.white])
+    }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

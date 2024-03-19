@@ -97,8 +97,8 @@ class ColorOptionView: UIControl {
     }()
     let firstColorView: GradientImageView = {
         let view = GradientImageView(insets: .zero)
-        view.startColor = UIColor(red: 0.20, green: 0.24, blue: 0.92, alpha: 1.00)
-        view.endColor = UIColor(red: 0.20, green: 0.70, blue: 0.92, alpha: 1.00)
+        view.startColor = Constants.cardColors[0].start
+        view.endColor = Constants.cardColors[0].end
         view.circleImage = false
         view.imageView.contentMode = .scaleAspectFit
         view.imageView.tintColor = Theme.current.whiteColor
@@ -112,8 +112,8 @@ class ColorOptionView: UIControl {
     }()
     let secondColorView: GradientImageView = {
         let view = GradientImageView(insets: .zero)
-        view.startColor = UIColor(red: 0.20, green: 0.92, blue: 0.32, alpha: 1.00)
-        view.endColor = UIColor(red: 0.73, green: 0.92, blue: 0.20, alpha: 1.00)
+        view.startColor = Constants.cardColors[1].start
+        view.endColor = Constants.cardColors[1].end
         view.circleImage = false
         view.imageView.contentMode = .scaleAspectFit
         view.imageView.tintColor = Theme.current.whiteColor
@@ -126,8 +126,8 @@ class ColorOptionView: UIControl {
     }()
     let thirdColorView: GradientImageView = {
         let view = GradientImageView(insets: .zero)
-        view.startColor = UIColor(red: 0.92, green: 0.20, blue: 0.20, alpha: 1.00)
-        view.endColor = UIColor(red: 0.92, green: 0.59, blue: 0.20, alpha: 1.00)
+        view.startColor = Constants.cardColors[2].start
+        view.endColor = Constants.cardColors[2].start
         view.circleImage = false
         view.imageView.contentMode = .scaleAspectFit
         view.imageView.tintColor = Theme.current.whiteColor

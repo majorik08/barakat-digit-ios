@@ -78,6 +78,8 @@ class PaymentsCoordinator: Coordinator {
             self.navigateToTransferByCardView()
         case .transferBetweenAccounts:
             self.navigateToTransferAccounts(topupCreditCard: nil)
+        case .transferFromForeign:
+            self.navigateToTransferForeign()
         }
     }
     
@@ -110,5 +112,11 @@ class PaymentsCoordinator: Coordinator {
         let vc = ChooseTransferViewController(type: transfers ? .transfers : .payments, viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), paymentCreditCard: paymentCard)
         vc.coordinator = self
         self.nav.present(vc, animated: true)
+    }
+    
+    func navigateToTransferForeign() {
+        let transfer = TransferCoordinator(nav: self.nav)
+        transfer.navigateToTypePick()
+        self.children.append(transfer)
     }
 }

@@ -137,9 +137,9 @@ struct Constants {
     }
     
     static var cardColors: [(start: UIColor, end: UIColor)] = [
-        (start: UIColor(red: 0.20, green: 0.24, blue: 0.92, alpha: 1.00), end: UIColor(red: 0.20, green: 0.70, blue: 0.92, alpha: 1.00)),
-        (start: UIColor(red: 0.20, green: 0.92, blue: 0.32, alpha: 1.00), end: UIColor(red: 0.73, green: 0.92, blue: 0.20, alpha: 1.00)),
-        (start: UIColor(red: 0.92, green: 0.20, blue: 0.20, alpha: 1.00), end: UIColor(red: 0.92, green: 0.59, blue: 0.20, alpha: 1.00))
+        (start: UIColor(red: 0.11, green: 0.70, blue: 0.71, alpha: 1.00), end: UIColor(red: 0.11, green: 0.70, blue: 0.71, alpha: 1.00)),
+        (start: UIColor(red: 0.09, green: 0.12, blue: 0.15, alpha: 1.00), end: UIColor(red: 0.09, green: 0.12, blue: 0.15, alpha: 1.00)),
+        (start: UIColor(red: 0.03, green: 0.36, blue: 0.22, alpha: 1.00), end: UIColor(red: 0.03, green: 0.36, blue: 0.22, alpha: 1.00))
     ]
     
     static var DeviceId: String {

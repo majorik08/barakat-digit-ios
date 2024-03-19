@@ -62,7 +62,7 @@ class MainTopBarView: UIView {
             self.accountInfoView.leftAnchor.constraint(equalTo: self.leftAnchor),
             self.accountInfoView.topAnchor.constraint(equalTo: self.headerView.bottomAnchor, constant: 0),
             self.accountInfoView.rightAnchor.constraint(equalTo: self.rightAnchor),
-            self.accountInfoView.heightAnchor.constraint(equalToConstant: 92),
+            self.accountInfoView.heightAnchor.constraint(equalToConstant: 66),
             self.storiesView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 0),
             self.storiesView.topAnchor.constraint(equalTo: self.accountInfoView.bottomAnchor, constant: 0),
             self.storiesView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: 0),
@@ -88,6 +88,10 @@ class MainTopBarView: UIView {
         self.headerView.themeChanged(newTheme: newTheme)
         self.accountInfoView.themeChanged(newTheme: newTheme)
         self.storiesView.themeChanged(newTheme: newTheme)
+    }
+    
+    func languageChanged() {
+        self.headerView.searchView.languageChanged()
     }
     
     private func updateShadow() {

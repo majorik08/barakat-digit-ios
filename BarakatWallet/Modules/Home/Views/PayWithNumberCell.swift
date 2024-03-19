@@ -70,9 +70,9 @@ class PayWithNumberCell: UICollectionViewCell {
             self.labelView.topAnchor.constraint(equalTo: self.searchView.topAnchor, constant: 8),
             self.labelView.bottomAnchor.constraint(equalTo: self.searchView.bottomAnchor, constant: -8),
             self.iconView.leftAnchor.constraint(greaterThanOrEqualTo: self.labelView.rightAnchor, constant: -10),
-            self.iconView.topAnchor.constraint(equalTo: self.searchView.topAnchor, constant: 8),
+            self.iconView.topAnchor.constraint(equalTo: self.searchView.topAnchor, constant: 14),
             self.iconView.rightAnchor.constraint(equalTo: self.searchView.rightAnchor, constant: -8),
-            self.iconView.bottomAnchor.constraint(equalTo: self.searchView.bottomAnchor, constant: -8),
+            self.iconView.bottomAnchor.constraint(equalTo: self.searchView.bottomAnchor, constant: -14),
             self.iconView.widthAnchor.constraint(equalTo: self.iconView.heightAnchor, multiplier: 1)
         ])
     }
@@ -82,6 +82,7 @@ class PayWithNumberCell: UICollectionViewCell {
     }
     
     func configure() {
+        self.titleView.text = "PAY_WITH_NUMBER".localized
         self.titleView.textColor = Theme.current.primaryTextColor
         self.iconView.tintColor = Theme.current.borderColor
         self.labelView.textColor = Theme.current.secondaryTextColor

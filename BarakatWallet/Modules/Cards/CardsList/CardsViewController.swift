@@ -85,6 +85,13 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
         self.collectionView.reloadData()
     }
     
+    override func languageChanged() {
+        super.languageChanged()
+        self.navigationItem.title = "MY_CARDS".localized
+        self.viewModel.loadCardCategories()
+        self.collectionView.reloadData()
+    }
+    
     @objc func showHideCardTapped() {
         self.viewModel.showCardInfo = !self.viewModel.showCardInfo
         for cardItem in self.viewModel.userCards.enumerated() {

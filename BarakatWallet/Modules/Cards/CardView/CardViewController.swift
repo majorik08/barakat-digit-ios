@@ -192,11 +192,11 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
     
     func configure() {
         self.controlView.numberOfPages = self.viewModel.userCards.count
-        
-        if let index = self.viewModel.userCards.firstIndex(where: { $0.id == self.selectedCard.id }) {
-            self.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() +  0.5) {
+            if let index = self.viewModel.userCards.firstIndex(where: { $0.id == self.selectedCard.id }) {
+                self.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: true)
+            }
         }
-        
         self.buttonsStackView.addArrangedSubview(self.getActions(action: .pay))
         self.buttonsStackView.addArrangedSubview(self.getActions(action: .topup))
         self.buttonsStackView.addArrangedSubview(self.getActions(action: .transfer))

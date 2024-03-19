@@ -45,9 +45,114 @@ struct AppMethods {
                 let key: String
             }
             public struct Result: Codable {
+                let walletExist: Bool
+                let key: String
+            }
+        }
+        
+        struct SetPin: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "registration/pin"
+            public static var result: Result.Type = Result.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let pin: String
+                let key: String
+            }
+            public struct Result: Codable {
                 let code: Int
                 let expire: String
                 let token: String
+            }
+        }
+        
+        struct Resend: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "registration/resend"
+            public static var result: Result.Type = Result.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let key: String
+            }
+            public struct Result: Codable {
+                let key: String
+            }
+        }
+        
+        struct SignIn: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "sign"
+            public static var result: Result.Type = Result.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let pin: String
+            }
+            public struct Result: Codable {
+                let smsSign: Bool
+            }
+        }
+        
+        struct SignConfirm: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "sign/confirm"
+            public static var result: Result.Type = Result.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let token: String
+            }
+            public struct Result: Codable {
+                let message: String
+            }
+        }
+        
+        struct ResetConfirm: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "reset/confirm"
+            public static var result: Result.Type = Result.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let token: String
+                let key: String
+            }
+            public struct Result: Codable {
+                let message: String
+            }
+        }
+        
+        struct ResetPin: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "reset/pin"
+            public static var result: Result.Type = Result.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let key: String
+            }
+            public struct Result: Codable {
+                let wallet: String
             }
         }
         
@@ -611,7 +716,7 @@ struct AppMethods {
         }
         struct GetHelp: EndpointRequestType {
             static var method: HTTPMethod = .get
-            var url: String = "/clients/help"
+            var url: String = "simple/clients/help"
             public static var result: GetHelpResult.Type = GetHelpResult.self
             public var params: EmptyParams
             

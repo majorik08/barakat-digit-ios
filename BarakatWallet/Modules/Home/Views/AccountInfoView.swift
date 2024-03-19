@@ -10,19 +10,11 @@ import UIKit
 
 class AccountInfoView: UIView {
    
-    let balanceHintLabel: UILabel = {
-        let view = UILabel(frame: .zero)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 20)
-        view.textColor = Theme.current.whiteColor
-        view.text = "WALLET_BALANCE_HINT".localized
-        return view
-    }()
     let balanceLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 25)
-        view.textColor = Theme.current.whiteColor
+        view.textColor = .black
         view.text = "00.0 с."
         return view
     }()
@@ -30,7 +22,7 @@ class AccountInfoView: UIView {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.font = UIFont.regular(size: 16)
-        view.textColor = Theme.current.whiteColor
+        view.textColor = .black
         view.text = "00.0 с. bonus"
         return view
     }()
@@ -66,40 +58,34 @@ class AccountInfoView: UIView {
         self.translatesAutoresizingMaskIntoConstraints = false
         self.clipsToBounds = true
         self.backgroundColor = .clear
-        self.addSubview(self.balanceHintLabel)
         self.addSubview(self.balanceLabel)
         self.addSubview(self.bonusLabel)
         self.addSubview(self.plusButton)
         self.addSubview(self.hideButton)
         NSLayoutConstraint.activate([
-            self.balanceHintLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
-            self.balanceHintLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
-            self.balanceHintLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.balanceHintLabel.heightAnchor.constraint(equalToConstant: 20),
             self.balanceLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
-            self.balanceLabel.topAnchor.constraint(equalTo: self.balanceHintLabel.bottomAnchor, constant: 6),
+            self.balanceLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
+            self.balanceLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.balanceLabel.heightAnchor.constraint(equalToConstant: 24),
-            self.plusButton.leftAnchor.constraint(equalTo: self.balanceLabel.rightAnchor, constant: 10),
-            self.plusButton.topAnchor.constraint(equalTo: self.balanceHintLabel.bottomAnchor, constant: 4),
+            self.bonusLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
+            self.bonusLabel.topAnchor.constraint(equalTo: self.balanceLabel.bottomAnchor, constant: 6),
+            self.bonusLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
+            self.bonusLabel.heightAnchor.constraint(equalToConstant: 16),
+            self.plusButton.leftAnchor.constraint(equalTo: self.bonusLabel.rightAnchor, constant: 10),
+            self.plusButton.bottomAnchor.constraint(equalTo: self.bonusLabel.bottomAnchor, constant: 0),
             self.plusButton.heightAnchor.constraint(equalToConstant: 26),
             self.plusButton.widthAnchor.constraint(equalToConstant: 26),
             self.hideButton.leftAnchor.constraint(equalTo: self.plusButton.rightAnchor, constant: 10),
-            self.hideButton.topAnchor.constraint(equalTo: self.balanceHintLabel.bottomAnchor, constant: 4),
+            self.hideButton.bottomAnchor.constraint(equalTo: self.bonusLabel.bottomAnchor, constant: 0),
             self.hideButton.rightAnchor.constraint(lessThanOrEqualTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.hideButton.heightAnchor.constraint(equalToConstant: 26),
             self.hideButton.widthAnchor.constraint(equalToConstant: 26),
-            self.bonusLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
-            self.bonusLabel.topAnchor.constraint(equalTo: self.balanceLabel.bottomAnchor, constant: 6),
-            self.bonusLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.bonusLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
-            self.bonusLabel.heightAnchor.constraint(equalToConstant: 16),
         ])
     }
     
     func themeChanged(newTheme: Theme) {
-        self.balanceHintLabel.textColor = newTheme.whiteColor
-        self.balanceLabel.textColor = newTheme.whiteColor
-        self.bonusLabel.textColor = newTheme.whiteColor
+        //self.balanceLabel.textColor = newTheme.whiteColor
+        //self.bonusLabel.textColor = newTheme.whiteColor
         self.hideButton.tintColor = newTheme.whiteColor
         self.plusButton.tintColor = newTheme.whiteColor
     }

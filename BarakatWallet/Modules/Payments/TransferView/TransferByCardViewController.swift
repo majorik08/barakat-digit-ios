@@ -125,7 +125,7 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
         self.commentView.fieldView.addTarget(self, action: #selector(self.editingCheck), for: .editingChanged)
         self.nextButton.addTarget(self, action: #selector(self.nextTapped), for: .touchUpInside)
         self.sumView.configure(param: self.viewModel.sumParam, validate: false)
-        self.commentView.configure(param: self.viewModel.messageParam, validate: false)
+        self.commentView.configure(param: self.viewModel.messageParam, value: nil, validate: false)
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
     }
     

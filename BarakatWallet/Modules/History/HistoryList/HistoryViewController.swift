@@ -72,6 +72,13 @@ class HistoryViewController: BaseViewController, UITableViewDelegate, UITableVie
         self.viewModel.getHistory()
     }
     
+    override func languageChanged() {
+        super.languageChanged()
+        self.navigationItem.title = "HISTORY".localized
+        self.filterView.collectionView.reloadData()
+        self.tableView.reloadData()
+    }
+    
     override func themeChanged(newTheme: Theme) {
         super.themeChanged(newTheme: newTheme)
         self.view.backgroundColor = Theme.current.plainTableBackColor
