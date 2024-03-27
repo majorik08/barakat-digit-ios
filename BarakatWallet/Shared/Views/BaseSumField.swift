@@ -112,9 +112,12 @@ class BaseSumFiled: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, validate: Bool) {
+    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, value: String?) {
         self.param = param
         self.tag = param.id
         self.topLabel.text = param.name
+        if let v = value, let _ = Double(v) {
+            self.textField.textField.text = value
+        }
     }
 }

@@ -120,7 +120,7 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
         self.nextButton.addTarget(self, action: #selector(self.makePayment), for: .touchUpInside)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-        self.sumFieldView.configure(param: self.viewModel.sumParam, validate: false)
+        self.sumFieldView.configure(param: self.viewModel.sumParam, value: nil)
         self.topupBalanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
         self.payBalanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
     }

@@ -12,9 +12,12 @@ protocol CardService: Service {
     var accountInfo: AppStructs.AccountInfo { get }
     
     func getUserCards() -> Single<[AppStructs.CreditDebitCard]>
-    func updateUserCard(PINOnPay: Bool?, block: Bool?, colorID: Int?, id: Int, internetPay: Bool?, newPin: String?) -> Single<AppMethods.Card.UpdateUserCard.Result>
+    func updateUserCard(PINOnPay: Bool?, block: Bool?, colorID: Int?, id: Int, internetPay: Bool?) -> Single<AppMethods.Card.UpdateUserCard.Result>
+    func updateUserCardPin(id: Int, newPin: String) -> Single<AppMethods.Card.UpdatePinUserCard.Result>
     func addUserCard(cardHolder: String, colorID: Int, cvv: String, pan: String, validMonth: String, validYear: String) -> Single<AppMethods.Card.AddUserCard.Result>
+    func addUserCardVerify(id: Int, code: String) -> Single<AppMethods.Card.AddUserCardVerify.Result>
     func removeUserCard(id: Int) -> Single<AppMethods.Card.DeleteUserCard.Result>
+    func getUserCardBalance(id: Int) -> Single<AppStructs.CreditDebitCard>
     
     func getCardCategories() -> Single<[AppStructs.CreditDebitCardCategory]>
     func getRegions() -> Single<[AppStructs.Region]>
@@ -46,7 +49,7 @@ final class CardServiceImpl: CardService {
         }
     }
     
-    func updateUserCard(PINOnPay: Bool?, block: Bool?, colorID: Int?, id: Int, internetPay: Bool?, newPin: String?) -> Single<AppMethods.Card.UpdateUserCard.Result> {
+    func updateUserCard(PINOnPay: Bool?, block: Bool?, colorID: Int?, id: Int, internetPay: Bool?) -> Single<AppMethods.Card.UpdateUserCard.Result> {
         return Single<AppMethods.Card.UpdateUserCard.Result>.create { single in
             APIManager.instance.request(.init(AppMethods.Card.UpdateUserCard(.init(PINOnPay: PINOnPay, block: block, colorID: colorID, id: id, internetPay: internetPay))), auth: .auth, timeOut: 20) { response in
                 switch response.result {
@@ -64,9 +67,63 @@ final class CardServiceImpl: CardService {
         }
     }
     
+    func updateUserCardPin(id: Int, newPin: String) -> Single<AppMethods.Card.UpdatePinUserCard.Result>  {
+        return Single<AppMethods.Card.UpdatePinUserCard.Result>.create { single in
+            APIManager.instance.request(.init(AppMethods.Card.UpdatePinUserCard.init(.init(PINCode: newPin, cardID: id))), auth: .auth, timeOut: 20) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
+    func getUserCardBalance(id: Int) -> Single<AppStructs.CreditDebitCard> {
+        return Single<AppStructs.CreditDebitCard>.create { single in
+            APIManager.instance.request(.init(AppMethods.Card.GetUserCardsBalance(.init(id: id))), auth: .auth, timeOut: 20) { response in
+                switch response.result {
+                case .success(let result):
+                    if let index = self.accountInfo.cards.firstIndex(where: { $0.id == id }) {
+                        self.accountInfo.cards[index] = result
+                        self.accountInfo.didUpdateCards.onNext(())
+                    }
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
     func addUserCard(cardHolder: String, colorID: Int, cvv: String, pan: String, validMonth: String, validYear: String) -> Single<AppMethods.Card.AddUserCard.Result> {
         return Single<AppMethods.Card.AddUserCard.Result>.create { single in
             APIManager.instance.request(.init(AppMethods.Card.AddUserCard(.init(cardHolder: cardHolder, colorID: colorID, cvv: cvv, pan: pan, validMonth: validMonth, validYear: validYear))), auth: .auth, timeOut: 20) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }.flatMap { result in
+            if result.isVerify {
+                return Single.just(result)
+            } else {
+                return self.getUserCards().flatMap { _ in
+                    return Single.just(result)
+                }
+            }
+        }
+    }
+    
+    func addUserCardVerify(id: Int, code: String) -> Single<AppMethods.Card.AddUserCardVerify.Result> {
+        return Single<AppMethods.Card.AddUserCardVerify.Result>.create { single in
+            APIManager.instance.request(.init(AppMethods.Card.AddUserCardVerify(.init(cardID: id, verifyCode: code))), auth: .auth, timeOut: 20) { response in
                 switch response.result {
                 case .success(let result):
                     single(.success(result))

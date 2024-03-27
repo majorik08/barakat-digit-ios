@@ -160,6 +160,7 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
     }()
     weak var delegate: PaymentFieldDelegate?
     var param: AppStructs.PaymentGroup.ServiceItem.Params? = nil
+    var getInfo: Bool = false
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -197,7 +198,8 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, value: String?, validate: Bool) {
+    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, value: String?, validate: Bool, getInfo: Bool) {
+        self.getInfo = getInfo
         self.param = param
 //        let coms = param.prefix.split(separator: ",")
 //        if coms.count == 1 {
@@ -232,10 +234,11 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
             self.bottomLabel.text = nil
             self.bottomLabel.textColor = .systemRed
             self.fieldView.delegate = self
-            self.fieldView.addTarget(self, action: #selector(self.reformatAsNeeded(textField:)), for: .editingDidEnd)
+            self.fieldView.addTarget(self, action: #selector(self.reformatAsNeeded(textField:)), for: .editingChanged)
         }
         if let value = value {
             self.fieldView.text = value
+            self.fieldView.sendActions(for: .editingChanged)
         }
     }
     
@@ -254,6 +257,9 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
         }
         if self.regexCheck(pattern: param.mask, text: value) {
             self.bottomLabel.text = nil
+            if self.getInfo {
+                self.delegate?.getServiceAccountInfo(account: "\(param.prefix)\(value)")
+            }
         } else {
             self.bottomLabel.text = "NUMBER_MUST_START_WITH".localizedFormat(arguments: param.prefix)
         }

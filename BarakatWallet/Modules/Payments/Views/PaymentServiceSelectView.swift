@@ -263,7 +263,7 @@ class PaymentServiceSelectCell: UICollectionViewCell {
         self.titleView.textColor = Theme.current.primaryTextColor
         self.titleView.textColor = Theme.current.whiteColor
         self.titleView.text = service.service.name
-        self.subTitleView.text = service.accountInfo
+        self.subTitleView.text = service.accountInfo.info
         self.rootView.backgroundColor = service.color
     }
 }

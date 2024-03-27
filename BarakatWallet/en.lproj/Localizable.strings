@@ -290,3 +290,4 @@
 "FOR_FULL_ACCESS_JOIN" = "For full access, log into the app using your phone number.";
 "CARD_NUMBER" = "Card number";
 "PASSCODE_GEN" = "Create a PIN code";
+"REMOVE_CARD_INFO" = "";

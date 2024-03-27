@@ -155,7 +155,7 @@ class IndentifyMainViewController: BaseViewController {
     
     @objc func navigateToVerify() {
         switch self.viewModel.accountInfo.client.limit.identifyed {
-        case .noIdentified, .onlineIdentified:
+        case .noIdentified:
             if self.viewModel.accountInfo.client.limit.id == self.limit.id {
                 self.showProgressView()
                 self.viewModel.service.getLimits().subscribe { [weak self] result in
@@ -178,6 +178,22 @@ class IndentifyMainViewController: BaseViewController {
                 } else {
                     self.coordinator?.navigateToVerify()
                 }
+            }
+        case .onlineIdentified:
+            if self.viewModel.accountInfo.client.limit.id == self.limit.id {
+                self.showProgressView()
+                self.viewModel.service.getLimits().subscribe { [weak self] result in
+                    guard let self = self else { return }
+                    self.hideProgressView()
+                    guard let limit = result.first(where: { $0.id == self.viewModel.accountInfo.client.limit.id + 1 }) else { return }
+                    self.coordinator?.navigateToStatusView(identify: self.identify, limit: limit)
+                } onFailure: { [weak self] _ in
+                    self?.hideProgressView()
+                    self?.showServerErrorAlert()
+                }.disposed(by: self.viewModel.disposeBag)
+            } else {
+                guard let number = URL(string: "tel://" + Constants.SupportNumber) else { return }
+                UIApplication.shared.open(number, options: [:], completionHandler: nil)
             }
         case .identified:
             guard let number = URL(string: "tel://" + Constants.SupportNumber) else { return }

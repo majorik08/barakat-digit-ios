@@ -9,8 +9,8 @@ import Foundation
 import UIKit
 import RxSwift
 
-class CardAddViewController: BaseViewController, UITextFieldDelegate {
-    
+class CardAddViewController: BaseViewController, UITextFieldDelegate, VerifyCodeViewControllerDelegate {
+
     private let scrollView: UIScrollView = {
         let view = UIScrollView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -187,6 +187,8 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        self.navigationController?.navigationBar.isHidden = false
+        self.setStatusBarStyle(dark: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
@@ -208,10 +210,15 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
                                                    cvv: self.cardCvvField.textField.text ?? "", pan: self.cardNumerField.textField.text?.digits ?? "",
                                                    validMonth: monthString, validYear: yearString)
                 .observe(on: MainScheduler.instance)
-                .subscribe { [weak self] _ in
+                .subscribe { [weak self] result in
                     guard let self = self else { return }
-                    self.successProgress(text: "ADDED".localized)
-                    self.coordinator?.navigateBack()
+                    if result.isVerify {
+                        self.hideProgressView()
+                        self.coordinator?.navigateToConfirm(phoneNumber: self.viewModel.accountInfo.client.wallet, key: String(result.id), delegate: self)
+                    } else {
+                        self.successProgress(text: "ADDED".localized)
+                        self.coordinator?.navigateBack()
+                    }
                 } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
@@ -220,6 +227,27 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
         } else {
             //error
         }
+    }
+    
+    func verify(code: String, key: String, wallet: String) {
+        guard let id = Int(key) else { return }
+        self.showProgressView()
+        self.viewModel.cardService.addUserCardVerify(id: id, code: code)
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] result in
+                guard let self = self else { return }
+                self.successProgress(text: "ADDED".localized)
+                self.coordinator?.navigateBack()
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.showServerErrorAlert()
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func resendCode(key: String, completion: @escaping (String) -> Void) {
+        self.coordinator?.navigateBack()
+        self.addCard()
     }
     
     @objc func optionTapped(_ sender: ColorOptionView) {
@@ -265,14 +293,14 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate {
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if self.checkFields() {
-            view.endEditing(true)
+            self.view.endEditing(true)
         }
         return false
     }
     
     @objc func hideKeyView() {
         if self.checkFields() {
-            view.endEditing(true)
+            self.view.endEditing(true)
         }
     }
     

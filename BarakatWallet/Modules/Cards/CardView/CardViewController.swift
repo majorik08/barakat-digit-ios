@@ -79,7 +79,6 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
         view.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         return view
     }()
-    
     let viewModel: CardsViewModel
     var selectedCard: AppStructs.CreditDebitCard
     var selectedColor: (start: UIColor, end: UIColor)? = nil
@@ -142,7 +141,11 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
         self.controlView.drawer = ExtendedDotDrawer(numberOfPages: 1, space: 8, indicatorColor: Theme.current.tintColor, dotsColor: Theme.current.secondTintColor, isBordered: false, borderWidth: 0.0, indicatorBorderColor: .clear, indicatorBorderWidth: 0.0)
-        self.configure()
+        self.buttonsStackView.addArrangedSubview(self.getActions(action: .pay))
+        self.buttonsStackView.addArrangedSubview(self.getActions(action: .topup))
+        self.buttonsStackView.addArrangedSubview(self.getActions(action: .transfer))
+        self.buttonsStackView.addArrangedSubview(self.getActions(action: .history))
+        self.configure(scroll: true)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -184,29 +187,41 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
         let index = scrollView.contentOffset.x / witdh
         let roundedIndex = index.rounded(.up)
         if self.controlView.numberOfPages > Int(roundedIndex) {
+            self.selectedCard = self.viewModel.userCards[Int(roundedIndex)]
+            self.configure(scroll: false)
             self.controlView.setPage(Int(roundedIndex))
         } else {
+            if let last = self.viewModel.userCards.last {
+                self.selectedCard = last
+                self.configure(scroll: false)
+            }
             self.controlView.setPage(self.controlView.numberOfPages - 1)
         }
     }
     
-    func configure() {
+    func configure(scroll: Bool) {
         self.controlView.numberOfPages = self.viewModel.userCards.count
-        DispatchQueue.main.asyncAfter(deadline: .now() +  0.5) {
-            if let index = self.viewModel.userCards.firstIndex(where: { $0.id == self.selectedCard.id }) {
+        DispatchQueue.main.asyncAfter(deadline: .now() +  0.3) {
+            if let index = self.viewModel.userCards.firstIndex(where: { $0.id == self.selectedCard.id }), scroll {
                 self.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: true)
             }
         }
-        self.buttonsStackView.addArrangedSubview(self.getActions(action: .pay))
-        self.buttonsStackView.addArrangedSubview(self.getActions(action: .topup))
-        self.buttonsStackView.addArrangedSubview(self.getActions(action: .transfer))
-        self.buttonsStackView.addArrangedSubview(self.getActions(action: .history))
-        
+        self.actionsStackView.arrangedSubviews.forEach { v in
+            v.removeFromSuperview()
+        }
         self.actionsStackView.addArrangedSubview(self.getOption(option: .title))
-        self.actionsStackView.addArrangedSubview(self.getOption(option: .payPin))
-        self.actionsStackView.addArrangedSubview(self.getOption(option: .payInternet))
-        self.actionsStackView.addArrangedSubview(self.getOption(option: .block))
-        self.actionsStackView.addArrangedSubview(self.getOption(option: .changePin))
+        for action in self.selectedCard.actions {
+            switch action {
+            case .PINOnPay:
+                self.actionsStackView.addArrangedSubview(self.getOption(option: .payPin))
+            case .internetPay:
+                self.actionsStackView.addArrangedSubview(self.getOption(option: .payInternet))
+            case .block:
+                self.actionsStackView.addArrangedSubview(self.getOption(option: .block))
+            case .pin:
+                self.actionsStackView.addArrangedSubview(self.getOption(option: .changePin))
+            }
+        }
         self.actionsStackView.addArrangedSubview(self.getOption(option: .remove))
         self.actionsStackView.addArrangedSubview(self.getOption(option: .changeColor))
     }
@@ -348,25 +363,25 @@ class CardViewController: BaseViewController, UICollectionViewDelegate, UICollec
             self.coordinator?.navigateToPinChange(card: self.selectedCard)
         case .payPin:
             guard let switchView = sender as? SwitchOptionView else { return }
-            self.makeOp(PINOnPay: switchView.switchView.isOn, block: nil, colorID: nil, internetPay: nil, newPin: nil, changeView: switchView.switchView)
+            self.makeOp(PINOnPay: switchView.switchView.isOn, block: self.selectedCard.block, colorID: self.selectedCard.colorID, internetPay: self.selectedCard.internetPay, changeView: switchView.switchView)
         case .payInternet:
             guard let switchView = sender as? SwitchOptionView else { return }
-            self.makeOp(PINOnPay: nil, block: nil, colorID: nil, internetPay: switchView.switchView.isOn, newPin: nil, changeView: switchView.switchView)
+            self.makeOp(PINOnPay: self.selectedCard.PINOnPay, block: self.selectedCard.block, colorID: self.selectedCard.colorID, internetPay: switchView.switchView.isOn, changeView: switchView.switchView)
         case .block:
             guard let switchView = sender as? SwitchOptionView else { return }
-            self.makeOp(PINOnPay: nil, block: switchView.switchView.isOn, colorID: nil, internetPay: nil, newPin: nil, changeView: switchView.switchView)
+            self.makeOp(PINOnPay: self.selectedCard.PINOnPay, block: switchView.switchView.isOn, colorID: self.selectedCard.colorID, internetPay: self.selectedCard.internetPay, changeView: switchView.switchView)
         case .changeColor:
             guard let view = sender as? ColorOptionView else { return }
             let color = Constants.cardColors[view.selectedColor]
             self.selectedColor = color
             self.collectionView.reloadData()
-            self.makeOp(PINOnPay: nil, block: nil, colorID: view.selectedColor + 1, internetPay: nil, newPin: nil, changeView: nil)
+            self.makeOp(PINOnPay: self.selectedCard.PINOnPay, block: self.selectedCard.block, colorID: view.selectedColor + 1, internetPay: self.selectedCard.internetPay, changeView: nil)
         }
     }
     
-    private func makeOp(PINOnPay: Bool?, block: Bool?, colorID: Int?, internetPay: Bool?, newPin: String?, changeView: UISwitch?) {
+    private func makeOp(PINOnPay: Bool, block: Bool, colorID: Int, internetPay: Bool, changeView: UISwitch?) {
         self.showProgressView()
-        self.viewModel.cardService.updateUserCard(PINOnPay: PINOnPay, block: block, colorID: colorID, id: self.selectedCard.id, internetPay: internetPay, newPin: newPin)
+        self.viewModel.cardService.updateUserCard(PINOnPay: PINOnPay, block: block, colorID: colorID, id: self.selectedCard.id, internetPay: internetPay)
             .observe(on: MainScheduler.instance)
             .subscribe { [weak self] _ in
                 guard let self = self else { return }

@@ -450,7 +450,7 @@ struct AppMethods {
                 let account: String
             }
             public struct GetNumberInfoResult: Codable {
-                let accountInfo: String
+                let accountInfo: AppMethods.Payments.GetNumberInfo.GetNumberInfoResult.Account
                 let service: AppStructs.PaymentGroup.ServiceItem
             }
         }
@@ -590,6 +590,7 @@ struct AppMethods {
             }
             public struct GetAccountResult: Codable {
                 let info: String
+                let available: Bool
             }
         }
         struct GetNumberInfo: EndpointRequestType {
@@ -606,8 +607,13 @@ struct AppMethods {
                 let account: String
             }
             public struct GetNumberInfoResult: Codable {
-                let accountInfo: String
+                let accountInfo: Account
                 let service: AppStructs.PaymentGroup.ServiceItem
+                
+                public struct Account: Codable {
+                    let info: String
+                    let available: Bool
+                }
             }
         }
         struct QrCheck: EndpointRequestType {
@@ -880,10 +886,24 @@ struct AppMethods {
                 let internetPay: Bool?
             }
         }
+        struct UpdatePinUserCard: EndpointRequestType {
+            static var method: HTTPMethod = .put
+            var url: String = "cards/card/pin"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let PINCode: String
+                let cardID: Int
+            }
+        }
         struct AddUserCard: EndpointRequestType {
             static var method: HTTPMethod = .post
             var url: String = "cards/card"
-            public static var result: EmptyParams.Type = EmptyParams.self
+            public static var result: AddCardResult.Type = AddCardResult.self
             public var params: Params
             
             public init(_ params: Params) {
@@ -896,6 +916,24 @@ struct AppMethods {
                 let pan: String
                 let validMonth: String
                 let validYear: String
+            }
+            public struct AddCardResult: Codable {
+                let id: Int
+                let isVerify: Bool
+            }
+        }
+        struct AddUserCardVerify: EndpointRequestType {
+            static var method: HTTPMethod = .post
+            var url: String = "cards/card/verify"
+            public static var result: EmptyParams.Type = EmptyParams.self
+            public var params: Params
+            
+            public init(_ params: Params) {
+                self.params = params
+            }
+            public struct Params: Codable {
+                let cardID: Int
+                let verifyCode: String
             }
         }
         struct DeleteUserCard: EndpointRequestType {

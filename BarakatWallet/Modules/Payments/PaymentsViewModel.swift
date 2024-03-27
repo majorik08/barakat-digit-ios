@@ -19,7 +19,7 @@ class PaymentsViewModel {
     let didLoadPayments = PublishSubject<Void>()
     let didAddFavorite = PublishSubject<Void>()
     
-    let didLoadServiceInfo = PublishSubject<String>()
+    let didLoadServiceInfo = PublishSubject<(String, Bool)>()
     
     let didLoadPaymentsError = PublishSubject<String>()
     let didAddFavoriteError = PublishSubject<String>()
@@ -82,7 +82,7 @@ class PaymentsViewModel {
         self.service.loadServiceInfo(service: service, account: account)
             .observe(on: MainScheduler.instance)
             .subscribe { result in
-                self.didLoadServiceInfo.onNext(result)
+                self.didLoadServiceInfo.onNext((result.info, result.available))
         } onFailure: { error in
             if let error = error as? NetworkError {
                 self.didLoadPaymentsError.onNext((error.message ?? error.error) ?? error.localizedDescription)
@@ -106,12 +106,13 @@ class PaymentsViewModel {
     }
     
     struct NumberServiceInfo {
-        let accountInfo: String
+        let accountInfo: AppMethods.Payments.GetNumberInfo.GetNumberInfoResult.Account
         let service: AppStructs.PaymentGroup.ServiceItem
         let color: UIColor
     }
     
     private func loadColor(imagePath: String) -> Single<UIColor> {
+        guard !imagePath.isEmpty else { return Single.just(Theme.current.tintColor) }
         return Single<UIColor>.create { obs in
             APIManager.instance.loadImage(into: nil, filePath: imagePath) { result in
                 if let r = result {

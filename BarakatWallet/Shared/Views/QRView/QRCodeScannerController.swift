@@ -151,7 +151,7 @@ public class QRCodeScannerController: UIViewController, UIImagePickerControllerD
         if qrScannerConfiguration.readQRFromPhotos {
             addPhotoPickerButton(frame: CGRect(origin: CGPoint(x: self.view.frame.midX - width/2,
                                                                y: roundViewFrame.origin.y + width + 30),
-                                               size: CGSize(width: self.view.frame.size.width/2.2, height: 36)))
+                                               size: CGSize(width: self.view.frame.size.width/2, height: 36)))
         }
         
     }
@@ -429,13 +429,14 @@ extension QRCodeScannerController {
     private func addHintTextLayer(maskLayer: CAShapeLayer) {
         let hintTextLayer = CATextLayer()
         hintTextLayer.fontSize = 18.0
+        hintTextLayer.isWrapped = true
         hintTextLayer.string = self.qrScannerConfiguration.hint
         hintTextLayer.alignmentMode = CATextLayerAlignmentMode.center
         hintTextLayer.contentsScale = UIScreen.main.scale
         hintTextLayer.frame = CGRect(x: spaceFactor,
                                      y: self.view.frame.midY - self.view.frame.size.height/4 - 62,
                                      width: view.frame.size.width - (2.0 * spaceFactor),
-                                     height: 22)
+                                     height: 44)
         hintTextLayer.foregroundColor = UIColor.white.withAlphaComponent(0.7).cgColor
         view.layer.insertSublayer(hintTextLayer, above: maskLayer)
     }

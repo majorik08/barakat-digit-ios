@@ -200,7 +200,7 @@ class CardPinViewController: BaseViewController, KeyPadViewDelegate {
         case .second(let new):
             if new == text {
                 self.showProgressView()
-                self.viewModel.cardService.updateUserCard(PINOnPay: nil, block: nil, colorID: nil, id: self.card.id, internetPay: nil, newPin: new)
+                self.viewModel.cardService.updateUserCardPin(id: self.card.id, newPin: new)
                     .observe(on: MainScheduler.instance)
                     .subscribe { [weak self] _ in
                         guard let self = self else { return }

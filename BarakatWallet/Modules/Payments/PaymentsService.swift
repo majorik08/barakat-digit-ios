@@ -17,7 +17,7 @@ protocol PaymentsService: Service {
     func removeFavorite(id: Int) -> RxSwift.Single<Bool>
     
     func qrCheck(qr: String) -> Single<AppMethods.Payments.QrCheck.CheckResult>
-    func loadServiceInfo(service: String, account: String) -> Single<String>
+    func loadServiceInfo(service: String, account: String) -> Single<AppMethods.Payments.GetAccountInfo.GetAccountResult>
     func loadNumberInfo(number: String) -> Single<[AppMethods.Payments.GetNumberInfo.GetNumberInfoResult]>
     func verifyPayment(account: String, accountType: AppStructs.AccountType, amount: Double, comment: String, params: [String], serviceID: Int) -> Single<AppMethods.Payments.TransactionVerify.VerifyResult>
     func commitPayment(tranID: String, code: String, key: String) -> Single<AppMethods.Payments.TransactionCommit.Result>
@@ -74,12 +74,12 @@ final class PaymentsServiceImpl: PaymentsService {
         }
     }
     
-    func loadServiceInfo(service: String, account: String) -> RxSwift.Single<String> {
-        return Single<String>.create { single in
+    func loadServiceInfo(service: String, account: String) -> RxSwift.Single<AppMethods.Payments.GetAccountInfo.GetAccountResult> {
+        return Single<AppMethods.Payments.GetAccountInfo.GetAccountResult>.create { single in
             APIManager.instance.request(.init(AppMethods.Payments.GetAccountInfo(.init(service: service, account: account))), auth: .auth, timeOut: 20) { response in
                 switch response.result {
                 case .success(let result):
-                    single(.success(result.info))
+                    single(.success(result))
                 case .failure(let error):
                     single(.failure(error))
                 }
@@ -202,8 +202,8 @@ final class PaymentsServiceMockImpl: PaymentsService {
         fatalError("")
     }
     
-    func loadServiceInfo(service: String, account: String) -> RxSwift.Single<String> {
-        return .just((""))
+    func loadServiceInfo(service: String, account: String) -> RxSwift.Single<AppMethods.Payments.GetAccountInfo.GetAccountResult> {
+        fatalError("")
     }
     
     func removeFavorite(id: Int) -> RxSwift.Single<Bool> {

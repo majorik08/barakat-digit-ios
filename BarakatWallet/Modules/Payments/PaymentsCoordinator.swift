@@ -66,7 +66,7 @@ class PaymentsCoordinator: Coordinator {
     
     func navigateToPaymentView(service: AppStructs.PaymentGroup.ServiceItem, merchant: AppStructs.Merchant?, favorite: AppStructs.Favourite?, addFavoriteMode: Bool, transferParam: String?) {
         guard let transferType = AppStructs.TransferType(rawValue: service.id) else {
-            let vc = PaymentViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), service: service, merchant: merchant, favorite: favorite, addFavoriteMode: addFavoriteMode)
+            let vc = PaymentViewController(viewModel: .init(service: self.paymentsService, historyService: self.historyService, accountInfo: self.accountInfo), service: service, serviceParam: transferParam, merchant: merchant, favorite: favorite, addFavoriteMode: addFavoriteMode)
             vc.coordinator = self
             self.nav.pushViewController(vc, animated: true)
             return

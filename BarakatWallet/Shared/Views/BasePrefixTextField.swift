@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-class BasePrefixTextField: UIView {
+class BasePrefixTextField: UIView, UITextFieldDelegate {
     
     let rootView: UIView = {
         let view = UIView(frame: .zero)
@@ -71,6 +71,10 @@ class BasePrefixTextField: UIView {
     }()
     let textField: UITextField
     
+    weak var delegate: PaymentFieldDelegate?
+    var param: AppStructs.PaymentGroup.ServiceItem.Params? = nil
+    var getInfo: Bool = false
+    
     init(textField: UITextField = UITextField(frame: .zero)) {
         self.textField = textField
         self.textField.translatesAutoresizingMaskIntoConstraints = false
@@ -119,5 +123,91 @@ class BasePrefixTextField: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    // struct Params: Codable {
+    //            let id: Int
+    //            let name: String
+    //            let coment: String
+    //            let keyboard: Int
+    //            let mask: String
+    //            let maxLen: Int
+    //            let minLen: Int
+    //            let param: Int
+    //            let prefix: String
+    // }
+    
+    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, value: String?, validate: Bool, getInfo: Bool) {
+        self.getInfo = getInfo
+        self.param = param
+        self.tag = param.id
+        self.topLabel.text = param.name
+        self.prefixLabel.text = param.prefix.components(separatedBy: ",").first ?? param.prefix
+        self.textField.attributedPlaceholder = NSAttributedString(string: param.coment, attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
+        let type = AppStructs.KeyboardViewType(rawValue: param.keyboard) ?? .alphabet
+        switch type {
+        case .nums:
+            self.textField.keyboardType = .decimalPad
+        case .alphabet:
+            self.textField.keyboardType = .alphabet
+        case .numsAndAlphabet:
+            self.textField.keyboardType = .default
+        case .phoneNumber:
+            self.textField.keyboardType = .phonePad
+        }
+        if validate {
+            self.bottomLabel.text = nil
+            self.bottomLabel.textColor = .systemRed
+            self.textField.delegate = self
+            self.textField.addTarget(self, action: #selector(self.reformatAsNeeded(textField:)), for: .editingChanged)
+        }
+        if let value = value {
+            self.textField.text = value
+            self.textField.sendActions(for: .editingChanged)
+        }
+    }
+    
+//    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+//        guard let tText = textField.text else { return true }
+//        guard let param = self.param else { return true }
+//        let newLength = tText.count + string.count - range.length
+//        return newLength <= param.maxLen
+//    }
+    
+    @objc func reformatAsNeeded(textField: UITextField) {
+        guard let param = self.param else { return }
+        var value = ""
+        if let text = textField.text {
+            value = text
+        }
+        if self.regexCheck(pattern: param.mask, text: value) {
+            self.bottomLabel.text = nil
+            if self.getInfo {
+                self.delegate?.getServiceAccountInfo(account: "\(param.prefix)\(value)")
+            }
+        } else {
+            self.bottomLabel.text = "NUMBER_MUST_START_WITH".localizedFormat(arguments: param.prefix)
+        }
+    }
+    
+    func snackView(viewToShake: UIView) {
+        let animation = CABasicAnimation(keyPath: "position")
+        animation.duration = 0.07
+        animation.repeatCount = 3
+        animation.autoreverses = true
+        animation.fromValue = NSValue(cgPoint: CGPoint(x: viewToShake.center.x - 10, y: viewToShake.center.y))
+        animation.toValue = NSValue(cgPoint: CGPoint(x: viewToShake.center.x + 10, y: viewToShake.center.y))
+        viewToShake.layer.add(animation, forKey: "position")
+    }
+    
+    func regexCheck(pattern: String, text: String) -> Bool {
+        do {
+            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+            let match = regex.firstMatch(in: text, options: [], range: NSMakeRange(0, text.count))
+            return match != nil
+        } catch {
+            debugPrint(error)
+            return false
+        }
     }
 }

@@ -151,8 +151,8 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         self.numberView.rightImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.contactPick)))
         self.numberView.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
         self.numberView.textField.delegate = self
-        self.sumView.configure(param: self.viewModel.sumParam, validate: false)
-        self.commentView.configure(param: self.viewModel.messageParam, value: nil, validate: false)
+        self.sumView.configure(param: self.viewModel.sumParam, value: nil)
+        self.commentView.configure(param: self.viewModel.messageParam, value: nil, validate: false, getInfo: false)
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
         let validNumber = self.numberView.textField.rx.text.orEmpty
         validNumber
@@ -353,7 +353,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         confirmView.receiverView.typeIcon.tintColor = Theme.current.tintColor
         confirmView.receiverView.typeIcon.layer.borderColor = Theme.current.tintColor.cgColor
         confirmView.receiverView.typeIcon.backgroundColor = Theme.current.plainTableBackColor
-        confirmView.receiverInfoView.infoLabel.text = service.accountInfo
+        confirmView.receiverInfoView.infoLabel.text = service.accountInfo.info
         confirmView.receiverCurrencyView.infoLabel.text = "TJS"
         confirmView.sumPlusView.infoLabel.text = result.admission.balanceText
         confirmView.sumMinusView.infoLabel.text = amount.balanceText

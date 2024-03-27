@@ -237,6 +237,7 @@ struct AppStructs {
         var internetPay: Bool
         var logo: String
         var pan: String
+        var settings: String
         var showBalance: Bool
         var validMonth: String
         var validYear: String
@@ -254,6 +255,18 @@ struct AppStructs {
             if let internetPay {
                 self.internetPay = internetPay
             }
+        }
+        
+        var actions: [Action] {
+            let items = self.settings.components(separatedBy: ",")
+            return items.compactMap({ Action(rawValue: $0) })
+        }
+        
+        enum Action: String {
+            case PINOnPay = "PINOnPay"
+            case internetPay = "internetPay"
+            case block = "block"
+            case pin = "pin"
         }
     }
     

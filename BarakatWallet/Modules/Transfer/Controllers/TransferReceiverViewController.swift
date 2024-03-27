@@ -302,7 +302,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         switch self.type {
         case .byNumber:
             guard let service = self.selectorView.selectedService else { return }
-            receiver = .number(number: "+992\(self.numberView.textField.text?.digits ?? "")", service: service.service, info: service.accountInfo)
+            receiver = .number(number: "+992\(self.numberView.textField.text?.digits ?? "")", service: service.service, info: service.accountInfo.info)
         case .byCard:
             receiver = .card(number: self.cardNumerField.textField.text ?? "", phoneNumber: "+992\(self.numberView.textField.text?.digits ?? "")")
         }

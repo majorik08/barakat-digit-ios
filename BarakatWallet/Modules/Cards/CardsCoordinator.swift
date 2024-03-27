@@ -24,6 +24,9 @@ class CardsCoordinator: Coordinator {
     var paymentsService: PaymentsService {
         return ENVIRONMENT.isMock ? PaymentsServiceMockImpl(accountInfo: self.accountInfo) : PaymentsServiceImpl(accountInfo: self.accountInfo)
     }
+    var authService: AccountService {
+        return ENVIRONMENT.isMock ? AccountServiceImpl() : AccountServiceImpl()
+    }
     
     init(nav: BaseNavigationController, accountInfo: AppStructs.AccountInfo) {
         self.accountInfo = accountInfo
@@ -76,6 +79,12 @@ class CardsCoordinator: Coordinator {
     func navigateToReleaseCardItem(cardItem: AppStructs.CreditDebitCardTypes) {
         let vc = CardReleaseViewInfoController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo), cardItem: cardItem)
         vc.coordinator = self
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToConfirm(phoneNumber: String, key: String, delegate: VerifyCodeViewControllerDelegate) {
+        let vc = VerifyCodeViewController(viewModel: .init(service: self.authService, phoneNumber: phoneNumber, key: key))
+        vc.delegate = delegate
         self.nav.pushViewController(vc, animated: true)
     }
     

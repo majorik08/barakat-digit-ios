@@ -61,6 +61,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     let addFavoriteMode: Bool
     let viewModel: PaymentsViewModel
     let service: AppStructs.PaymentGroup.ServiceItem
+    let serviceParam: String?
     let favorite: AppStructs.Favourite?
     let merchant: AppStructs.Merchant?
     weak var coordinator: PaymentsCoordinator? = nil
@@ -68,11 +69,12 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     var verifyResult: AppMethods.Payments.TransactionVerify.VerifyResult? = nil
     var verifyKey: String? = nil
     
-    init(viewModel: PaymentsViewModel, service: AppStructs.PaymentGroup.ServiceItem, merchant: AppStructs.Merchant?, favorite: AppStructs.Favourite?, addFavoriteMode: Bool) {
+    init(viewModel: PaymentsViewModel, service: AppStructs.PaymentGroup.ServiceItem, serviceParam: String?, merchant: AppStructs.Merchant?, favorite: AppStructs.Favourite?, addFavoriteMode: Bool) {
         self.viewModel = viewModel
         self.addFavoriteMode = addFavoriteMode
         self.favorite = favorite
         self.service = service
+        self.serviceParam = serviceParam
         self.merchant = merchant
         super.init(nibName: nil, bundle: nil)
         self.hidesBottomBarWhenPushed = true
@@ -157,7 +159,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
             self.coordinator?.navigateToRootViewController()
         }.disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLoadServiceInfo.subscribe { [weak self] info in
-            self?.addClientInfo(info: info)
+            self?.addClientInfo(info: info.0, available: info.1)
         }.disposed(by: self.viewModel.disposeBag)
         self.configure()
     }
@@ -206,21 +208,26 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
         let sorted = self.service.params.sorted(by: { $0.param < $1.param })
         for param in sorted.enumerated() {
-            let fieldView = PaymentFieldView(frame: .zero)
+            let fieldView = BasePrefixTextField(textField: UITextField(frame: .zero))
             fieldView.delegate = self
             var paramValue: String? = nil
             if let f = self.favorite, f.params.count > param.offset {
                 paramValue = f.params[param.offset]
+            } else if let s = self.serviceParam, param.offset == 0 {
+                paramValue = s.starts(with: "+992") ? s.replacingOccurrences(of: "+992", with: "") : s
             }
-            fieldView.configure(param: param.element, value: paramValue, validate: true)
+            fieldView.heightAnchor.constraint(equalToConstant: 64).isActive = true
+            fieldView.delegate = self
+            fieldView.configure(param: param.element, value: paramValue, validate: true, getInfo: param.offset == 0)
             self.stackView.addArrangedSubview(fieldView)
         }
-        let fieldView = PaymentFieldView(frame: .zero)
+        let fieldView = BaseSumFiled()
+        fieldView.heightAnchor.constraint(equalToConstant: 64).isActive = true
         var amountValue: String? = nil
         if let f = self.favorite, f.amount > 0 {
             amountValue = String(f.amount)
         }
-        fieldView.configure(param: self.viewModel.sumParam, value: amountValue, validate: false)
+        fieldView.configure(param: self.viewModel.sumParam, value: amountValue)
         self.stackView.addArrangedSubview(fieldView)
         
         if let a = self.favorite?.account, !a.isEmpty {
@@ -230,7 +237,8 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
         }
     }
     
-    func addClientInfo(info: String) {
+    func addClientInfo(info: String, available: Bool) {
+        self.nextButton.isEnabled = available
         guard !info.isEmpty else { return }
         if let v = self.stackView.arrangedSubviews.first(where: { $0 is PaymentServiceInfoView }) {
             v.removeFromSuperview()
@@ -241,8 +249,8 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     }
     
     private func getEnteredSum() -> Double? {
-        if let sumView = self.stackView.arrangedSubviews.first(where: { $0.tag == self.viewModel.sumParam.id }) as? PaymentFieldView {
-            return Double(sumView.fieldView.text ?? "0") ?? 0
+        if let sumView = self.stackView.arrangedSubviews.first(where: { $0.tag == self.viewModel.sumParam.id }) as? BaseSumFiled {
+            return sumView.textField.value
         }
         return nil
     }
@@ -250,8 +258,9 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     private func getParams() -> [String] {
         var params: [String] = []
         for item in self.stackView.arrangedSubviews {
-            guard let enterView = item as? PaymentFieldView, item.tag != self.viewModel.sumParam.id else { continue }
-            params.append(enterView.fieldView.text ?? "")
+            guard let enterView = item as? BasePrefixTextField, item.tag != self.viewModel.sumParam.id else { continue }
+            let value = enterView.param?.prefix ?? ""
+            params.append("\(value)\(enterView.textField.text ?? "")")
         }
         return params
     }
@@ -262,8 +271,8 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
         } else {
             var result = true
             for item in self.stackView.arrangedSubviews {
-                guard let enterView = item as? PaymentFieldView, item.tag != self.viewModel.sumParam.id, let param = enterView.param else { continue }
-                if !enterView.regexCheck(pattern: param.mask, text: enterView.fieldView.text ?? "") {
+                guard let enterView = item as? BasePrefixTextField, item.tag != self.viewModel.sumParam.id, let param = enterView.param else { continue }
+                if !enterView.regexCheck(pattern: param.mask, text: enterView.textField.text ?? "") {
                     result = false
                 }
             }
@@ -273,7 +282,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     
     func makePayemnt() {
         guard let selectedBalance = self.balanceView.selectedBalance else { return }
-        guard let sum = self.getEnteredSum(), self.verifyParams() else { return }
+        guard let sum = self.getEnteredSum(), sum < selectedBalance.balance ?? 0, self.verifyParams() else { return }
         let params = self.getParams()
         self.showProgressView()
         self.viewModel.service.verifyPayment(account: selectedBalance.account, accountType: selectedBalance.accountType, amount: sum, comment: "", params: params, serviceID: self.service.id)
