@@ -200,7 +200,7 @@ class CardReleaseViewInfoController: BaseViewController {
                 self.coordinator?.navigateToOrderCard(cardItem: self.cardItem, regions: regions)
             } onFailure: { [weak self] error in
                 self?.hideProgressView()
-                self?.showServerErrorAlert()
+                self?.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

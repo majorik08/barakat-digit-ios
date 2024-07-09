@@ -182,7 +182,13 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
                 visibleHeight = windowFrame.intersection(keyboardRect).height
             }
         }
-        self.nextButtonBottom.constant = -(visibleHeight - (self.tabBarController?.tabBar.frame.height ?? 0) + 6)
+        var tabHeight: CGFloat
+        if self.tabBarController?.tabBar.isHidden ?? true {
+            tabHeight = 20
+        } else {
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 0
+        }
+        self.nextButtonBottom.constant = -(visibleHeight - (tabHeight) + 6)
     }
      
     @objc func keyboardWillHide(_ notification: Notification) {
@@ -387,7 +393,7 @@ class TransferSumViewController: BaseViewController, UITabBarControllerDelegate,
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

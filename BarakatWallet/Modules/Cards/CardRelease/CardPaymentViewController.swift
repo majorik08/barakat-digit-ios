@@ -158,7 +158,7 @@ class CardPaymentViewController: BaseViewController, CardPaymentViewDelegate {
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

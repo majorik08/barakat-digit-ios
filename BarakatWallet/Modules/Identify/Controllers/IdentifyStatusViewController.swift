@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class IndentifyMainViewController: BaseViewController {
     
@@ -49,6 +50,7 @@ class IndentifyMainViewController: BaseViewController {
     }()
     let viewModel: IdentifyViewModel
     let identify: AppMethods.Client.IdentifyGet.IdentifyResult?
+    var help: AppMethods.App.GetHelp.GetHelpResult? = nil
     let limit: AppStructs.ClientInfo.Limit
     weak var coordinator: IdentifyCoordinator?
     
@@ -57,6 +59,7 @@ class IndentifyMainViewController: BaseViewController {
         self.identify = identify
         self.limit = limit
         super.init(nibName: nil, bundle: nil)
+        self.hidesBottomBarWhenPushed = true
     }
     
     required init?(coder: NSCoder) {
@@ -102,42 +105,6 @@ class IndentifyMainViewController: BaseViewController {
         self.setStatus()
     }
     
-    enum SocialNets: Int { case facebook = 1, instagram = 2, telegram = 3, linkedin = 4 }
-    
-    func getButton(type: SocialNets) -> BaseButtonView {
-        let button = BaseButtonView(frame: .zero)
-        button.circle = true
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.tintColor = Theme.current.whiteColor
-        button.widthAnchor.constraint(equalTo: button.heightAnchor, multiplier: 1).isActive = true
-        button.addTarget(self, action: #selector(self.socialTapped(_:)), for: .touchUpInside)
-        switch type {
-        case .facebook:
-            button.setImage(UIImage(name: .facebook_icon), for: .normal)
-        case .instagram:
-            button.setImage(UIImage(name: .instagram_icon), for: .normal)
-        case .telegram:
-            button.setImage(UIImage(name: .telegram_icon), for: .normal)
-        case .linkedin:
-            button.setImage(UIImage(name: .linkedin_icon), for: .normal)
-        }
-        return button
-    }
-    
-    @objc func socialTapped(_ sender: BaseButtonView) {
-        guard let type = SocialNets(rawValue: sender.tag) else { return }
-        switch type {
-        case .facebook:
-            UIApplication.shared.open(URL(string: Constants.FacebookUrl)!)
-        case .instagram:
-            UIApplication.shared.open(URL(string: Constants.InstagramUrl)!)
-        case .telegram:
-            UIApplication.shared.open(URL(string: Constants.TelegramUrl)!)
-        case .linkedin:
-            UIApplication.shared.open(URL(string: Constants.LinkedinUrl)!)
-        }
-    }
-    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.isHidden = false
@@ -163,9 +130,9 @@ class IndentifyMainViewController: BaseViewController {
                     self.hideProgressView()
                     guard let limit = result.first(where: { $0.id == self.viewModel.accountInfo.client.limit.id + 1 }) else { return }
                     self.coordinator?.navigateToStatusView(identify: self.identify, limit: limit)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     self?.hideProgressView()
-                    self?.showServerErrorAlert()
+                    self?.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
             } else {
                 if let result = self.identify {
@@ -187,16 +154,16 @@ class IndentifyMainViewController: BaseViewController {
                     self.hideProgressView()
                     guard let limit = result.first(where: { $0.id == self.viewModel.accountInfo.client.limit.id + 1 }) else { return }
                     self.coordinator?.navigateToStatusView(identify: self.identify, limit: limit)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     self?.hideProgressView()
-                    self?.showServerErrorAlert()
+                    self?.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
             } else {
-                guard let number = URL(string: "tel://" + Constants.SupportNumber) else { return }
+                guard let h = self.help?.callCenter, let number = URL(string: "tel://+" + h.digits) else { return }
                 UIApplication.shared.open(number, options: [:], completionHandler: nil)
             }
         case .identified:
-            guard let number = URL(string: "tel://" + Constants.SupportNumber) else { return }
+            guard let h = self.help?.callCenter, let number = URL(string: "tel://+" + h.digits) else { return }
             UIApplication.shared.open(number, options: [:], completionHandler: nil)
         }
     }
@@ -218,11 +185,7 @@ class IndentifyMainViewController: BaseViewController {
             self.statusView.topTitle.text = "IDENTIFIED".localized
             self.statusView.topTitle.textColor = Theme.current.tintColor
             self.nextButton.setTitle("MAKE_CALL".localized, for: .normal)
-            self.buttonsStackView.addArrangedSubview(self.getButton(type: .facebook))
-            self.buttonsStackView.addArrangedSubview(self.getButton(type: .facebook))
-            self.buttonsStackView.addArrangedSubview(self.getButton(type: .instagram))
-            self.buttonsStackView.addArrangedSubview(self.getButton(type: .telegram))
-            self.buttonsStackView.addArrangedSubview(self.getButton(type: .linkedin))
+            self.loadHelp()
         }
         self.statusView.topAvatar.tintColor = Theme.current.tintColor
         self.statusView.topLimitDetail.text = "\(self.limit.maxInWallet) сомони"
@@ -234,5 +197,44 @@ class IndentifyMainViewController: BaseViewController {
         self.statusView.cashItem.setStatus(active: self.limit.cashing)
         self.statusView.convertItem.setStatus(active: self.limit.convert)
         self.statusView.creditItem.setStatus(active: self.limit.creditControl)
+    }
+    
+    func loadHelp() {
+        self.showProgressView()
+        self.viewModel.service.getHelp()
+            .observe(on: MainScheduler.instance)
+            .subscribe { [weak self] item in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.help = item
+                self.setHelp(help: item)
+            } onFailure: { [weak self] error in
+                guard let self = self else { return }
+                self.hideProgressView()
+                self.showApiError(title: "ERROR".localized, error: error)
+            }.disposed(by: self.viewModel.disposeBag)
+    }
+    
+    func setHelp(help: AppMethods.App.GetHelp.GetHelpResult) {
+        for item in help.socials {
+            let btn = self.getButton(type: item)
+            self.buttonsStackView.addArrangedSubview(btn)
+        }
+    }
+    
+    func getButton(type: AppMethods.App.GetHelp.GetHelpResult.Socials) -> CircleImageView {
+        let button = CircleImageView(frame: .zero)
+        button.tag = type.id
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalTo: button.widthAnchor, multiplier: 1).isActive = true
+        button.isUserInteractionEnabled = true
+        button.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.socialTapped(_:))))
+        button.loadImage(filePath: Theme.current.dark ? type.darkLogo : type.logo)
+        return button
+    }
+    
+    @objc func socialTapped(_ sender: UITapGestureRecognizer) {
+        guard let soc = self.help?.socials, let item = soc.first(where: { $0.id == sender.view?.tag }), let url = URL(string: item.link) else { return }
+        UIApplication.shared.open(url)
     }
 }

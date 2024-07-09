@@ -17,7 +17,7 @@ final class LoginViewModel {
     let privacyCheck = BehaviorSubject(value: true)
     
     let didSendCode = PublishSubject<String>()
-    let didSendError = PublishSubject<String>()
+    let didSendError = PublishSubject<Error>()
     let isSendActive = PublishSubject<Bool>()
     
     init(service: AccountService) {
@@ -34,7 +34,7 @@ final class LoginViewModel {
             .subscribe { [weak self] key in
                 self?.didSendCode.onNext(key)
             } onFailure: { [weak self] error in
-                self?.didSendError.onNext(error.localizedDescription)
+                self?.didSendError.onNext(error)
             }.disposed(by: self.disposeBag)
     }
 }

@@ -67,11 +67,11 @@ class ProfilePrivacyViewController: BaseViewController, UITableViewDelegate, UIT
                 self.docs = item.documents
                 self.tableView.reloadData()
                 self.tableView.refreshControl?.endRefreshing()
-            } onFailure: { [weak self] _ in
+            } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.tableView.refreshControl?.endRefreshing()
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

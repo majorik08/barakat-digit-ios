@@ -1,16 +1,17 @@
 {
   "images" : [
     {
+      "filename" : "bonus.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Group 88@2x.png",
+      "filename" : "bonus@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Group 88@3x.png",
+      "filename" : "bonus@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
@@ -20,6 +21,6 @@
     "version" : 1
   },
   "properties" : {
-    "template-rendering-intent" : "original"
+    "template-rendering-intent" : "template"
   }
 }

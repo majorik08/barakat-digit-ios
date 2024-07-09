@@ -105,22 +105,22 @@ final class RootTabCoordinator: Coordinator {
         } onFailure: { [weak self] error in
             guard let self = self else { return }
             self.tabBar.hideProgressView()
-            self.tabBar.showErrorAlert(title: "QR", message: error.localizedDescription)
+            self.tabBar.showApiError(title: "QR", error: error)
         }.disposed(by: self.disposeBag)
     }
     
     private func navigateToQrPayment(merchant: AppStructs.Merchant?, serviceId: Int, transferParam: String?) {
         let service: AppStructs.PaymentGroup.ServiceItem
         if let merchant = merchant, merchant.id != nil {
-            service = AppStructs.PaymentGroup.ServiceItem(id: serviceId, name: "QR_OPERATION".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [])
+            service = AppStructs.PaymentGroup.ServiceItem(id: serviceId, name: "QR_OPERATION".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [], enable: 1)
         } else if let _ = transferParam {
             guard let findService = self.accountInfo.getService(serviceID: serviceId) else {
-                self.tabBar.showErrorAlert(title: "QR", message: "Service not found")
+                self.tabBar.showErrorAlert(title: "QR", message: "SERVICE_NOT_FOUND".localized)
                 return
             }
             service = findService
         } else {
-            self.tabBar.showErrorAlert(title: "QR", message: "Service not found")
+            self.tabBar.showErrorAlert(title: "QR", message: "SERVICE_NOT_FOUND".localized)
             return
         }
         guard let nav = self.tabBar.selectedViewController as? BaseNavigationController else { return }

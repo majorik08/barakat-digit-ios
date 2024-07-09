@@ -38,6 +38,9 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
     }()
     private let sumView: BaseSumFiled = {
         let view = BaseSumFiled()
+        view.bottomLabel.isHidden = true
+        view.bottomLabel.text = "NO_BALANCE_FOR_PAY".localized
+        view.bottomLabel.textColor = .systemRed
         return view
     }()
     private let commentView: PaymentFieldView = {
@@ -109,7 +112,7 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
             self.sumView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.sumView.topAnchor.constraint(equalTo: self.cardNumberView.bottomAnchor, constant: 20),
             self.sumView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.sumView.heightAnchor.constraint(equalToConstant: 64),
+            self.sumView.heightAnchor.constraint(equalToConstant: 82),
             self.commentView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.commentView.topAnchor.constraint(equalTo: self.sumView.bottomAnchor, constant: 10),
             self.commentView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
@@ -125,7 +128,7 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
         self.commentView.fieldView.addTarget(self, action: #selector(self.editingCheck), for: .editingChanged)
         self.nextButton.addTarget(self, action: #selector(self.nextTapped), for: .touchUpInside)
         self.sumView.configure(param: self.viewModel.sumParam, value: nil)
-        self.commentView.configure(param: self.viewModel.messageParam, value: nil, validate: false, getInfo: false)
+        self.commentView.configure(param: self.viewModel.messageParam, value: nil, getInfo: false)
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
     }
     
@@ -180,13 +183,20 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
             self.nextButton.isEnabled = false
             return false
         }
-        guard let _ = self.balanceView.selectedBalance else {
+        guard let balance = self.balanceView.selectedBalance else {
             self.nextButton.isEnabled = false
             return false
         }
         guard let sum = self.sumView.textField.value, sum > 0 else {
             self.nextButton.isEnabled = false
             return false
+        }
+        if let b = balance.balance, b < sum {
+            self.sumView.showHide(show: true)
+            self.nextButton.isEnabled = false
+            return false
+        } else {
+            self.sumView.showHide(show: false)
         }
         self.nextButton.isEnabled = true
         return true
@@ -207,7 +217,7 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -223,7 +233,7 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -338,10 +348,10 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
                     self.hideProgressView()
                     self.verifyKey = item.verifyKey
                     self.configureCode(amount: sum, balance: selectedBalance, result: result)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.commitPayment(viewToRemove:view, amount: sum, balance: selectedBalance, result: result, verifyKey: "", enteredCode: "")
@@ -375,10 +385,10 @@ class TransferByCardViewController: BaseViewController, TransferConfirmViewDeleg
                     guard let self = self else { return }
                     self.hideProgressView()
                     self.coordinator?.navigateToHistoryRecipe(item: item)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.navigationController?.navigationBar.isHidden = false

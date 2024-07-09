@@ -59,10 +59,10 @@ class HistoryCoordinator: Coordinator {
         self.nav.pushViewController(vc, animated: true)
     }
     
-    func navigateToRepetPayment(service: AppStructs.PaymentGroup.ServiceItem) {
+    func navigateToRepetPayment(service: AppStructs.PaymentGroup.ServiceItem, toAccount: String?) {
         let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
         payments.parent = self.parent
-        payments.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: false, transferParam: nil)
+        payments.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: false, transferParam: toAccount)
         self.children.append(payments)
     }
     

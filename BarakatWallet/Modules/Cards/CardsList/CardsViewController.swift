@@ -58,9 +58,9 @@ class CardsViewController: BaseViewController, UICollectionViewDelegate, UIColle
         self.collectionView.refreshControl = UIRefreshControl()
         self.collectionView.refreshControl?.tintColor = Theme.current.tintColor
         self.collectionView.refreshControl!.addTarget(self, action: #selector(reloadMainView), for: .valueChanged)
-        self.viewModel.didLoadError.subscribe(onNext: { [weak self] message in
+        self.viewModel.didLoadError.subscribe(onNext: { [weak self] error in
             self?.collectionView.refreshControl?.endRefreshing()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            self?.showApiError(title: "ERROR".localized, error: error)
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLoadCards.subscribe { [weak self] _ in
             self?.collectionView.refreshControl?.endRefreshing()

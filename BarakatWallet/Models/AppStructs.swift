@@ -97,22 +97,26 @@ struct AppStructs {
             return items
         }
         var walletBalance: Double {
-            let acc = self.accounts.first(where: { $0.bal_account == "63" })?.balance ?? 0
+            let acc = self.accounts.first(where: { $0.bal_account == "70000" })?.balance ?? 0
             return acc
         }
         var bonusBalance: Double {
-            let acc = self.accounts.first(where: { $0.bal_account == "64" })?.balance ?? 0
+            let acc = self.accounts.first(where: { $0.bal_account == "80000" })?.balance ?? 0
             return acc
         }
         
         init(accounts: [Account], client: ClientInfo, cards: [AppStructs.CreditDebitCard] = []) {
-            self.accounts = accounts
+            self.accounts = accounts.sorted(by: { $0.isBonus != $1.isBonus })
             self.cards = cards
             self.client = client
         }
         
         func getService(serviceID: Int) -> AppStructs.PaymentGroup.ServiceItem? {
             return self.paymentGroups.first(where: { $0.services.contains(where: { $0.id == serviceID }) })?.services.first(where: { $0.id == serviceID }) ?? self.transferTypes.first(where: { $0.id == serviceID })
+        }
+        
+        func getTransfer(type: TransferType) -> AppStructs.PaymentGroup.ServiceItem? {
+            return self.paymentGroups.first(where: { $0.services.contains(where: { $0.id == type.rawValue }) })?.services.first(where: { $0.id == type.rawValue }) ?? self.transferTypes.first(where: { $0.id == type.rawValue })
         }
     }
     
@@ -143,7 +147,16 @@ struct AppStructs {
         }
         
         var isBonus: Bool {
-            return self.bal_account == "64"
+            return self.bal_account == "80000"
+        }
+        
+        var title: String {
+            if self.bal_account == "70000" {
+                return "WALLET_BALANCE_HINT".localized
+            } else if self.bal_account == "80000" {
+                return "BONUS_ACCOUNT".localized
+            }
+            return self.name
         }
     }
     
@@ -221,6 +234,10 @@ struct AppStructs {
         case alphabet = 2
         case numsAndAlphabet = 3
         case phoneNumber = 4
+    }
+    
+    enum ServiceWithoutRepeat: Int {
+        case prixodeKassa = 110
     }
     
     struct CreditDebitCard: Codable, Hashable {
@@ -325,7 +342,7 @@ struct AppStructs {
         let commission: Double
         let datetime: String
         let service: String
-        let status: Int
+        var status: Int
         let tran_id: String
         
         var statusType: HistoryStatus {
@@ -338,6 +355,7 @@ struct AppStructs {
             case inProgress = 2
             case error = 3
             case success = 4
+            case successTo = 10
             
             var name: String {
                 switch self {
@@ -351,6 +369,8 @@ struct AppStructs {
                     return "PAYMENT_FAILED".localized
                 case .success:
                     return "PAYMENT_SUCCESS".localized
+                case .successTo:
+                    return "PAYMENT_SUCCESS".localized
                 }
             }
             var color: UIColor {
@@ -358,6 +378,7 @@ struct AppStructs {
                 case .notVerfied, .new, .inProgress:return UIColor.systemOrange
                 case .error:return UIColor.systemRed
                 case .success:return UIColor.systemGreen
+                case .successTo:return UIColor.systemGreen
                 }
             }
         }
@@ -387,6 +408,11 @@ struct AppStructs {
             let darkListImage: String
             let isCheck: Int
             let params: [Params]
+            let enable: Int
+            
+            var isEnabledForNotIden: Bool {
+                return self.enable == 1
+            }
             
             struct Params: Codable {
                 let id: Int
@@ -397,7 +423,7 @@ struct AppStructs {
                 let maxLen: Int
                 let minLen: Int
                 let param: Int
-                let prefix: String
+                //let prefix: String
             }
         }
     }

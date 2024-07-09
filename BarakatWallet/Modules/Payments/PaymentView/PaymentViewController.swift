@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import RxSwift
+import ContactsUI
 
 protocol PaymentViewsDelegate: AnyObject {
     func confirmViewClose(view: PaymentConfirmView)
@@ -17,8 +18,8 @@ protocol PaymentViewsDelegate: AnyObject {
     func resultViewClose(view: PaymentResultView, close: Bool, addFav: Bool, repeatPay: Bool, recipe: Bool)
 }
 
-class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelegate, PaymentFieldDelegate, PaymentViewsDelegate {
-   
+class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelegate, PaymentFieldDelegate, PaymentViewsDelegate, CountryPickerDelegate, CNContactPickerDelegate, BalanceSelectViewDelegate, CurrencyFormatFieldDelegate {
+    
     private let scrollView: UIScrollView = {
         let view = UIScrollView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -61,7 +62,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     let addFavoriteMode: Bool
     let viewModel: PaymentsViewModel
     let service: AppStructs.PaymentGroup.ServiceItem
-    let serviceParam: String?
+    var serviceParam: String?
     let favorite: AppStructs.Favourite?
     let merchant: AppStructs.Merchant?
     weak var coordinator: PaymentsCoordinator? = nil
@@ -150,6 +151,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
         if self.addFavoriteMode {
             self.nextButton.setTitle("ADD_FAV".localized, for: .normal)
         }
+        self.balanceView.delegate = self
         self.navigationController?.navigationBar.isHidden = false
         self.setStatusBarStyle(dark: nil)
         self.nextButton.addTarget(self, action: #selector(self.makePayment), for: .touchUpInside)
@@ -162,6 +164,15 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
             self?.addClientInfo(info: info.0, available: info.1)
         }.disposed(by: self.viewModel.disposeBag)
         self.configure()
+    }
+    
+    private func parseParams(parse: String) -> String {
+        do {
+            let pn = try Constants.phoneNumberKit.parse(parse)
+            return pn.adjustedNationalNumber()
+        } catch {
+            return parse
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -204,25 +215,73 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
         self.viewModel.addFavorite(account: balance?.account ?? "", amount: self.getEnteredSum() ?? 0, comment: "", params: self.getParams(), name: name, serviceID: self.service.id)
     }
     
+    func getCountryTapped() {
+        let vc = CountryPickerViewController(transparentChange: false)
+        vc.delegate = self
+        self.navigationController?.present(vc, animated: true)
+    }
+    
+    func getContactTapped() {
+        let vc = CNContactPickerViewController(nibName: nil, bundle: nil)
+        vc.predicateForSelectionOfProperty = NSPredicate(format: "key == 'phoneNumbers'")
+        vc.delegate = self
+        self.present(vc, animated: true)
+    }
+    
+    func contactPicker(_ picker: CNContactPickerViewController, didSelect contactProperty: CNContactProperty) {
+        guard let item = contactProperty.value as? CNPhoneNumber else { return }
+        let a = self.stackView.arrangedSubviews.compactMap { v in
+            if let a = v as? BasePrefixTextField, a.keyboardType == .phoneNumber {
+                return a
+            }
+            return nil
+        }
+        for field in a {
+            field.setInfo(country: nil, contactNumber: item)
+        }
+    }
+    
+    func onSelected(type: CountryPicker.Country) {
+        let a = self.stackView.arrangedSubviews.compactMap { v in
+            if let a = v as? BasePrefixTextField, a.keyboardType == .phoneNumber {
+                return a
+            }
+            return nil
+        }
+        for field in a {
+            field.setInfo(country: type, contactNumber: nil)
+        }
+    }
+    
     func configure() {
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
         let sorted = self.service.params.sorted(by: { $0.param < $1.param })
         for param in sorted.enumerated() {
-            let fieldView = BasePrefixTextField(textField: UITextField(frame: .zero))
-            fieldView.delegate = self
+            let keyType = AppStructs.KeyboardViewType(rawValue: param.element.keyboard) ?? .numsAndAlphabet
             var paramValue: String? = nil
             if let f = self.favorite, f.params.count > param.offset {
-                paramValue = f.params[param.offset]
+                if keyType == .phoneNumber {
+                    paramValue = self.parseParams(parse: f.params[param.offset])
+                } else {
+                    paramValue = f.params[param.offset]
+                }
             } else if let s = self.serviceParam, param.offset == 0 {
-                paramValue = s.starts(with: "+992") ? s.replacingOccurrences(of: "+992", with: "") : s
+                if keyType == .phoneNumber {
+                    paramValue = self.parseParams(parse: s)
+                } else {
+                    paramValue = s
+                }
             }
-            fieldView.heightAnchor.constraint(equalToConstant: 64).isActive = true
+            let fieldView = BasePrefixTextField(textField: UITextField(frame: .zero), keyboardType: keyType)
             fieldView.delegate = self
             fieldView.configure(param: param.element, value: paramValue, validate: true, getInfo: param.offset == 0)
             self.stackView.addArrangedSubview(fieldView)
         }
         let fieldView = BaseSumFiled()
-        fieldView.heightAnchor.constraint(equalToConstant: 64).isActive = true
+        fieldView.bottomLabel.isHidden = true
+        fieldView.bottomLabel.text = "NO_BALANCE_FOR_PAY".localized
+        fieldView.bottomLabel.textColor = .systemRed
+        fieldView.textField.delegate = self
         var amountValue: String? = nil
         if let f = self.favorite, f.amount > 0 {
             amountValue = String(f.amount)
@@ -248,6 +307,41 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
         self.stackView.insertArrangedSubview(infoView, at: self.stackView.arrangedSubviews.count - 1)
     }
     
+    func balanceSelected(view: BalanceSelectView) {
+        self.checkFields()
+    }
+    
+    func currencyFieldDidChanged() {
+        self.checkFields()
+    }
+    
+    @discardableResult
+    func checkFields() -> Bool {
+        guard let balance = self.balanceView.selectedBalance else {
+            self.nextButton.isEnabled = false
+            return false
+        }
+        guard let sum = self.getEnteredSum(), sum > 0 else {
+            self.nextButton.isEnabled = false
+            return false
+        }
+        if let b = balance.balance, b < sum {
+            self.showSumError(show: true)
+            self.nextButton.isEnabled = false
+            return false
+        } else {
+            self.showSumError(show: false)
+        }
+        self.nextButton.isEnabled = true
+        return true
+    }
+    
+    private func showSumError(show: Bool) {
+        if let sumView = self.stackView.arrangedSubviews.first(where: { $0.tag == self.viewModel.sumParam.id }) as? BaseSumFiled {
+            sumView.showHide(show: show)
+        }
+    }
+    
     private func getEnteredSum() -> Double? {
         if let sumView = self.stackView.arrangedSubviews.first(where: { $0.tag == self.viewModel.sumParam.id }) as? BaseSumFiled {
             return sumView.textField.value
@@ -259,8 +353,11 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
         var params: [String] = []
         for item in self.stackView.arrangedSubviews {
             guard let enterView = item as? BasePrefixTextField, item.tag != self.viewModel.sumParam.id else { continue }
-            let value = enterView.param?.prefix ?? ""
-            params.append("\(value)\(enterView.textField.text ?? "")")
+            if enterView.keyboardType == .phoneNumber {
+                params.append("\(enterView.selectedCountry.countryPhoneCode)\(enterView.textField.text ?? "")")
+            } else {
+                params.append(enterView.textField.text ?? "")
+            }
         }
         return params
     }
@@ -272,7 +369,13 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
             var result = true
             for item in self.stackView.arrangedSubviews {
                 guard let enterView = item as? BasePrefixTextField, item.tag != self.viewModel.sumParam.id, let param = enterView.param else { continue }
-                if !enterView.regexCheck(pattern: param.mask, text: enterView.textField.text ?? "") {
+                let value: String
+                if enterView.keyboardType == .phoneNumber {
+                    value = "\(enterView.selectedCountry.countryPhoneCode)\(enterView.textField.text ?? "")"
+                } else {
+                    value = enterView.textField.text ?? ""
+                }
+                if !enterView.regexCheck(pattern: param.mask, text: value) {
                     result = false
                 }
             }
@@ -281,8 +384,9 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
     }
     
     func makePayemnt() {
+        guard self.checkFields() else { return }
         guard let selectedBalance = self.balanceView.selectedBalance else { return }
-        guard let sum = self.getEnteredSum(), sum < selectedBalance.balance ?? 0, self.verifyParams() else { return }
+        guard let sum = self.getEnteredSum(), self.verifyParams() else { return }
         let params = self.getParams()
         self.showProgressView()
         self.viewModel.service.verifyPayment(account: selectedBalance.account, accountType: selectedBalance.accountType, amount: sum, comment: "", params: params, serviceID: self.service.id)
@@ -294,7 +398,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -310,7 +414,7 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -378,10 +482,10 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
                     self.hideProgressView()
                     self.verifyKey = item.verifyKey
                     self.configureCode(amount: view.amount, balance: view.balance, result: view.result)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.commitPayment(viewToRemove:view, amount: view.amount, balance: view.balance, result: view.result, key: "", enteredCode: "")
@@ -415,10 +519,10 @@ class PaymentViewController: BaseViewController, AddFavoriteViewControllerDelega
                     guard let self = self else { return }
                     self.hideProgressView()
                     self.coordinator?.navigateToHistoryRecipe(item: item)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.navigationController?.navigationBar.isHidden = false

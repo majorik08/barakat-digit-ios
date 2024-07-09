@@ -13,6 +13,7 @@ protocol IdentifyService: Service {
     func sendIdentify(front: String, back: String, selfie: String) -> Single<AppMethods.Client.IdentifySet.Result>
     func getIdentify() -> Single<AppMethods.Client.IdentifyGet.IdentifyResult>
     func getLimits() -> Single<[AppStructs.ClientInfo.Limit]>
+    func getHelp() -> Single<AppMethods.App.GetHelp.GetHelpResult>
 }
 
 final class IdentifyServiceImpl: IdentifyService {
@@ -57,6 +58,20 @@ final class IdentifyServiceImpl: IdentifyService {
     func getLimits() -> RxSwift.Single<[AppStructs.ClientInfo.Limit]> {
         return Single.create { single in
             APIManager.instance.request(.init(AppMethods.Client.IdentifyLimitsGet(.init())), auth: .auth) { response in
+                switch response.result {
+                case .success(let result):
+                    single(.success(result))
+                case .failure(let error):
+                    single(.failure(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+    
+    func getHelp() -> RxSwift.Single<AppMethods.App.GetHelp.GetHelpResult> {
+        return Single<AppMethods.App.GetHelp.GetHelpResult>.create { single in
+            APIManager.instance.request(.init(AppMethods.App.GetHelp(.init())), auth: .noAuth) { response in
                 switch response.result {
                 case .success(let result):
                     single(.success(result))

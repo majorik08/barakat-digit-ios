@@ -38,4 +38,15 @@ class IdentifyCoordinator: Coordinator {
         vc.coordinator = self
         self.nav.pushViewController(vc, animated: true)
     }
+    
+    func navigateBack() {
+        var vcs = self.nav.viewControllers
+        vcs.removeAll { vc in
+            if vc is IndentifyMainViewController || vc is IdentifyViewController {
+                return true
+            }
+            return false
+        }
+        self.nav.viewControllers = vcs
+    }
 }

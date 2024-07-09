@@ -148,9 +148,9 @@ class ChooseTransferViewController: BaseViewController, UITableViewDelegate, UIT
             self?.scrollView.refreshControl?.endRefreshing()
             self?.scrollView.reloadData()
         }.disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didLoadPaymentsError.subscribe(onNext: { [weak self] message in
+        self.viewModel.didLoadPaymentsError.subscribe(onNext: { [weak self] error in
             self?.scrollView.refreshControl?.endRefreshing()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            self?.showApiError(title: "ERROR".localized, error: error)
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.loadPayments()
         self.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)

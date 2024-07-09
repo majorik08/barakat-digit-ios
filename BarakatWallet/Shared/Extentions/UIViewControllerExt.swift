@@ -11,6 +11,26 @@ import MBProgressHUD
 
 public extension UIViewController {
     
+    func showApiError(title: String, error: Error) {
+        if let appError = error as? NetworkError {
+            if let error = appError.error {
+                if let knownError = ServerErrors(rawValue: error) {
+                    self.showErrorAlert(title: title, message: knownError.rawValue.localized)
+                } else if let message = appError.message {
+                    self.showErrorAlert(title: title, message: message)
+                } else {
+                    self.showErrorAlert(title: title, message: "SERVER_ERROR".localized)
+                }
+            } else if let message = appError.message {
+                self.showErrorAlert(title: title, message: message)
+            } else {
+                self.showErrorAlert(title: title, message: "SERVER_ERROR".localized)
+            }
+        } else {
+            self.showErrorAlert(title: title, message: "SERVER_ERROR".localized)
+        }
+    }
+    
     @objc func hideKeyboard() {
         self.view.endEditing(true)
     }

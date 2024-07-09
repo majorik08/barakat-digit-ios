@@ -223,7 +223,7 @@ struct AppMethods {
                     str += "amountFrom=\(t)&"
                 }
                 if let t = params.amountTo {
-                    str += "amountFrom=\(t)&"
+                    str += "amountTo=\(t)&"
                 }
                 if let t = params.dateFrom {
                     str += "dateFrom=\(t)&"
@@ -241,7 +241,7 @@ struct AppMethods {
                     str += "type=\(t)&"
                 }
                 str += "limit=\(params.limit)&"
-                str += "offset=\(params.offset)&"
+                str += "offset=\(params.offset)"
                 self.url = str
             }
             public struct Params: Codable {

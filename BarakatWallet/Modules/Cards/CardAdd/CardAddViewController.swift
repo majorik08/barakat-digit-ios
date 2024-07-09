@@ -222,7 +222,7 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate, VerifyCode
                 } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             //error
@@ -241,7 +241,7 @@ class CardAddViewController: BaseViewController, UITextFieldDelegate, VerifyCode
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

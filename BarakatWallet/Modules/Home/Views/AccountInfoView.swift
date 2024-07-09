@@ -67,7 +67,7 @@ class AccountInfoView: UIView {
             self.balanceLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
             self.balanceLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
             self.balanceLabel.heightAnchor.constraint(equalToConstant: 24),
-            self.bonusLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
+            self.bonusLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings + 1.5),
             self.bonusLabel.topAnchor.constraint(equalTo: self.balanceLabel.bottomAnchor, constant: 6),
             self.bonusLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
             self.bonusLabel.heightAnchor.constraint(equalToConstant: 16),

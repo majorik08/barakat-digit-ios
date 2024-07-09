@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 protocol Service {
     
@@ -28,17 +29,44 @@ extension Coordinator {
     }
 }
 
+let transactionUpdate = PublishSubject<(String, Int)>()
+let authExpaired = PublishSubject<Void>()
+
 final class AppCoordinator: Coordinator {
     
     var children: [Coordinator] = []
    
     var window: UIWindow
+    let bag = DisposeBag()
+    var lockTimeout: Double? = nil
+    
+    var authService: AccountService {
+        return ENVIRONMENT.isMock ? AccountServiceImpl() : AccountServiceImpl()
+    }
     
     init(window : UIWindow) {
         self.window = window
+        authExpaired.observe(on: MainScheduler.instance).subscribe { _ in
+            guard let account = CoreAccount.accounts().first else { return }
+            let _ = CoreAccount.logout(account: account)
+            self.showLogin(authExpaired: true)
+        }.disposed(by: self.bag)
     }
-    var authService: AccountService {
-        return ENVIRONMENT.isMock ? AccountServiceImpl() : AccountServiceImpl()
+    
+    func applicationDidEnterBackground() {
+        if !CoreAccount.accounts().isEmpty {
+            self.lockTimeout = Date().timeIntervalSince1970
+        } else {
+            self.lockTimeout = nil
+        }
+    }
+
+    func applicationWillEnterForeground() {
+        if let lockTimeout, Date().timeIntervalSince1970 - lockTimeout > 30, let a = CoreAccount.accounts().first {
+            self.showPasscode(account: a)
+        } else {
+            self.lockTimeout = nil
+        }
     }
     
     func startWithCheck() {
@@ -55,15 +83,17 @@ final class AppCoordinator: Coordinator {
     func start() {
         let accounts = CoreAccount.accounts()
         if accounts.isEmpty {
-            self.showLogin()
+            self.showLogin(authExpaired: false)
         } else {
             let account = accounts.first!
             self.showPasscode(account: account)
         }
     }
     
-    func showLogin() {
-        let login = LoginCoordinator(nav: FirstLaunchNavigation(overrideInterfaceStyle: false), authService: self.authService)
+    func showLogin(authExpaired: Bool) {
+        APIManager.instance.setToken(token: nil)
+        let nav = FirstLaunchNavigation(overrideInterfaceStyle: false)
+        let login = LoginCoordinator(nav: nav, authService: self.authService)
         login.parent = self
         login.start()
         self.window.rootViewController = login.nav
@@ -75,6 +105,9 @@ final class AppCoordinator: Coordinator {
         }
         self.window.makeKeyAndVisible()
         self.children.append(login)
+        if authExpaired {
+            nav.showErrorAlert(title: "AUTH_EXP".localized, message: "AUTH_EXP_HELP".localized)
+        }
     }
     
     func showPasscode(account: CoreAccount) {

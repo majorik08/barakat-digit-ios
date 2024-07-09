@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import RxSwift
+import RxRelay
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -73,19 +75,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         Logger.log(tag: "AppDelegate", message: "didReceiveRemoteNotification:fetchCompletionHandler")
-//        guard let _ = NCPCore.instance.currentAccount else { completionHandler(.newData); return }
-//        if NCPCore.instance.socketStateEvent.value == .synced {
-//            NCPCore.instance.system.websocketPing()
-//            completionHandler(.newData)
-//            return
-//        }
-//        NCPCore.instance.network.connect()
-//        NCPCore.instance.session.exporterWrite(events: [.init(name: "PushNotification", boolValue: nil, intValue: nil, doubleValue: nil, stringValue: "default push", ts: Date())])
-//        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 15.0, execute: {
-//            if UIApplication.shared.applicationState == .background {
-//                NCPCore.instance.network.close(intentionalClose: true)
-//            }
-//            completionHandler(.newData)
-//        })
+        if let data = userInfo["data"] as? [String:Any] {
+            if let status = data["status"] as? Int, let tranId = data["tranID"] as? String {
+                transactionUpdate.onNext((tranId, status))
+            } else if let _ = data["expired"] as? Bool {
+                authExpaired.onNext(())
+            }
+        }
+        completionHandler(.newData)
+        debugPrint(userInfo)
+    }
+    
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        Logger.log(tag: "AppDelegate", message: "applicationDidEnterBackground")
+        self.appCoordinator?.applicationDidEnterBackground()
+    }
+
+    func applicationWillEnterForeground(_ application: UIApplication) {
+        Logger.log(tag: "AppDelegate", message: "applicationWillEnterForeground")
+        self.appCoordinator?.applicationWillEnterForeground()
     }
 }

@@ -48,6 +48,9 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
     }()
     private let sumFieldView: BaseSumFiled = {
         let view = BaseSumFiled()
+        view.bottomLabel.isHidden = true
+        view.bottomLabel.text = "NO_BALANCE_FOR_PAY".localized
+        view.bottomLabel.textColor = .systemRed
         return view
     }()
     var nextButtonBottom: NSLayoutConstraint!
@@ -107,9 +110,9 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
             self.sumFieldView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.sumFieldView.topAnchor.constraint(equalTo: self.topupBalanceView.bottomAnchor, constant: 10),
             self.sumFieldView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.sumFieldView.heightAnchor.constraint(equalToConstant: 64),
+            self.sumFieldView.heightAnchor.constraint(equalToConstant: 82),
             self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
-            self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.sumFieldView.bottomAnchor, constant: 10),
+            self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.sumFieldView.bottomAnchor, constant: 6),
             self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.nextButtonBottom,
             self.nextButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight),
@@ -188,6 +191,13 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
             self.nextButton.isEnabled = false
             return false
         }
+        if let b = pay.balance, b < sum {
+            self.sumFieldView.showHide(show: true)
+            self.nextButton.isEnabled = false
+            return false
+        } else {
+            self.sumFieldView.showHide(show: false)
+        }
         self.nextButton.isEnabled = true
         return true
     }
@@ -206,7 +216,7 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -222,7 +232,7 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -352,10 +362,10 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
                     self.hideProgressView()
                     self.verifyKey = item.verifyKey
                     self.configureCode(amount: sum, pay: pay, result: result)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.commitPayment(viewToRemove:view, amount: sum, pay: pay, result: result, verifyKey: "", enteredCode: "")
@@ -389,10 +399,10 @@ class TransferByAccountsViewController: BaseViewController, TransferConfirmViewD
                     guard let self = self else { return }
                     self.hideProgressView()
                     self.coordinator?.navigateToHistoryRecipe(item: item)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.navigationController?.navigationBar.isHidden = false

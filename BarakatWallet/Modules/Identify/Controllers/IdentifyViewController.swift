@@ -104,6 +104,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
     init(viewModel: IdentifyViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
+        self.hidesBottomBarWhenPushed = true
     }
     
     required init?(coder: NSCoder) {
@@ -178,12 +179,14 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
         
         self.viewModel.didSetFailed.subscribe { [weak self] error in
             self?.hideProgressView()
-            self?.showErrorAlert(title: "error", message: error ?? "")
+            if let er = error {
+                self?.showApiError(title: "ERROR", error: er)
+            }
             self?.checkSendStatus()
         }.disposed(by: self.viewModel.disposeBag)
         self.viewModel.didSetSuccess.subscribe(onNext: { [weak self] _ in
-            self?.successProgress(text: "success")
-            self?.checkSendStatus()
+            self?.successProgress(text: "DONE".localized)
+            self?.coordinator?.navigateBack()
         }).disposed(by: self.viewModel.disposeBag)
     }
     

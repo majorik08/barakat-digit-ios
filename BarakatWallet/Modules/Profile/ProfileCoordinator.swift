@@ -96,11 +96,16 @@ class ProfileCoordinator: Coordinator {
     }
     
     func logoutFromAccount() {
-        self.parent?.parent?.parent?.showLogin()
+        self.parent?.parent?.parent?.showLogin(authExpaired: false)
     }
     
     func navigateToAboutApp() {
         let vc = AboutViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
+        self.nav.pushViewController(vc, animated: true)
+    }
+    
+    func navigateToHelp() {
+        let vc = ProfileHelpViewController(viewModel: .init(accountInfo: self.accountInfo, profileService: self.profileService, identifyService: self.identifyService))
         self.nav.pushViewController(vc, animated: true)
     }
     

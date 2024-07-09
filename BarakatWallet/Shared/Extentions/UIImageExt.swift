@@ -22,6 +22,7 @@ internal extension UIImage {
         case tab_menu
         case tab_qr
         case wallet_icon
+        case bonus_icon
         case wallet_inset
         case main_logo
         case main_logo_in
@@ -96,15 +97,8 @@ internal extension UIImage {
         
         case check_dark
         case check_light
-        
-        case facebook_icon
-        case instagram_icon
-        case linkedin_icon
-        case telegram_icon
-        
         case checkmark
         case arrow_up
-        
         case flag_eu
         case flag_ru
         case flag_usa
@@ -122,20 +116,20 @@ extension UIImage {
     static func generateAppQRCode(from string: String) -> UIImage? {
         let doc = QRCode.Document(message: QRCode.Message.Phone(string))
         doc.errorCorrection = .high
-        doc.design.style.backgroundFractionalCornerRadius = 1
-        doc.design.style.background = QRCode.FillStyle.Solid(UIColor.white.cgColor)
-        doc.design.shape.eye = QRCode.EyeShape.Leaf()
-        doc.design.style.eye = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
-        doc.design.shape.pupil = QRCode.PupilShape.Leaf()
-        doc.design.style.pupil = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
-        doc.design.shape.onPixels = QRCode.PixelShape.Vertical(insetFraction: 0.1, cornerRadiusFraction: 0.75)
-        doc.design.style.onPixels = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
+//        doc.design.style.backgroundFractionalCornerRadius = 1
+//        doc.design.style.background = QRCode.FillStyle.Solid(UIColor.white.cgColor)
+//        doc.design.shape.eye = QRCode.EyeShape.Leaf()
+//        doc.design.style.eye = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
+//        doc.design.shape.pupil = QRCode.PupilShape.Leaf()
+//        doc.design.style.pupil = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
+//        doc.design.shape.onPixels = QRCode.PixelShape.Vertical(insetFraction: 0.1, cornerRadiusFraction: 0.75)
+//        doc.design.style.onPixels = QRCode.FillStyle.Solid(UIColor(red: 0.28, green: 0.74, blue: 0.70, alpha: 1.00).cgColor)
         doc.logoTemplate = QRCode.LogoTemplate (
             image: UIImage(name: .main_logo_in).cgImage!,
             path: CGPath(rect: CGRect(x: 0.35, y: 0.35, width: 0.30, height: 0.30), transform: nil),
             inset: 3
         )
-        let generated = doc.cgImage(CGSize(width: 600, height: 600))
+        let generated = doc.cgImage(CGSize(width: 800, height: 800))
         if let g = generated {
             return UIImage(cgImage: g)
         }

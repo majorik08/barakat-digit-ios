@@ -24,7 +24,7 @@ class IdentifyViewModel {
     var selfieUrl: URL? = nil
     
     let didSetSuccess = PublishSubject<Void>()
-    let didSetFailed = PublishSubject<String?>()
+    let didSetFailed = PublishSubject<Error?>()
     
     var pickerType: PickerType = .front
     let accountInfo: AppStructs.AccountInfo
@@ -65,11 +65,7 @@ class IdentifyViewModel {
         req.subscribe { _ in
             self.didSetSuccess.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didSetFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didSetFailed.onNext(error.localizedDescription)
-            }
+            self.didSetFailed.onNext(error)
         }.disposed(by: self.disposeBag)
     }
 }

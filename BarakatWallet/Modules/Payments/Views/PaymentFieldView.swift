@@ -101,6 +101,8 @@ class PaymentTextView: UIView {
 
 protocol PaymentFieldDelegate: AnyObject {
     func getServiceAccountInfo(account: String)
+    func getCountryTapped()
+    func getContactTapped()
 }
 
 class PaymentFieldView: UIView, UITextFieldDelegate {
@@ -198,24 +200,9 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, value: String?, validate: Bool, getInfo: Bool) {
+    func configure(param: AppStructs.PaymentGroup.ServiceItem.Params, value: String?, getInfo: Bool) {
         self.getInfo = getInfo
         self.param = param
-//        let coms = param.prefix.split(separator: ",")
-//        if coms.count == 1 {
-//            self.fieldView.text = param.prefix
-//        }
-        //        struct Params: Codable {
-        //            let id: Int
-        //            let name: String
-        //            let coment: String
-        //            let keyboard: Int
-        //            let mask: String
-        //            let maxLen: Int
-        //            let minLen: Int
-        //            let param: Int
-        //            let prefix: String
-        //        }
         self.tag = param.id
         self.topLabel.text = param.name
         self.fieldView.attributedPlaceholder = NSAttributedString(string: param.coment, attributes: [NSAttributedString.Key.foregroundColor: Theme.current.secondaryTextColor])
@@ -230,38 +217,9 @@ class PaymentFieldView: UIView, UITextFieldDelegate {
         case .phoneNumber:
             self.fieldView.keyboardType = .phonePad
         }
-        if validate {
-            self.bottomLabel.text = nil
-            self.bottomLabel.textColor = .systemRed
-            self.fieldView.delegate = self
-            self.fieldView.addTarget(self, action: #selector(self.reformatAsNeeded(textField:)), for: .editingChanged)
-        }
         if let value = value {
             self.fieldView.text = value
             self.fieldView.sendActions(for: .editingChanged)
-        }
-    }
-    
-//    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-//        guard let tText = textField.text else { return true }
-//        guard let param = self.param else { return true }
-//        let newLength = tText.count + string.count - range.length
-//        return newLength <= param.maxLen
-//    }
-    
-    @objc func reformatAsNeeded(textField: UITextField) {
-        guard let param = self.param else { return }
-        var value = ""
-        if let text = textField.text {
-            value = text
-        }
-        if self.regexCheck(pattern: param.mask, text: value) {
-            self.bottomLabel.text = nil
-            if self.getInfo {
-                self.delegate?.getServiceAccountInfo(account: "\(param.prefix)\(value)")
-            }
-        } else {
-            self.bottomLabel.text = "NUMBER_MUST_START_WITH".localizedFormat(arguments: param.prefix)
         }
     }
     

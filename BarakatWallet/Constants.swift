@@ -167,7 +167,11 @@ struct Constants {
     }
     
     static var PrivacyUrl: String {
-        return "https://google.ru/app_privacy"
+        return "\(ApiUrl)simple/files/public/96498d38-a5b9-48ac-b5c2-623f5131872c.html"
+    }
+    
+    static var PolicyUrl: String {
+        return "\(ApiUrl)simple/files/public/44485a8a-dac0-4fe0-afcf-024d0d60b88e.html"
     }
     
     static var AppRateUrl: String {

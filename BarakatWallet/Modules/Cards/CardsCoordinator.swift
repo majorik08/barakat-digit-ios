@@ -71,9 +71,13 @@ class CardsCoordinator: Coordinator {
     }
     
     func navigateToReleaseCardView(categoryId: Int?) {
-        let vc = CardReleaseViewController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo), categoryId: categoryId)
-        vc.coordinator = self
-        self.nav.pushViewController(vc, animated: true)
+        if self.accountInfo.client.limit.cardOrder {
+            let vc = CardReleaseViewController(viewModel: .init(cardService: self.cardService, paymentsService: self.paymentsService, accountInfo: self.accountInfo), categoryId: categoryId)
+            vc.coordinator = self
+            self.nav.pushViewController(vc, animated: true)
+        } else {
+            self.nav.showErrorAlert(title: "ORDER_CARD".localized, message: "NEED_IDENTITY_FOR_CARD_ORDER".localized)
+        }
     }
     
     func navigateToReleaseCardItem(cardItem: AppStructs.CreditDebitCardTypes) {
@@ -102,9 +106,10 @@ class CardsCoordinator: Coordinator {
     }
     
     func navigateToTransferAccounts(topupCreditCard: AppStructs.CreditDebitCard) {
+        guard let service = self.accountInfo.getTransfer(type: .transferBetweenAccounts) else { return }
         let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
         payments.parent = self.parent
-        payments.navigateToTransferAccounts(topupCreditCard: topupCreditCard)
+        payments.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: false, transferParam: nil, topupCreditCard: topupCreditCard)
         self.children.append(payments)
     }
     

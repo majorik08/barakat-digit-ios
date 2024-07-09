@@ -60,6 +60,11 @@ public class DateUtils {
         }
     }
     
+    public static func stringFullDate2(date: Date) -> String {
+        let formatter = DateUtils.cachedFormatter("dd-MM-yyyy", timeZone: NSTimeZone.local, locale: Locale.current)
+        return formatter.string(from: date)
+    }
+    
     public static func stringFullDate(date: Date) -> String {
         let formatter = DateUtils.cachedFormatter("dd.MM.yyyy", timeZone: NSTimeZone.local, locale: Locale.current)
         return formatter.string(from: date)

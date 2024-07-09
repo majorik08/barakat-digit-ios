@@ -55,9 +55,9 @@ class CardReleaseViewController: BaseViewController, UICollectionViewDelegate, U
         self.collectionView.contentInsetAdjustmentBehavior = .never
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
-        self.viewModel.didLoadError.subscribe(onNext: { [weak self] message in
+        self.viewModel.didLoadError.subscribe(onNext: { [weak self] error in
             self?.hideProgressView()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            self?.showApiError(title: "ERROR".localized, error: error)
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLoadCategories.subscribe { [weak self] _ in
             self?.collectionView.reloadData()

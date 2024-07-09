@@ -51,11 +51,11 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
     private let numberView: BasePrefixTextField = {
         let view = UITextField(frame: .zero)
         //let view = PhoneNumberTextField(withPhoneNumberKit: Constants.phoneNumberKit)
-        let filedView = BasePrefixTextField(textField: view)
+        let filedView = BasePrefixTextField(textField: view, keyboardType: .phoneNumber)
         filedView.topLabel.text = "PHONE_NUMBER_RECEIVER".localized
         filedView.translatesAutoresizingMaskIntoConstraints = false
         filedView.rightImage.image = UIImage(name: .add_number)
-        filedView.prefixLabel.text = "+992"
+        filedView.countryCodeLable.text = "+992"
         //view.withFlag = false
         //view.maxDigits = 9
         //view.withPrefix = true
@@ -71,6 +71,12 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         view.controlView.isHidden = true
         view.titleView.isHidden = false
         view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    private let infoView: PaymentServiceInfoView = {
+        let view = PaymentServiceInfoView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
         return view
     }()
     private let bottomAuthLabel: UILabel = {
@@ -103,6 +109,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         return view
     }()
     private var nextButtonBottom: NSLayoutConstraint!
+    private var infoViewHeight: NSLayoutConstraint!
     private var previousTextFieldContent: String?
     private var previousSelection: UITextRange?
     weak var delegate: TransferSumViewControllerDelegate?
@@ -136,6 +143,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         let rootHeight = self.rootView.heightAnchor.constraint(equalTo: self.scrollView.heightAnchor)
         rootHeight.priority = UILayoutPriority(rawValue: 250)
         self.nextButtonBottom = self.nextButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -20)
+        self.infoViewHeight = self.infoView.heightAnchor.constraint(equalToConstant: 0)
         NSLayoutConstraint.activate([
             self.topBar.leftAnchor.constraint(equalTo: self.view.leftAnchor),
             self.topBar.topAnchor.constraint(equalTo: self.view.topAnchor),
@@ -185,6 +193,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
         case .byNumber:
             self.rootView.addSubview(self.numberView)
             self.rootView.addSubview(self.selectorView)
+            self.rootView.addSubview(self.infoView)
             self.topBar.subTitleLabel.text = "TRANSFER_BY_NUMBER_INFO".localized
             self.bottomAuthLabel.isHidden = true
             self.bottomAuthHintLabel.isHidden = true
@@ -197,9 +206,13 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 self.selectorView.topAnchor.constraint(equalTo: self.numberView.bottomAnchor, constant: 10),
                 self.selectorView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: 0),
                 self.selectorView.heightAnchor.constraint(equalToConstant: 140),
+                self.infoView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+                self.infoView.topAnchor.constraint(equalTo: self.selectorView.bottomAnchor, constant: 10),
+                self.infoView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+                self.infoViewHeight,
                 self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
                 self.nextButton.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
-                self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.selectorView.bottomAnchor, constant: 20),
+                self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.infoView.bottomAnchor, constant: 20),
                 self.nextButtonBottom,
                 self.nextButton.heightAnchor.constraint(equalToConstant: Theme.current.mainButtonHeight)
             ])
@@ -210,13 +223,14 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 .filter({ $0.count >= 6 })
                 .flatMap { str in
                     self.selectorView.configure(services: [])
+                    self.serviceSelected()
                     return self.viewModel.loadNumberServices(number: "+992\(str.digits)")
                 }
                 .subscribe { [weak self] services in
                     self?.selectorView.configure(services: services)
                     self?.checkFields()
                 } onError: { _ in
-                    
+                     
                 }.disposed(by: self.viewModel.disposeBag)
         }
         self.selectorView.delegate = self
@@ -260,7 +274,13 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 visibleHeight = windowFrame.intersection(keyboardRect).height
             }
         }
-        self.nextButtonBottom.constant = -(visibleHeight - (self.tabBarController?.tabBar.frame.height ?? 0) + 6)
+        var tabHeight: CGFloat
+        if self.tabBarController?.tabBar.isHidden ?? true {
+            tabHeight = 20
+        } else {
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 0
+        }
+        self.nextButtonBottom.constant = -(visibleHeight - (tabHeight) + 6)
     }
      
     @objc func keyboardWillHide(_ notification: Notification) {
@@ -288,9 +308,16 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
     }
     
     func serviceSelected() {
-        if self.checkFields() {
-            self.view.endEditing(true)
+        self.checkFields()
+        guard let selectedService = self.selectorView.selectedService else {
+            self.infoViewHeight.isActive = true
+            self.infoView.infoLabel.text = nil
+            self.infoView.isHidden = true
+            return
         }
+        self.infoViewHeight.isActive = false
+        self.infoView.isHidden = false
+        self.infoView.infoLabel.text = selectedService.accountInfo.info
     }
     
     @objc func goBack() {
@@ -321,7 +348,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         }
     }
@@ -362,7 +389,7 @@ class TransferReceiverViewController: BaseViewController, UITabBarControllerDele
                 self.nextButton.isEnabled = false
                 return false
             }
-            guard let _ = self.selectorView.selectedService else {
+            guard let s = self.selectorView.selectedService, s.accountInfo.available else {
                 self.nextButton.isEnabled = false
                 return false
             }

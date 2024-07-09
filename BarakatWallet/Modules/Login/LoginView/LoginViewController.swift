@@ -98,11 +98,25 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
         view.disabledLinkAttributes = Attrs().foregroundColor(.lightGray).attributes
         view.linkHighlightViewFactory = RoundedRectLinkHighlightViewFactory()
         let a = Attrs().font(UIFont.regular(size: 14)).foregroundColor(Theme.current.tintColor)
-        let str = "PRIVACY_LOGIN".localized.style(tags: ["a": a]).attributedString
+        let ta = TagTuner {
+            Attrs(a).akaLink($0.tag.attributes["href"] ?? "")
+        }
+        let link = DetectionTuner {
+           // ignore detection if akaLink was set for its range beforehand
+           if $0.firstExistingAttributeValue(for: .akaLink) != nil {
+               return Attrs()
+           } else {
+               return Attrs(a).akaLink($0.text)
+           }
+       }
+        let str = "PRIVACY_LOGIN".localizedFormat(arguments: Constants.PrivacyUrl, Constants.PolicyUrl)
+            .style(tags: ["a": ta])
+            .styleLinks(link)
+            .attributedString
         view.attributedText = str
         view.numberOfLines = 0
         view.lineBreakMode = .byWordWrapping
-        view.isUserInteractionEnabled = true
+        //view.isUserInteractionEnabled = true
         return view
     }()
     let keyPadView: KeyPadView = {
@@ -204,7 +218,13 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
         self.countyView.addTapGestureRecognizerr {
             self.coordinator?.navigateToSelectCountry(delegate: self)
         }
-        self.privacyHint.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.openPrivacy)))
+        self.privacyHint.onLinkTouchUpInside = { _, val in
+            if let linkStr = val as? String {
+                if let url = URL(string: linkStr) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        }
         self.selectedCountry = CountryPicker.Country(countryName: "Tajikistan", countryCode: "TJ", countryPhoneCode: "+992", countryFullCode: "TJK")
         self.keyPadView.delegate = self
         self.backButton.rx.tap.subscribe { [weak self] _ in
@@ -221,9 +241,9 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
             let phoneNumber = "+\("\(self.selectedCountry?.countryPhoneCode ?? "") \(self.phoneNumberField.text!)".digits)"
             self.viewModel.signInTapped(device: Constants.Device, number: phoneNumber)
         }.disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didSendError.subscribe { [weak self] message in
+        self.viewModel.didSendError.subscribe { [weak self] error in
             self?.hideProgressView()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            self?.showApiError(title: "ERROR".localized, error: error)
         }.disposed(by: self.viewModel.disposeBag)
         self.viewModel.didSendCode.subscribe { [weak self] key in
             guard let self = self else { return }
@@ -245,11 +265,6 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
         super.viewWillAppear(animated)
         self.navigationController?.navigationBar.isHidden = true
         self.setStatusBarStyle(dark: nil)
-    }
-    
-    @objc func openPrivacy() {
-        guard let u = URL(string: Constants.PrivacyUrl) else { return }
-        UIApplication.shared.open(u)
     }
     
     func keyTapped(digit: String) {
@@ -284,11 +299,7 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                if let error = error as? NetworkError {
-                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-                }
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -303,11 +314,7 @@ class LoginViewController: BaseViewController, KeyPadViewDelegate, CountryPicker
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                if let error = error as? NetworkError {
-                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-                }
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
 }

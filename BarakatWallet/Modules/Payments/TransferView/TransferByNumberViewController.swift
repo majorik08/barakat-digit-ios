@@ -36,11 +36,11 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
     }()
     private let numberView: BasePrefixTextField = {
         let view = UITextField(frame: .zero)
-        let filedView = BasePrefixTextField(textField: view)
+        let filedView = BasePrefixTextField(textField: view, keyboardType: .phoneNumber)
         filedView.topLabel.text = "PHONE_NUMBER".localized
         filedView.translatesAutoresizingMaskIntoConstraints = false
         filedView.rightImage.image = UIImage(name: .add_number)
-        filedView.prefixLabel.text = "+992"
+        filedView.countryCodeLable.text = "+992"
         view.leftViewMode = .always
         view.keyboardType = UIKeyboardType.phonePad
         view.borderStyle = .none
@@ -55,6 +55,15 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
     }()
     private let sumView: BaseSumFiled = {
         let view = BaseSumFiled()
+        view.bottomLabel.isHidden = true
+        view.bottomLabel.text = "NO_BALANCE_FOR_PAY".localized
+        view.bottomLabel.textColor = .systemRed
+        return view
+    }()
+    private let infoView: PaymentServiceInfoView = {
+        let view = PaymentServiceInfoView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
         return view
     }()
     private let commentView: PaymentFieldView = {
@@ -72,6 +81,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         return view
     }()
     private var nextButtonBottom: NSLayoutConstraint!
+    private var infoViewHeight: NSLayoutConstraint!
     let viewModel: PaymentsViewModel
     var verifyResult: AppMethods.Payments.TransactionVerify.VerifyResult? = nil
     var verifyKey: String? = nil
@@ -100,12 +110,14 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         self.rootView.addSubview(self.balanceView)
         self.rootView.addSubview(self.numberView)
         self.rootView.addSubview(self.selectorView)
+        self.rootView.addSubview(self.infoView)
         self.rootView.addSubview(self.sumView)
         self.rootView.addSubview(self.commentView)
         self.rootView.addSubview(self.nextButton)
         let rootHeight = self.rootView.heightAnchor.constraint(equalTo: self.scrollView.heightAnchor)
         rootHeight.priority = UILayoutPriority(rawValue: 250)
         self.nextButtonBottom = self.nextButton.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: -20)
+        self.infoViewHeight = self.infoView.heightAnchor.constraint(equalToConstant: 0)
         let width = self.view.frame.width - (Theme.current.mainPaddings * 2)
         NSLayoutConstraint.activate([
             self.scrollView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
@@ -130,12 +142,16 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
             self.selectorView.topAnchor.constraint(equalTo: self.numberView.bottomAnchor, constant: 10),
             self.selectorView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: 0),
             self.selectorView.heightAnchor.constraint(equalToConstant: 140),
+            self.infoView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
+            self.infoView.topAnchor.constraint(equalTo: self.selectorView.bottomAnchor, constant: 10),
+            self.infoView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
+            self.infoViewHeight,
             self.sumView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
-            self.sumView.topAnchor.constraint(equalTo: self.selectorView.bottomAnchor, constant: 10),
+            self.sumView.topAnchor.constraint(equalTo: self.infoView.bottomAnchor, constant: 10),
             self.sumView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.sumView.heightAnchor.constraint(equalToConstant: 64),
+            self.sumView.heightAnchor.constraint(equalToConstant: 82),
             self.commentView.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
-            self.commentView.topAnchor.constraint(equalTo: self.sumView.bottomAnchor, constant: 10),
+            self.commentView.topAnchor.constraint(equalTo: self.sumView.bottomAnchor, constant: 6),
             self.commentView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -Theme.current.mainPaddings),
             self.nextButton.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: Theme.current.mainPaddings),
             self.nextButton.topAnchor.constraint(greaterThanOrEqualTo: self.commentView.bottomAnchor, constant: 20),
@@ -152,7 +168,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
         self.numberView.textField.addTarget(self, action: #selector(reformatAsCardNumber), for: [.editingChanged])
         self.numberView.textField.delegate = self
         self.sumView.configure(param: self.viewModel.sumParam, value: nil)
-        self.commentView.configure(param: self.viewModel.messageParam, value: nil, validate: false, getInfo: false)
+        self.commentView.configure(param: self.viewModel.messageParam, value: nil, getInfo: false)
         self.balanceView.configure(clientBalances: self.viewModel.accountInfo.clientBalances)
         let validNumber = self.numberView.textField.rx.text.orEmpty
         validNumber
@@ -161,7 +177,8 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
             .filter({ $0.count >= 6 })
             .flatMap { str in
                 self.selectorView.configure(services: [])
-                return self.viewModel.loadNumberServices(number: "+992\(str.digits)")
+                self.serviceSelected()
+                return self.viewModel.loadNumberServices(number: "\(self.numberView.selectedCountry.countryPhoneCode)\(str.digits)")
             }
             .subscribe { [weak self] services in
                 self?.selectorView.configure(services: services)
@@ -170,12 +187,18 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
                 
             }.disposed(by: self.viewModel.disposeBag)
         if let ph = self.phoneNumber {
-            if ph.starts(with: "+992") {
-                self.numberView.textField.text = ph.replacingOccurrences(of: "+992", with: "")
-            } else {
-                self.numberView.textField.text = ph.digits
-            }
+            let val = self.parseParams(parse: ph)
+            self.numberView.textField.text = val
             self.numberView.textField.sendActions(for: .editingChanged)
+        }
+    }
+    
+    private func parseParams(parse: String) -> String {
+        do {
+            let pn = try Constants.phoneNumberKit.parse(parse)
+            return pn.adjustedNationalNumber()
+        } catch {
+            return parse
         }
     }
     
@@ -235,6 +258,15 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
     
     func serviceSelected() {
         self.checkFields()
+        guard let selectedService = self.selectorView.selectedService else {
+            self.infoViewHeight.isActive = true
+            self.infoView.infoLabel.text = nil
+            self.infoView.isHidden = true
+            return
+        }
+        self.infoViewHeight.isActive = false
+        self.infoView.isHidden = false
+        self.infoView.infoLabel.text = selectedService.accountInfo.info
     }
     
     func balanceSelected(view: BalanceSelectView) {
@@ -270,13 +302,23 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
             self.nextButton.isEnabled = false
             return false
         }
-        guard let _ = self.selectorView.selectedService else {
+        guard let s = self.selectorView.selectedService, s.accountInfo.available else {
             self.nextButton.isEnabled = false
             return false
         }
         guard let sum = self.sumView.textField.value, sum > 0 else {
             self.nextButton.isEnabled = false
             return false
+        }
+        guard let balance = self.balanceView.selectedBalance else {
+            return false
+        }
+        if let b = balance.balance, b < sum {
+            self.sumView.showHide(show: true)
+            self.nextButton.isEnabled = false
+            return false
+        } else {
+            self.sumView.showHide(show: false)
         }
         self.nextButton.isEnabled = true
         return true
@@ -298,7 +340,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -314,7 +356,7 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -429,10 +471,10 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
                     self.hideProgressView()
                     self.verifyKey = item.verifyKey
                     self.configureCode(amount: sum, balance: selectedBalance, result: result)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.commitPayment(viewToRemove:view, amount: sum, balance: selectedBalance, result: result, verifyKey: "", enteredCode: "")
@@ -466,10 +508,10 @@ class TransferByNumberViewController: BaseViewController, CNContactPickerDelegat
                     guard let self = self else { return }
                     self.hideProgressView()
                     self.coordinator?.navigateToHistoryRecipe(item: item)
-                } onFailure: { [weak self] _ in
+                } onFailure: { [weak self] error in
                     guard let self = self else { return }
                     self.hideProgressView()
-                    self.showServerErrorAlert()
+                    self.showApiError(title: "ERROR".localized, error: error)
                 }.disposed(by: self.viewModel.disposeBag)
         } else {
             self.navigationController?.navigationBar.isHidden = false

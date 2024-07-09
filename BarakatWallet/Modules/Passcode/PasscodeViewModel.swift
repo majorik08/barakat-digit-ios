@@ -44,7 +44,7 @@ class PasscodeViewModel {
     
     let didLogin = PublishSubject<AppStructs.AccountInfo>()
     let didCodeNeeed = PublishSubject<Bool>()
-    let didLoginFailed = PublishSubject<String>()
+    let didLoginFailed = PublishSubject<Error>()
     
     init(authService: AccountService, startFor: StartFor) {
         self.authService = authService
@@ -69,11 +69,7 @@ class PasscodeViewModel {
         }.observe(on: MainScheduler.instance).subscribe { accountInfo in
             self.didLogin.onNext(accountInfo)
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoginFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoginFailed.onNext(error.localizedDescription)
-            }
+            self.didLoginFailed.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -85,11 +81,7 @@ class PasscodeViewModel {
                 self.login()
             }
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoginFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoginFailed.onNext(error.localizedDescription)
-            }
+            self.didLoginFailed.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -97,11 +89,7 @@ class PasscodeViewModel {
         self.authService.signInConfirm(code: code).subscribe { _ in
             self.login()
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoginFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoginFailed.onNext(error.localizedDescription)
-            }
+            self.didLoginFailed.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -114,11 +102,7 @@ class PasscodeViewModel {
         }.observe(on: MainScheduler.instance).subscribe { accountInfo in
             self.didLogin.onNext(accountInfo)
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoginFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoginFailed.onNext(error.localizedDescription)
-            }
+            self.didLoginFailed.onNext(error)
         }.disposed(by: self.disposeBag)
     }
 }

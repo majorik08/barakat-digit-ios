@@ -118,7 +118,7 @@ class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControlle
         return view
     }()
     let viewModel: HistoryViewModel
-    let item: AppStructs.HistoryItem
+    var item: AppStructs.HistoryItem
     weak var coordinator: HistoryCoordinator? = nil
      
     init(viewModel: HistoryViewModel, item: AppStructs.HistoryItem) {
@@ -183,17 +183,17 @@ class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControlle
             self.statusIcon.rightAnchor.constraint(equalTo: self.containerView.rightAnchor, constant: 0),
             self.statusIcon.widthAnchor.constraint(equalToConstant: 55),
             self.statusIcon.heightAnchor.constraint(equalToConstant: 55),
-            self.retryButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
-            self.retryButton.centerXAnchor.constraint(equalTo: self.containerView.centerXAnchor),
-            self.retryButton.heightAnchor.constraint(equalToConstant: 76),
-            self.saveFavButton.leftAnchor.constraint(equalTo: self.containerView.leftAnchor),
-            self.saveFavButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
-            self.saveFavButton.rightAnchor.constraint(equalTo: self.retryButton.leftAnchor, constant: -30),
-            self.saveFavButton.heightAnchor.constraint(equalToConstant: 76),
-            self.recipeButton.leftAnchor.constraint(equalTo: self.retryButton.rightAnchor, constant: 30),
             self.recipeButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
-            self.recipeButton.rightAnchor.constraint(equalTo: self.containerView.rightAnchor),
+            self.recipeButton.centerXAnchor.constraint(equalTo: self.containerView.centerXAnchor),
             self.recipeButton.heightAnchor.constraint(equalToConstant: 76),
+            self.retryButton.leftAnchor.constraint(equalTo: self.containerView.leftAnchor),
+            self.retryButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
+            self.retryButton.rightAnchor.constraint(equalTo: self.recipeButton.leftAnchor, constant: -30),
+            self.retryButton.heightAnchor.constraint(equalToConstant: 76),
+            self.saveFavButton.leftAnchor.constraint(equalTo: self.recipeButton.rightAnchor, constant: 30),
+            self.saveFavButton.topAnchor.constraint(equalTo: self.statusIcon.bottomAnchor, constant: 40),
+            self.saveFavButton.rightAnchor.constraint(equalTo: self.containerView.rightAnchor),
+            self.saveFavButton.heightAnchor.constraint(equalToConstant: 76),
             self.stackView.leftAnchor.constraint(equalTo: self.containerView.leftAnchor, constant: 0),
             self.stackView.topAnchor.constraint(equalTo: self.retryButton.bottomAnchor, constant: 40),
             self.stackView.rightAnchor.constraint(equalTo: self.containerView.rightAnchor, constant: 0),
@@ -204,6 +204,15 @@ class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControlle
         self.saveFavButton.addTarget(self, action: #selector(self.goToSave), for: .touchUpInside)
         self.retryButton.addTarget(self, action: #selector(self.goToRepeat), for: .touchUpInside)
         self.rootView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
+        transactionUpdate
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] info in
+                guard let self = self else { return }
+                if self.item.tran_id == info.0, self.item.status < info.1 {
+                    self.item.status = info.1
+                    self.setStatus()
+                }
+            }).disposed(by: self.viewModel.disposeBag)
         self.configure()
     }
     
@@ -255,7 +264,7 @@ class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControlle
     
     @objc func goToRepeat() {
         if let serviceId = Int(self.item.service), let service = self.viewModel.accountInfo.getService(serviceID: serviceId) {
-            self.coordinator?.navigateToRepetPayment(service: service)
+            self.coordinator?.navigateToRepetPayment(service: service, toAccount: self.item.accountTo)
         }
     }
     
@@ -281,6 +290,11 @@ class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControlle
                     }
                 }.disposed(by: self.viewModel.disposeBag)
         }
+    }
+    
+    func setStatus() {
+        self.statusLabel.textColor = self.item.statusType.color
+        self.statusLabel.text = self.item.statusType.name.uppercased()
     }
     
     func configure() {
@@ -319,7 +333,16 @@ class HistoryDetailsViewController: BaseViewController, AddFavoriteViewControlle
         self.stackView.addArrangedSubview(totalView)
         let fromBill = HistoryInfoItemView(frame: .zero)
         fromBill.titleLabel.text = "HISTORY_FROM_BILL".localized
-        fromBill.infoLabel.text = self.item.accountFrom
+        if let balance = self.viewModel.accountInfo.accounts.first(where: { $0.account == self.item.accountFrom }) {
+            fromBill.infoLabel.text = "\(balance.title)\n\(self.item.accountFrom)"
+        } else {
+            fromBill.infoLabel.text = self.item.accountFrom
+        }
         self.stackView.addArrangedSubview(fromBill)
+        
+        if let serviceId = Int(self.item.service), let _ = AppStructs.ServiceWithoutRepeat(rawValue: serviceId) {
+            self.retryButton.isHidden = true
+            self.saveFavButton.isHidden = true
+        }
     }
 }

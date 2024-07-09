@@ -93,7 +93,8 @@ class BalanceSelectView: UIView, UICollectionViewDelegate, UICollectionViewDataS
         let index = scrollView.contentOffset.x / witdh
         let roundedIndex = index.rounded(.up)
         if self.controlView.numberOfPages > Int(roundedIndex) {
-            self.controlView.setPage(Int(roundedIndex))
+            //self.controlView.setPage(Int(roundedIndex))
+            self.controlView.setPageOffset(roundedIndex)
         } else {
             self.controlView.setPage(self.controlView.numberOfPages - 1)
         }

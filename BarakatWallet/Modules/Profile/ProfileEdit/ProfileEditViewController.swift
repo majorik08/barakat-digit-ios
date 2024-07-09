@@ -226,10 +226,10 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
         self.femaleButton.addTarget(self, action: #selector(self.maleFemaleChanged(_:)), for: .touchUpInside)
         self.nextButton.addTarget(self, action: #selector(self.setInfo(_:)), for: .touchUpInside)
         
-        self.viewModel.didUpdateFailed.subscribe(onNext: { [weak self] message in
+        self.viewModel.didUpdateFailed.subscribe(onNext: { [weak self] error in
             self?.topBar.avatarView.progressView.stopAnimating()
             self?.hideProgressView()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            self?.showApiError(title: "ERROR".localized, error: error)
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didUploadFailed.subscribe(onNext: { [weak self] _ in
             self?.topBar.avatarView.progressView.stopAnimating()
@@ -345,7 +345,7 @@ class ProfileEditViewController: BaseViewController, UIImagePickerControllerDele
     
     @objc func hideKeyboard(_ sender: UIBarButtonItem) {
         self.view.endEditing(true)
-        self.docBirthdayField.fieldView.text = DateUtils.stringFullDate(date: self.dobPicker.date)
+        self.docBirthdayField.fieldView.text = DateUtils.stringFullDate2(date: self.dobPicker.date)
     }
     
     func setInfo() {

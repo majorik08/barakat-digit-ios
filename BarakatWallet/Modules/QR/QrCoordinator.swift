@@ -22,9 +22,13 @@ class QrCoordinator: Coordinator, QRScannerCodeDelegate {
     }
     
     func start() {
-        let vc = QrViewController(config: QRScannerConfiguration.default)
-        vc.delegate = self
-        self.nav.present(vc, animated: true)
+        if self.accountInfo.client.limit.QRPayment {
+            let vc = QrViewController(config: QRScannerConfiguration.default)
+            vc.delegate = self
+            self.nav.present(vc, animated: true)
+        } else {
+            self.nav.showErrorAlert(title: "QR", message: "NEED_IDENTITY_FOR_QR".localized)
+        }
     }
     
     func qrScannerShowMyQr(_ controller: UIViewController) {

@@ -21,8 +21,8 @@ class PaymentsViewModel {
     
     let didLoadServiceInfo = PublishSubject<(String, Bool)>()
     
-    let didLoadPaymentsError = PublishSubject<String>()
-    let didAddFavoriteError = PublishSubject<String>()
+    let didLoadPaymentsError = PublishSubject<Error>()
+    let didAddFavoriteError = PublishSubject<Error>()
     
     var paymentGroups: [AppStructs.PaymentGroup] {
         return self.accountInfo.paymentGroups
@@ -32,17 +32,17 @@ class PaymentsViewModel {
     }
     
     var sumParam: AppStructs.PaymentGroup.ServiceItem.Params {
-        return .init(id: -999, name: "SUMMA".localized, coment: "SUMMA_HINT".localized, keyboard: 1, mask: "", maxLen: 10, minLen: 1, param: 0, prefix: "")
+        return .init(id: -999, name: "SUMMA".localized, coment: "SUMMA_HINT".localized, keyboard: 1, mask: "", maxLen: 10, minLen: 1, param: 0)
     }
     var messageParam: AppStructs.PaymentGroup.ServiceItem.Params {
-        return .init(id: -998, name: "MESSAGE_FOR_RECEIVER".localized, coment: "MESSAGE".localized, keyboard: 3, mask: "", maxLen: 255, minLen: 0, param: 0, prefix: "")
+        return .init(id: -998, name: "MESSAGE_FOR_RECEIVER".localized, coment: "MESSAGE".localized, keyboard: 3, mask: "", maxLen: 255, minLen: 0, param: 0)
     }
     
     var transferToCardService: AppStructs.PaymentGroup.ServiceItem {
-        return .init(id: AppStructs.TransferType.transferToCard.rawValue, name: "TRANSFER_TO_CARD_OPERATION".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [])
+        return .init(id: AppStructs.TransferType.transferToCard.rawValue, name: "TRANSFER_TO_CARD_OPERATION".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [], enable: 0)
     }
     var transferAccountsService: AppStructs.PaymentGroup.ServiceItem {
-        return .init(id: AppStructs.TransferType.transferBetweenAccounts.rawValue, name: "BEETWIN_ACCOUNT_TRANSFER".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [])
+        return .init(id: AppStructs.TransferType.transferBetweenAccounts.rawValue, name: "BEETWIN_ACCOUNT_TRANSFER".localized, image: "", listImage: "", darkImage: "", darkListImage: "", isCheck: 0, params: [], enable: 0)
     }
     
     init(service: PaymentsService, historyService: HistoryService, accountInfo: AppStructs.AccountInfo) {
@@ -57,11 +57,7 @@ class PaymentsViewModel {
             .subscribe { result in
                 self.didLoadPayments.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadPaymentsError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadPaymentsError.onNext(error.localizedDescription)
-            }
+            self.didLoadPaymentsError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -70,11 +66,7 @@ class PaymentsViewModel {
             .subscribe { result in
                 self.didAddFavorite.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didAddFavoriteError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didAddFavoriteError.onNext(error.localizedDescription)
-            }
+            self.didAddFavoriteError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -84,11 +76,7 @@ class PaymentsViewModel {
             .subscribe { result in
                 self.didLoadServiceInfo.onNext((result.info, result.available))
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadPaymentsError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadPaymentsError.onNext(error.localizedDescription)
-            }
+            self.didLoadPaymentsError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     

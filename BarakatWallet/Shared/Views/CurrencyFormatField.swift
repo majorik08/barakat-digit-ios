@@ -16,8 +16,10 @@ class CurrencyFormatField: UIView, UITextFieldDelegate {
  
     private let formatter: NumberFormatter = {
         let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
+        formatter.numberStyle = .decimal
         formatter.currencySymbol = ""
+        formatter.usesGroupingSeparator = true
+        formatter.groupingSeparator = " "
         return formatter
     }()
     let textField: ClosestPositionField = {

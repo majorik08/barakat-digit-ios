@@ -79,16 +79,18 @@ class HomeCoordinator: Coordinator {
     }
     
     func navigateToTransferByNumberView() {
+        guard let service = self.accountInfo.getTransfer(type: .transferToPhone) else { return }
         let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
         payments.parent = self.parent
-        payments.navigateToTransferByNumberView(transferParam: nil)
+        payments.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: false, transferParam: nil, topupCreditCard: nil)
         self.children.append(payments)
     }
     
     func navigateToTransferByAccounts() {
+        guard let service = self.accountInfo.getTransfer(type: .transferBetweenAccounts) else { return }
         let payments = PaymentsCoordinator(nav: self.nav, accountInfo: self.accountInfo)
         payments.parent = self.parent
-        payments.navigateToTransferAccounts(topupCreditCard: nil)
+        payments.navigateToPaymentView(service: service, merchant: nil, favorite: nil, addFavoriteMode: false, transferParam: nil, topupCreditCard: nil)
         self.children.append(payments)
     }
     

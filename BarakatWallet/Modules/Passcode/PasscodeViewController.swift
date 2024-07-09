@@ -407,16 +407,13 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate, VerifyCode
             }
         }.observe(on: MainScheduler.instance).subscribe { [weak self] accountInfo in
             guard let self = self else { return }
+            Constants.Username = accountInfo.client.firstName
             self.hideProgressView()
             self.coordinator?.authSuccess(accountInfo: accountInfo)
         } onFailure: { [weak self] error in
             guard let self = self else { return }
             self.hideProgressView()
-            if let error = error as? NetworkError {
-                self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-            }
+            self.showApiError(title: "ERROR".localized, error: error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -447,11 +444,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate, VerifyCode
             } else {
                 self.keyPadView.updateHashButtonImage(image: nil)
             }
-            if let error = error as? NetworkError {
-                self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-            }
+            self.showApiError(title: "ERROR".localized, error: error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -465,11 +458,7 @@ class PasscodeViewController: BaseViewController, KeyPadViewDelegate, VerifyCode
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                if let error = error as? NetworkError {
-                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-                }
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.disposeBag)
     }
     

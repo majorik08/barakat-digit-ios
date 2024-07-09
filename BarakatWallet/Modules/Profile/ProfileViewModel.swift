@@ -17,7 +17,7 @@ class ProfileViewModel {
     
     let didProfileUpdate = PublishSubject<Void>()
     let didIdentifyUpdate = PublishSubject<AppMethods.Client.IdentifyGet.IdentifyResult>()
-    let didUpdateFailed = PublishSubject<String>()
+    let didUpdateFailed = PublishSubject<Error>()
     let didUploadFailed = PublishSubject<Void>()
     
     let isSendActive = PublishSubject<Bool>()
@@ -47,11 +47,7 @@ class ProfileViewModel {
             .subscribe(onSuccess: { _ in
                 self.didProfileUpdate.onNext(())
             }, onFailure: { error in
-                if let error = error as? NetworkError {
-                    self.didUpdateFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.didUpdateFailed.onNext(error.localizedDescription)
-                }
+                self.didUpdateFailed.onNext(error)
         }).disposed(by: self.disposeBag)
     }
     
@@ -59,11 +55,7 @@ class ProfileViewModel {
         self.profileService.setAvatar(avatar: avatar).observe(on: MainScheduler.instance).subscribe(onSuccess: { _ in
             self.didProfileUpdate.onNext(())
         }, onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didUpdateFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didUpdateFailed.onNext(error.localizedDescription)
-            }
+            self.didUpdateFailed.onNext(error)
         }).disposed(by: self.disposeBag)
     }
     
@@ -71,16 +63,8 @@ class ProfileViewModel {
         self.profileService.setSettings(pushNotify: pushNotify, smsPush: smsPush).subscribe(onSuccess: { _ in
             self.didProfileUpdate.onNext(())
         }, onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didUpdateFailed.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didUpdateFailed.onNext(error.localizedDescription)
-            }
+            self.didUpdateFailed.onNext(error)
         }).disposed(by: self.disposeBag)
-    }
-    
-    func updateDevice(device: AppStructs.Device) {
-        self.profileService.updateDevice(device: device)
     }
     
     func loadIdentifyStatus() {

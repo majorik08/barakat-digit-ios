@@ -34,6 +34,17 @@ class HistoryItemCell: UITableViewCell {
         view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         return view
     }()
+    let infoView: UILabel = {
+        let view = UILabel(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.font = UIFont.regular(size: 15)
+        view.textColor = Theme.current.secondaryTextColor
+        view.numberOfLines = 1
+        view.adjustsFontSizeToFitWidth = true
+        view.minimumScaleFactor = 0.8
+        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return view
+    }()
     let detailView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -63,6 +74,7 @@ class HistoryItemCell: UITableViewCell {
         self.contentView.addSubview(self.rootView)
         self.rootView.addSubview(self.iconView)
         self.rootView.addSubview(self.titleView)
+        self.rootView.addSubview(self.infoView)
         self.rootView.addSubview(self.detailView)
         NSLayoutConstraint.activate([
             self.rootView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: 16),
@@ -73,10 +85,14 @@ class HistoryItemCell: UITableViewCell {
             self.iconView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 0),
             self.iconView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 0),
             self.iconView.widthAnchor.constraint(equalTo: self.iconView.heightAnchor, multiplier: 1),
+            
             self.titleView.leftAnchor.constraint(equalTo: self.iconView.rightAnchor, constant: 10),
             self.titleView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 0),
-            self.titleView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 0),
-            self.titleView.centerYAnchor.constraint(equalTo: self.rootView.centerYAnchor),
+            self.infoView.leftAnchor.constraint(equalTo: self.titleView.leftAnchor),
+            self.infoView.topAnchor.constraint(equalTo: self.titleView.bottomAnchor, constant: 0),
+            self.infoView.rightAnchor.constraint(equalTo: self.titleView.rightAnchor),
+            self.infoView.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 0),
+            
             self.detailView.leftAnchor.constraint(equalTo: self.titleView.rightAnchor, constant: 10),
             self.detailView.topAnchor.constraint(equalTo: self.rootView.topAnchor, constant: 0),
             self.detailView.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -10),
@@ -96,7 +112,7 @@ class HistoryItemCell: UITableViewCell {
         self.iconView.image = nil
     }
     
-    func configure(history: AppStructs.HistoryItem, service: AppStructs.PaymentGroup.ServiceItem?) {
+    func configure(history: AppStructs.HistoryItem, service: AppStructs.PaymentGroup.ServiceItem?, fromMe: Bool) {
         self.titleView.textColor = Theme.current.primaryTextColor
         if history.amount < 0 {
             self.detailView.textColor = Theme.current.primaryTextColor
@@ -111,5 +127,10 @@ class HistoryItemCell: UITableViewCell {
             self.iconView.image = UIImage(name: .wallet_icon)
         }
         self.detailView.text = "\(history.amount.balanceText)"
+        if fromMe {
+            self.infoView.text = history.accountTo
+        } else {
+            self.infoView.text = history.accountFrom
+        }
     }
 }

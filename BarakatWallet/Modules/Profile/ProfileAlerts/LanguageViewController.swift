@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class LanguageViewController: BaseViewController, UITableViewDelegate, UITableViewDataSource  {
     
@@ -129,19 +130,28 @@ class LanguageViewController: BaseViewController, UITableViewDelegate, UITableVi
             return
         }
         if Localize.setLanguage(langCode: lang) {
-            self.viewModel.updateDevice(device: Constants.Device)
-            if let main = self.coordinator?.parent?.parent?.tabBar {
-                let cell = tableView.cellForRow(at: indexPath)
-                let tempView = UIActivityIndicatorView(style: .gray)
-                tempView.startAnimating()
-                cell?.accessoryView = tempView
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
-                    main.languageChanged()
-                    tempView.stopAnimating()
-                    cell?.accessoryView = nil
-                    tableView.reloadData()
-                })
-            }
+            self.viewModel.profileService.updateDevice(device: Constants.Device)
+                .observe(on: MainScheduler.instance)
+                .subscribe { [weak self] result in
+                    guard let self = self else { return }
+                    self.hideProgressView()
+                    if let main = self.coordinator?.parent?.parent?.tabBar {
+                        let cell = tableView.cellForRow(at: indexPath)
+                        let tempView = UIActivityIndicatorView(style: .gray)
+                        tempView.startAnimating()
+                        cell?.accessoryView = tempView
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+                            main.languageChanged()
+                            tempView.stopAnimating()
+                            cell?.accessoryView = nil
+                            tableView.reloadData()
+                        })
+                    }
+                } onFailure: { [weak self] error in
+                    guard let self = self else { return }
+                    self.hideProgressView()
+                    self.showApiError(title: "ERROR".localized, error: error)
+                }.disposed(by: self.viewModel.disposeBag)
         }
     }
     

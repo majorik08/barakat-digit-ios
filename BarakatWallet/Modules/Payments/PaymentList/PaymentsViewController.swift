@@ -80,9 +80,9 @@ class PaymentsViewController: BaseViewController, UITableViewDelegate, UITableVi
             self?.tableView.refreshControl?.endRefreshing()
             self?.tableView.reloadData()
         }.disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didLoadPaymentsError.subscribe(onNext: { [weak self] message in
+        self.viewModel.didLoadPaymentsError.subscribe(onNext: { [weak self] error in
             self?.tableView.refreshControl?.endRefreshing()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            self?.showApiError(title: "ERROR".localized, error: error)
         }).disposed(by: self.viewModel.disposeBag)
         
         if self.viewModel.paymentGroups.isEmpty {

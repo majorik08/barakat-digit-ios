@@ -167,19 +167,7 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
     }
     
     @objc func goToSupport() {
-        self.showProgressView()
-        self.viewModel.profileService.getHelp()
-            .observe(on: MainScheduler.instance)
-            .subscribe { [weak self] item in
-                guard let self = self else { return }
-                self.hideProgressView()
-                guard let number = URL(string: "tel://" + item.callCenter.digits) else { return }
-                UIApplication.shared.open(number, options: [:], completionHandler: nil)
-            } onFailure: { [weak self] _ in
-                guard let self = self else { return }
-                self.hideProgressView()
-                self.showServerErrorAlert()
-            }.disposed(by: self.viewModel.disposeBag)
+        self.coordinator?.navigateToHelp()
     }
     
     @objc func goBack() {

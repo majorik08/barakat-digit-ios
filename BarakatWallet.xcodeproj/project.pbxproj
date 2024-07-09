@@ -25,6 +25,7 @@
 		040C373C2B08ED0D00243385 /* CardOptionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040C373B2B08ED0D00243385 /* CardOptionViews.swift */; };
 		040C373F2B090DFB00243385 /* CardReleaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040C373E2B090DFB00243385 /* CardReleaseViewController.swift */; };
 		040C37412B09128300243385 /* CardFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040C37402B09128300243385 /* CardFeatureView.swift */; };
+		040C3A2D2C13A2B20010F1FD /* ProfileHelpViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040C3A2C2C13A2B20010F1FD /* ProfileHelpViewController.swift */; };
 		0417F6032B6E83C70082A65E /* PaymentConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0417F6022B6E83C70082A65E /* PaymentConfirmView.swift */; };
 		0417F6052B6E83E40082A65E /* PaymentCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0417F6042B6E83E40082A65E /* PaymentCodeView.swift */; };
 		0417F6072B6E83FF0082A65E /* PaymentResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0417F6062B6E83FF0082A65E /* PaymentResultView.swift */; };
@@ -283,6 +284,7 @@
 		040C373B2B08ED0D00243385 /* CardOptionViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardOptionViews.swift; sourceTree = "<group>"; };
 		040C373E2B090DFB00243385 /* CardReleaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReleaseViewController.swift; sourceTree = "<group>"; };
 		040C37402B09128300243385 /* CardFeatureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardFeatureView.swift; sourceTree = "<group>"; };
+		040C3A2C2C13A2B20010F1FD /* ProfileHelpViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileHelpViewController.swift; sourceTree = "<group>"; };
 		0417F6022B6E83C70082A65E /* PaymentConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentConfirmView.swift; sourceTree = "<group>"; };
 		0417F6042B6E83E40082A65E /* PaymentCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentCodeView.swift; sourceTree = "<group>"; };
 		0417F6062B6E83FF0082A65E /* PaymentResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentResultView.swift; sourceTree = "<group>"; };
@@ -585,9 +587,18 @@
 			path = CardRelease;
 			sourceTree = "<group>";
 		};
+		040C3A2E2C13A2B80010F1FD /* ProfileHelp */ = {
+			isa = PBXGroup;
+			children = (
+				040C3A2C2C13A2B20010F1FD /* ProfileHelpViewController.swift */,
+			);
+			path = ProfileHelp;
+			sourceTree = "<group>";
+		};
 		041A9AFE2AECEF220001B62E /* Profile */ = {
 			isa = PBXGroup;
 			children = (
+				040C3A2E2C13A2B80010F1FD /* ProfileHelp */,
 				041CE6742B832ED500F5A1C9 /* ProfileQr */,
 				040498252AF138CB005317F7 /* ProfileAlerts */,
 				0457F3F22AEFF192003130D6 /* ProfileAbout */,
@@ -1617,6 +1628,7 @@
 				04CB57902B8070BB00D5F95A /* BaseSumField.swift in Sources */,
 				0457F4052AEFF857003130D6 /* ProfilePrivacyViewController.swift in Sources */,
 				04C0DCC42AEA66DD00B964B9 /* AppMethods.swift in Sources */,
+				040C3A2D2C13A2B20010F1FD /* ProfileHelpViewController.swift in Sources */,
 				040C373C2B08ED0D00243385 /* CardOptionViews.swift in Sources */,
 				041B83E02ACE903700A9F529 /* QrViewController.swift in Sources */,
 				04C4FC942AFBD32C000F254A /* FavouriteViewModel.swift in Sources */,
@@ -1851,13 +1863,17 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.12;
+				MARKETING_VERSION = 1.0.20;
 				PRODUCT_BUNDLE_IDENTIFIER = tj.barakat.digit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -1888,13 +1904,17 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.12;
+				MARKETING_VERSION = 1.0.20;
 				PRODUCT_BUNDLE_IDENTIFIER = tj.barakat.digit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

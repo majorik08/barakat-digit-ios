@@ -96,9 +96,9 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         self.collectionView.refreshControl!.addTarget(self, action: #selector(reloadMainView), for: .valueChanged)
         self.topBar.configure(viewModel: self.viewModel)
         
-        self.viewModel.didLoadError.subscribe(onNext: { [weak self] message in
+        self.viewModel.didLoadError.subscribe(onNext: { [weak self] error in
             self?.collectionView.refreshControl?.endRefreshing()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            self?.showApiError(title: "ERROR".localized, error: error)
         }).disposed(by: self.viewModel.disposeBag)
         self.viewModel.didLoadServices.subscribe(onNext: { [weak self] _ in
             self?.viewModel.loadFavorites()
@@ -277,7 +277,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         } else if indexPath.section == 3 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "service_list_cell", for: indexPath) as! MainServiceListCell
             cell.delegate = self
-            cell.configure(transfers: self.viewModel.transfers)
+            cell.configure(transfers: self.viewModel.transfers, limit: self.viewModel.accountInfo.client.limit)
             return cell
         } else if indexPath.section == 4 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "vitrina_list_cell", for: indexPath) as! MainVitrinaListCell

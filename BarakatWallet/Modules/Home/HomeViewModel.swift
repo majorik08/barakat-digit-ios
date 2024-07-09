@@ -25,7 +25,7 @@ class HomeViewModel {
     let didLoadCards = PublishSubject<Void>()
     let didLoadRates = PublishSubject<Void>()
     
-    let didLoadError = PublishSubject<String>()
+    let didLoadError = PublishSubject<Error>()
     
     var serviceGroups: [AppStructs.PaymentGroup] {
         return self.accountInfo.paymentGroups
@@ -71,11 +71,7 @@ class HomeViewModel {
             self.accountInfo.accounts = accountInfo.accounts
             self.didLoadAccountInfo.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -85,11 +81,7 @@ class HomeViewModel {
             .subscribe { result in
                 self.didLoadServices.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -98,11 +90,7 @@ class HomeViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe { _ in
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -111,11 +99,7 @@ class HomeViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe { _ in
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -126,11 +110,7 @@ class HomeViewModel {
             self.showcaseList = cashbeks
             self.didLoadShowcase.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -141,11 +121,7 @@ class HomeViewModel {
             self.storiesList = stories
             self.didLoadStories.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -155,11 +131,7 @@ class HomeViewModel {
             .subscribe { cards in
             self.didLoadCards.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -170,11 +142,7 @@ class HomeViewModel {
             self.ratesList = rates
             self.didLoadRates.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
 }

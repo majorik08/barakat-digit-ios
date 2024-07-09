@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import RxSwift
 
 class HistoryRecipeViewController: BaseViewController {
     
@@ -58,7 +59,7 @@ class HistoryRecipeViewController: BaseViewController {
     }()
     
     let viewModel: HistoryViewModel
-    let item: AppStructs.HistoryItem
+    var item: AppStructs.HistoryItem
     weak var coordinator: HistoryCoordinator? = nil
      
     init(viewModel: HistoryViewModel, item: AppStructs.HistoryItem) {
@@ -112,7 +113,21 @@ class HistoryRecipeViewController: BaseViewController {
             self.stampView.bottomAnchor.constraint(equalTo: self.checkView.bottomAnchor, constant: -30),
         ])
         self.shareButton.addTarget(self, action: #selector(self.asImage), for: .touchUpInside)
+        transactionUpdate
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] info in
+                guard let self = self else { return }
+                if self.item.tran_id == info.0, self.item.status < info.1 {
+                    self.item.status = info.1
+                    self.setStatus()
+                }
+            }).disposed(by: self.viewModel.disposeBag)
         self.configure()
+    }
+    
+    func setStatus() {
+        self.stampView.payStatusLabel.textColor = self.item.statusType.color
+        self.stampView.payStatusLabel.text = self.item.statusType.name.uppercased()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -156,7 +171,11 @@ class HistoryRecipeViewController: BaseViewController {
         self.stackView.addArrangedSubview(totalView)
         let fromBill = HistoryInfoItemView(frame: .zero)
         fromBill.titleLabel.text = "HISTORY_FROM_BILL".localized
-        fromBill.infoLabel.text = self.item.accountFrom
+        if let balance = self.viewModel.accountInfo.accounts.first(where: { $0.account == self.item.accountFrom }) {
+            fromBill.infoLabel.text = "\(balance.title)\n\(self.item.accountFrom)"
+        } else {
+            fromBill.infoLabel.text = self.item.accountFrom
+        }
         self.stackView.addArrangedSubview(fromBill)
     }
     

@@ -143,10 +143,10 @@ class PasscodeResetViewController: BaseViewController, VerifyCodeViewControllerD
                 self.hideProgressView()
                 self.help = item
                 self.setHelp(help: item)
-            } onFailure: { [weak self] _ in
+            } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                self.showServerErrorAlert()
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -156,20 +156,19 @@ class PasscodeResetViewController: BaseViewController, VerifyCodeViewControllerD
         }
     }
     
-    func getButton(type: AppMethods.App.GetHelp.GetHelpResult.Socials) -> BaseButtonView {
-        let button = BaseButtonView(frame: .zero)
+    func getButton(type: AppMethods.App.GetHelp.GetHelpResult.Socials) -> CircleImageView {
+        let button = CircleImageView(frame: .zero)
         button.tag = type.id
-        button.circle = true
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.tintColor = Theme.current.whiteColor
         button.heightAnchor.constraint(equalTo: button.widthAnchor, multiplier: 1).isActive = true
-        button.addTarget(self, action: #selector(self.socialTapped(_:)), for: .touchUpInside)
-        button.imageView?.loadImage(filePath: Theme.current.dark ? type.darkLogo : type.logo)
+        button.isUserInteractionEnabled = true
+        button.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.socialTapped(_:))))
+        button.loadImage(filePath: Theme.current.dark ? type.darkLogo : type.logo)
         return button
     }
     
-    @objc func socialTapped(_ sender: BaseButtonView) {
-        guard let soc = self.help?.socials, let item = soc.first(where: { $0.id == sender.tag }), let url = URL(string: item.link) else { return }
+    @objc func socialTapped(_ sender: UITapGestureRecognizer) {
+        guard let soc = self.help?.socials, let item = soc.first(where: { $0.id == sender.view?.tag }), let url = URL(string: item.link) else { return }
         UIApplication.shared.open(url)
     }
     
@@ -190,11 +189,7 @@ class PasscodeResetViewController: BaseViewController, VerifyCodeViewControllerD
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                if let error = error as? NetworkError {
-                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-                }
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -209,11 +204,7 @@ class PasscodeResetViewController: BaseViewController, VerifyCodeViewControllerD
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                if let error = error as? NetworkError {
-                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-                }
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

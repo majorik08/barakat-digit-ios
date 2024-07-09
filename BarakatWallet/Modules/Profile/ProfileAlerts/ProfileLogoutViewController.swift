@@ -145,9 +145,9 @@ class ProfileLogoutViewController: BaseViewController {
                 Constants.Username = nil
                 self?.hideProgressView()
                 self?.coordinator?.logoutFromAccount()
-            } onFailure: { [weak self] _ in
+            } onFailure: { [weak self] error in
                 self?.hideProgressView()
-                self?.showServerErrorAlert()
+                self?.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

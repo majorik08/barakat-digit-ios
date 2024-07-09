@@ -68,8 +68,13 @@ class HistoryViewController: BaseViewController, UITableViewDelegate, UITableVie
             self?.tableView.reloadData()
         }.disposed(by: self.viewModel.disposeBag)
         self.filterView.delegate = self
-        self.filterView.configure(items: [.income(set: false), .expenses(set: false), .sum(from: nil, to: nil), .period(from: nil, to: nil), .operation(type: nil), .payedBy(account: nil, card: nil)])
-        self.viewModel.getHistory()
+        if let a = self.viewModel.forCreditCard {
+            self.filterView.configure(items: [.income(set: false), .expenses(set: false), .sum(from: nil, to: nil), .period(from: nil, to: nil), .operation(type: nil), .payedBy(account: nil, card: a)])
+            self.viewModel.setFilters(filter: .payedBy(account: nil, card: a))
+        } else {
+            self.filterView.configure(items: [.income(set: false), .expenses(set: false), .sum(from: nil, to: nil), .period(from: nil, to: nil), .operation(type: nil), .payedBy(account: nil, card: nil)])
+            self.viewModel.getHistory()
+        }
     }
     
     override func languageChanged() {
@@ -236,7 +241,11 @@ class HistoryViewController: BaseViewController, UITableViewDelegate, UITableVie
         let item = self.viewModel.historySections[indexPath.section].items[indexPath.row]
         let serviceId = Int(item.service) ?? 0
         let service = self.viewModel.accountInfo.getService(serviceID: serviceId)
-        cell.configure(history: item, service: service)
+        if self.viewModel.accountInfo.accounts.contains(where: { $0.account == item.accountFrom }) {
+            cell.configure(history: item, service: service, fromMe: true)
+        } else {
+            cell.configure(history: item, service: service, fromMe: false)
+        }
         return cell
     }
     
@@ -249,7 +258,7 @@ class HistoryViewController: BaseViewController, UITableViewDelegate, UITableVie
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 48
+        return 58
     }
     
     func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {

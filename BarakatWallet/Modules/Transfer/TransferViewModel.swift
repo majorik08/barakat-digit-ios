@@ -35,8 +35,9 @@ class TransferViewModel {
                 }
             }.observe(on: MainScheduler.instance)
     }
-    
+     
     private func loadColor(imagePath: String) -> Single<UIColor> {
+        guard !imagePath.isEmpty else { return Single.just(Theme.current.tintColor) }
         return Single<UIColor>.create { obs in
             APIManager.instance.loadImage(into: nil, filePath: imagePath) { result in
                 if let r = result {

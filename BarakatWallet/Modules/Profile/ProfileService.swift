@@ -18,7 +18,7 @@ protocol ProfileService: Service {
     
     func setSettings(pushNotify: Bool, smsPush: Bool) -> Single<Bool>
     
-    func updateDevice(device: AppStructs.Device)
+    func updateDevice(device: AppStructs.Device) -> Single<Bool>
     
     func logout() -> Single<Bool>
     
@@ -119,8 +119,15 @@ final class ProfileServiceImpl: ProfileService {
         }
     }
     
-    func updateDevice(device: AppStructs.Device) {
-        APIManager.instance.request(.init(AppMethods.Auth.DeviceUpdate(device)), auth: .auth) { _ in }
+    func updateDevice(device: AppStructs.Device) -> Single<Bool> {
+        return Single<Bool>.create { single in
+            APIManager.instance.request(.init(AppMethods.Auth.DeviceUpdate(device)), auth: .auth) { _ in
+                APIManager.instance.refreshToken { result in
+                    single(.success(result))
+                }
+            }
+            return Disposables.create()
+        }
     }
     
     func logout() -> Single<Bool> {

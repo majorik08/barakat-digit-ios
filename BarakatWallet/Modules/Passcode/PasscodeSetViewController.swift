@@ -166,9 +166,22 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, BioAuth
             self?.hideProgressView()
             self?.showBioAuth(accountInfo: info)
         }).disposed(by: self.viewModel.disposeBag)
-        self.viewModel.didLoginFailed.subscribe(onNext: { [weak self] message in
+        self.viewModel.didLoginFailed.subscribe(onNext: { [weak self] error in
             self?.hideProgressView()
-            self?.showErrorAlert(title: "ERROR".localized, message: message)
+            if let error = error as? NetworkError, error.error == ServerErrors.incorrectPinCode.rawValue {
+                switch self?.viewModel.startFor {
+                case .setup(_, let exist, _):
+                    if exist {
+                        self?.passcodeDotView.shakeAnimate()
+                        self?.passcodeDotView.totalDotCount = self?.viewModel.passcodeMinLength ?? 4
+                        self?.passcodeDotView.inputDotCount = 0
+                        self?.dialedNumbersDisplayString = ""
+                    }
+                case .change(_):break
+                case .none:break
+                }
+            }
+            self?.showApiError(title: "ERROR".localized, error: error)
         }).disposed(by: self.viewModel.disposeBag)
         self.setInfo()
     }
@@ -362,11 +375,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, BioAuth
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                if let error = error as? NetworkError {
-                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-                }
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     
@@ -380,11 +389,7 @@ class PasscodeSetViewController: BaseViewController, KeyPadViewDelegate, BioAuth
             } onFailure: { [weak self] error in
                 guard let self = self else { return }
                 self.hideProgressView()
-                if let error = error as? NetworkError {
-                    self.showErrorAlert(title: "ERROR".localized, message: (error.message ?? error.error) ?? error.localizedDescription)
-                } else {
-                    self.showErrorAlert(title: "ERROR".localized, message: error.localizedDescription)
-                }
+                self.showApiError(title: "ERROR".localized, error: error)
             }.disposed(by: self.viewModel.disposeBag)
     }
     

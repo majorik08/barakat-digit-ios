@@ -88,7 +88,7 @@ class BaseSumFiled: UIView {
             self.rootView.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
             self.rootView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: 0),
             self.bottomLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 0),
-            self.bottomLabel.topAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 0),
+            self.bottomLabel.topAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 2),
             self.bottomLabel.rightAnchor.constraint(lessThanOrEqualTo: self.rightAnchor, constant: 0),
             self.bottomLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 0),
             self.topLabel.leftAnchor.constraint(equalTo: self.rootView.leftAnchor, constant: 16),
@@ -101,6 +101,7 @@ class BaseSumFiled: UIView {
             self.textField.topAnchor.constraint(equalTo: self.textFieldTopLabel.bottomAnchor, constant: 0),
             self.textField.rightAnchor.constraint(equalTo: self.rightImage.leftAnchor, constant: -10),
             self.textField.bottomAnchor.constraint(equalTo: self.rootView.bottomAnchor, constant: 0),
+            self.textField.heightAnchor.constraint(equalToConstant: 48),
             self.rightImage.rightAnchor.constraint(equalTo: self.rootView.rightAnchor, constant: -16),
             self.rightImage.heightAnchor.constraint(equalTo: self.rootView.heightAnchor, multiplier: 0.45),
             self.rightImage.widthAnchor.constraint(equalTo: self.rightImage.heightAnchor, multiplier: 1),
@@ -118,6 +119,14 @@ class BaseSumFiled: UIView {
         self.topLabel.text = param.name
         if let v = value, let _ = Double(v) {
             self.textField.textField.text = value
+        }
+    }
+    
+    func showHide(show: Bool) {
+        if show {
+            self.bottomLabel.isHidden = false
+        } else {
+            self.bottomLabel.isHidden = true
         }
     }
 }

@@ -110,6 +110,20 @@ class HistoryViewModel {
         self.accountInfo = accountInfo
         self.historyService = historyService
         self.paymentsService = paymentsService
+        transactionUpdate
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] info in
+                guard let self = self else { return }
+                if let index = self.historySections.firstIndex(where: { $0.items.contains(where: { $0.tran_id == info.0 }) }) {
+                    let item = self.historySections[index]
+                    if let indexItem = item.items.firstIndex(where: {  $0.tran_id == info.0 }) {
+                        if self.historySections[index].items[indexItem].status < info.1 {
+                            self.historySections[index].items[indexItem].status = info.1
+                            self.didHistoryUpdate.onNext(())
+                        }
+                    }
+                }
+            }).disposed(by: self.disposeBag)
     }
     
     func loadEntries() {
@@ -141,8 +155,8 @@ class HistoryViewModel {
             self.filters.amountTo = to
         case .period(let from, let to):
             if let from, let to {
-                self.filters.dateFrom = DateUtils.stringFullDate(date: from)
-                self.filters.dateTo = DateUtils.stringFullDate(date: to)
+                self.filters.dateFrom = DateUtils.stringFullDate2(date: from)
+                self.filters.dateTo = DateUtils.stringFullDate2(date: to)
             } else {
                 self.filters.dateFrom = nil
                 self.filters.dateTo = nil
@@ -154,6 +168,8 @@ class HistoryViewModel {
                 self.filters.account = a.account
             } else if let c = card {
                 self.filters.account = String(c.id)
+            } else {
+                self.filters.account = nil
             }
         }
         self.getHistory()
@@ -192,7 +208,9 @@ class HistoryViewModel {
             guard let itemDate = item.datetime.toDate3() else { continue }
             if let lastSection = sections.last {
                 if lastSection.date.isInSameDay(as: itemDate) {
-                    lastSection.items.append(item)
+                    if !lastSection.items.contains(where: { $0.tran_id == item.tran_id }) {
+                        lastSection.items.append(item)
+                    }
                 } else {
                     sections.append(.init(date: itemDate, items: [item]))
                 }

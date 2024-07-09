@@ -27,7 +27,7 @@ class CardsViewModel {
     let didLoadCategories = PublishSubject<Void>()
     let didLoadCardTypes = PublishSubject<Void>()
     
-    let didLoadError = PublishSubject<String>()
+    let didLoadError = PublishSubject<Error>()
     let disposeBag = DisposeBag()
     
     init(cardService: CardService, paymentsService: PaymentsService, accountInfo: AppStructs.AccountInfo) {
@@ -45,11 +45,7 @@ class CardsViewModel {
             .subscribe { cards in
             self.didLoadCards.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -60,11 +56,7 @@ class CardsViewModel {
             self.availableCardCategories = cats
             self.didLoadCategories.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
     
@@ -75,11 +67,7 @@ class CardsViewModel {
             self.availableCardItems = cats
             self.didLoadCardTypes.onNext(())
         } onFailure: { error in
-            if let error = error as? NetworkError {
-                self.didLoadError.onNext((error.message ?? error.error) ?? error.localizedDescription)
-            } else {
-                self.didLoadError.onNext(error.localizedDescription)
-            }
+            self.didLoadError.onNext(error)
         }.disposed(by: self.disposeBag)
     }
 }

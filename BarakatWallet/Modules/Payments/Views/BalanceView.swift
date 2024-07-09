@@ -136,12 +136,13 @@ class BalanceView: UIView {
         case .wallet(let account):
             if account.isBonus {
                 self.accountNameView.text = "BONUS_ACCOUNT".localized
+                self.cardTypeIconView.image = UIImage(name: .bonus_icon)
             } else {
                 self.accountNameView.text = "WALLET_BALANCE_HINT".localized
+                self.cardTypeIconView.image = UIImage(name: .wallet_icon)
             }
             self.cardBalanceView.text = account.balance.balanceText
             self.cardAuthorView.text = ""
-            self.cardTypeIconView.image = UIImage(name: .wallet_icon)
         case .card(let card):
             let last4 = String(card.pan.suffix(4))
             self.accountNameView.text = "•• \(last4)"

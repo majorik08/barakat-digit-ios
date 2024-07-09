@@ -55,6 +55,7 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
     weak var delegate: HomeViewControllerItemDelegate? = nil
     var services: [AppStructs.PaymentGroup]? = nil
     var transfers: [AppStructs.PaymentGroup.ServiceItem]? = nil
+    var limit: AppStructs.ClientInfo.Limit? = nil
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -127,7 +128,7 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         if let services = self.services {
             cell.configure(service: services[indexPath.item])
         } else if let transfers = self.transfers {
-            cell.configure(transfer: transfers[indexPath.item])
+            cell.configure(transfer: transfers[indexPath.item], limit: self.limit)
         }
         return cell
     }
@@ -185,7 +186,8 @@ class MainServiceListCell: UICollectionViewCell, UICollectionViewDelegate, UICol
         self.controlView.numberOfPages = count
     }
     
-    func configure(transfers: [AppStructs.PaymentGroup.ServiceItem]) {
+    func configure(transfers: [AppStructs.PaymentGroup.ServiceItem], limit: AppStructs.ClientInfo.Limit) {
+        self.limit = limit
         self.emptyView.backgroundColor = Theme.current.plainTableCellColor
         self.titleView.textColor = Theme.current.primaryTextColor
         self.titleView.text = "PAY_SENDERS".localized
@@ -293,8 +295,17 @@ class MainServiceCell: UICollectionViewCell {
         self.iconView.loadImage(filePath: Theme.current.dark ? service.darkImage : service.image)
     }
     
-    func configure(transfer: AppStructs.PaymentGroup.ServiceItem) {
-        self.rootView.backgroundColor = Theme.current.plainTableCellColor
+    func configure(transfer: AppStructs.PaymentGroup.ServiceItem, limit: AppStructs.ClientInfo.Limit?) {
+        if let limit {
+            if limit.transfer || (limit.identifyed == .noIdentified && transfer.isEnabledForNotIden) {
+                self.rootView.backgroundColor = Theme.current.plainTableCellColor
+            } else {
+                self.rootView.backgroundColor = Theme.current.plainTableCellColor.withAlphaComponent(0.5)
+            }
+        } else {
+            self.rootView.backgroundColor = Theme.current.plainTableCellColor
+        }
+        //self.rootView.backgroundColor = Theme.current.plainTableCellColor
         self.rootView.layer.borderColor = Theme.current.secondTintColor.withAlphaComponent(0.3).cgColor
         self.iconContainer.backgroundColor = Theme.current.plainTableBackColor
         self.iconContainer.layer.borderColor = Theme.current.borderColor.cgColor

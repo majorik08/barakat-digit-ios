@@ -66,9 +66,8 @@ class APIManager {
         }
     }
     
-    public func setToken(token: String) {
+    public func setToken(token: String?) {
         self.token = token
-        print(token)
     }
     
     public func headers(auth: Authentication) -> HTTPHeaders {
@@ -100,7 +99,7 @@ class APIManager {
         if req.method != .get {
             req.httpBody = data
         }
-        Logger.log(tag: "NetworkClient", message: "request: \(String(data: data, encoding: .utf8) ??  "")")
+        Logger.log(tag: "NetworkClient", message: "request: \(request.url)\n \(String(data: data, encoding: .utf8) ??  "")")
         AF.request(req).validate().responseData { resp in
             Logger.log(tag: "NetworkClient", message: "statusCode: \(String(describing: resp.response?.statusCode))")
             let requestDecodeError: ResponseModel<Response> = ResponseModel(result: .failure(Self.decodeError))
@@ -110,9 +109,28 @@ class APIManager {
                 do {
                     let natsResp = try self.decoder.decode(ResponseModel<Response>.self, from: data)
                     if case Result.failure(let networkError) = natsResp.result {
-                        self.checkRefreshToken(error: networkError.error, token: self.token)
+                        guard let error = networkError.error else {
+                            completion(natsResp)
+                            return
+                        }
+                        if error == ServerErrors.invalidToken.rawValue {
+                            completion(natsResp)
+                            authExpaired.onNext(())
+                        } else if error == ServerErrors.tokenExpired.rawValue, self.tokenUpdateRetry < 2 {
+                            self.tokenUpdateRetry += 1
+                            self.refreshToken(completion: { result in
+                                if result {
+                                    self.request(request, auth: auth, timeOut: timeOut, completion: completion)
+                                } else {
+                                    completion(natsResp)
+                                }
+                            })
+                        } else {
+                            completion(natsResp)
+                        }
+                    } else {
+                        completion(natsResp)
                     }
-                    completion(natsResp)
                 } catch {
                     Logger.log(tag: "NetworkClient", error: error)
                     completion(requestDecodeError)
@@ -127,8 +145,25 @@ class APIManager {
                 Logger.log(tag: "NetworkClient", message: "failure: \(String(data: data, encoding: .utf8) ??  "")")
                 do {
                     let natsResp = try self.decoder.decode(NetworkError.self, from: data)
-                    self.checkRefreshToken(error: natsResp.error, token: self.token)
-                    completion(.init(result: .failure(natsResp)))
+                    guard let error = natsResp.error else {
+                        completion(.init(result: .failure(natsResp)))
+                        return
+                    }
+                    if error == ServerErrors.invalidToken.rawValue {
+                        completion(.init(result: .failure(natsResp)))
+                        authExpaired.onNext(())
+                    } else if error == ServerErrors.tokenExpired.rawValue, self.tokenUpdateRetry < 2  {
+                        self.tokenUpdateRetry += 1
+                        self.refreshToken(completion: { result in
+                            if result {
+                                self.request(request, auth: auth, timeOut: timeOut, completion: completion)
+                            } else {
+                                completion(.init(result: .failure(natsResp)))
+                            }
+                        })
+                    } else {
+                        completion(.init(result: .failure(natsResp)))
+                    }
                 } catch {
                     Logger.log(tag: "NetworkClient", error: error)
                     completion(requestDecodeError)
@@ -137,18 +172,17 @@ class APIManager {
         }
     }
     
-    func checkRefreshToken(error: String?, token: String?) {
-        guard let error = error, error == ServerErrors.expiredToken.rawValue else { return }
-        guard self.tokenUpdateRetry < 2 else { return }
-        guard let oldToken = token else { return }
-        self.tokenUpdateRetry += 1
+    func refreshToken(completion: @escaping ((_ result: Bool) -> Void)) {
+        guard let tkn = self.token else { return }
         self.request(.init(AppMethods.Auth.RefreshToken(.init())), auth: .auth) { response in
             switch response.result {
             case .success(let token):
-                CoreAccount.updateToken(oldToken: oldToken, newToken: token.token)
+                CoreAccount.updateToken(oldToken: tkn, newToken: token.token)
                 self.token = token.token
+                completion(true)
             case .failure(let error):
-                debugPrint(error)
+                Logger.log(error: error)
+                completion(false)
             }
         }
     }
