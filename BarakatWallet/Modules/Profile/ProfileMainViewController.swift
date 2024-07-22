@@ -90,7 +90,11 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
             self.topAlertBar.infoLabel.text = ""
         case .rejected:
             self.topAlertBar.isHidden = false
-            self.topAlertBar.infoLabel.text = "IDEN_IN_DECLINED".localized
+            if let cause = result.cause {
+                self.topAlertBar.infoLabel.text = "IDEN_IN_DECLINED".localizedFormat(arguments: cause)
+            } else {
+                self.topAlertBar.infoLabel.text = "IDEN_IN_DECLINED_WITHOUTT".localized
+            }
         case .inReview:
             self.topAlertBar.isHidden = false
             self.topAlertBar.infoLabel.text = "IDEN_IN_REVIEW".localized

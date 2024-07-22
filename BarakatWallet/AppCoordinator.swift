@@ -31,6 +31,7 @@ extension Coordinator {
 
 let transactionUpdate = PublishSubject<(String, Int)>()
 let authExpaired = PublishSubject<Void>()
+let accountBlocked = PublishSubject<Void>()
 
 final class AppCoordinator: Coordinator {
     
@@ -49,7 +50,12 @@ final class AppCoordinator: Coordinator {
         authExpaired.observe(on: MainScheduler.instance).subscribe { _ in
             guard let account = CoreAccount.accounts().first else { return }
             let _ = CoreAccount.logout(account: account)
-            self.showLogin(authExpaired: true)
+            self.showLogin(errorText: "AUTH_EXP_HELP".localized)
+        }.disposed(by: self.bag)
+        accountBlocked.observe(on: MainScheduler.instance).subscribe { _ in
+            guard let account = CoreAccount.accounts().first else { return }
+            let _ = CoreAccount.logout(account: account)
+            self.showLogin(errorText: "ACCOUNT_BAN_ERROR".localized)
         }.disposed(by: self.bag)
     }
     
@@ -83,14 +89,14 @@ final class AppCoordinator: Coordinator {
     func start() {
         let accounts = CoreAccount.accounts()
         if accounts.isEmpty {
-            self.showLogin(authExpaired: false)
+            self.showLogin(errorText: nil)
         } else {
             let account = accounts.first!
             self.showPasscode(account: account)
         }
     }
     
-    func showLogin(authExpaired: Bool) {
+    func showLogin(errorText: String?) {
         APIManager.instance.setToken(token: nil)
         let nav = FirstLaunchNavigation(overrideInterfaceStyle: false)
         let login = LoginCoordinator(nav: nav, authService: self.authService)
@@ -105,8 +111,8 @@ final class AppCoordinator: Coordinator {
         }
         self.window.makeKeyAndVisible()
         self.children.append(login)
-        if authExpaired {
-            nav.showErrorAlert(title: "AUTH_EXP".localized, message: "AUTH_EXP_HELP".localized)
+        if let errorText {
+            nav.showErrorAlert(title: "ERROR".localized, message: errorText)
         }
     }
     

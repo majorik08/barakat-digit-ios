@@ -196,7 +196,8 @@
 "SEC_QUIT" = "Quit";
 "INVITE" = "Hi, I'm using %@. Join me! You can download it here: %@";
 "IDEN_IN_REVIEW" = "Your application for online identification is accepted, we will review it soon.\nStatus: UNDER REVIEW";
-"IDEN_IN_DECLINED" = "Your application for online identification is accepted, we will review it soon.\nStatus: DECLINED\nReason for rejection: Poor quality of photos";
+"IDEN_IN_DECLINED" = "Your application for online identification is accepted, we will review it soon.\nStatus: DECLINED\nReason for rejection: %@";
+"IDEN_IN_DECLINED_WITHOUTT" = "Your application for online identification is accepted, we will review it soon.\nStatus: DECLINED\n";
 "APPLY_CONFIRM" = "Confirm action";
 "USE_BIOAUTH_INAPP" = "Use biometrics to sign in?";
 "GRITTINGS_MORNING" = "Good morning";
@@ -301,6 +302,7 @@
 "NEED_IDENTITY_FOR_TRANSFERS" = "Identification needed for Transfers";
 "NEED_IDENTITY_OP" = "Identification needed";
 "GO_IDENTITY" = "Would you like to start the identification process now?";
+"ACCOUNT_BAN_ERROR" = "Your account is temporarily blocked, visit the nearest office for unlocking, or contact us at +992 446301000";
 "0x000" = "The token has expired";
 "0x001" = "Invalid registration data.";
 "1x001" = "Invalid data for verification code confirmation";
@@ -370,3 +372,4 @@
 "7x013" = "Internal error occurred during transfer";
 "7x014" =  "SMS verification disabled";
 "7x015" = "Your account is temporarily locked. To unlock it, please visit the nearest office or contact us at +992 446301000.";
+"1x014" = "Your account is temporarily blocked, visit the nearest office for unlocking, or contact us at +992 446301000";

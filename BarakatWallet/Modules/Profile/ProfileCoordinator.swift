@@ -96,7 +96,7 @@ class ProfileCoordinator: Coordinator {
     }
     
     func logoutFromAccount() {
-        self.parent?.parent?.parent?.showLogin(authExpaired: false)
+        self.parent?.parent?.parent?.showLogin(errorText: nil)
     }
     
     func navigateToAboutApp() {

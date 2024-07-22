@@ -344,6 +344,7 @@ struct AppMethods {
                 let rear: String
                 let selfie: String
                 let status: Int
+                let cause: String?
                 
                 var idStatus: Status {
                     return .init(rawValue: self.status) ?? .notidentified

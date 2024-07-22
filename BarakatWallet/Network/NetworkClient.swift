@@ -116,6 +116,9 @@ class APIManager {
                         if error == ServerErrors.invalidToken.rawValue {
                             completion(natsResp)
                             authExpaired.onNext(())
+                        } else if error == ServerErrors.blockedAccount.rawValue {
+                            completion(natsResp)
+                            accountBlocked.onNext(())
                         } else if error == ServerErrors.tokenExpired.rawValue, self.tokenUpdateRetry < 2 {
                             self.tokenUpdateRetry += 1
                             self.refreshToken(completion: { result in
@@ -152,6 +155,9 @@ class APIManager {
                     if error == ServerErrors.invalidToken.rawValue {
                         completion(.init(result: .failure(natsResp)))
                         authExpaired.onNext(())
+                    } else if error == ServerErrors.blockedAccount.rawValue {
+                        completion(.init(result: .failure(natsResp)))
+                        accountBlocked.onNext(())
                     } else if error == ServerErrors.tokenExpired.rawValue, self.tokenUpdateRetry < 2  {
                         self.tokenUpdateRetry += 1
                         self.refreshToken(completion: { result in

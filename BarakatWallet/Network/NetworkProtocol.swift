@@ -177,4 +177,5 @@ enum ServerErrors: String, Codable {
     case internalErrorDuringTransfer = "7x013"
     case smsVerificationDisabled = "7x014"
     case smsSendingError = "7x015"
+    case blockedAccount = "1x014"
 }

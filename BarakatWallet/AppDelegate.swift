@@ -79,7 +79,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             if let status = data["status"] as? Int, let tranId = data["tranID"] as? String {
                 transactionUpdate.onNext((tranId, status))
             } else if let _ = data["expired"] as? Bool {
-                authExpaired.onNext(())
+                accountBlocked.onNext(())
             }
         }
         completionHandler(.newData)
