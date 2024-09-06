@@ -238,7 +238,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
         }
         let mediaAlert = self.getActionSheet(popOver: sender, barButton: nil)
         let cameraAction = UIAlertAction(title: "CAMERA".localized, style: .default) { (_) in
-            self.imagePickerController.allowsEditing = true
+            self.imagePickerController.allowsEditing = false
             self.imagePickerController.sourceType = .camera
             self.imagePickerController.mediaTypes = [kUTTypeImage as String]
             self.imagePickerController.cameraCaptureMode = .photo
@@ -247,7 +247,7 @@ class IdentifyViewController: BaseViewController, UIImagePickerControllerDelegat
             self.present(self.imagePickerController, animated: true, completion: nil)
         }
         let photoAction = UIAlertAction(title: "PHOTOS".localized, style: .default) { (_) in
-            self.imagePickerController.allowsEditing = true
+            self.imagePickerController.allowsEditing = false
             self.imagePickerController.sourceType = .photoLibrary
             self.imagePickerController.mediaTypes = [kUTTypeImage as String]
             self.present(self.imagePickerController, animated: true, completion: nil)

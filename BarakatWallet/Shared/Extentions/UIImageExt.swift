@@ -183,7 +183,7 @@ extension UIImage {
     
     func scaleImage() -> UIImage {
         let nativeImageSize = CGSize(width: self.size.width * self.scale, height: self.size.height * self.scale)
-        let dimensions = nativeImageSize.fitted(CGSize(width: 1280.0, height: 1280.0))
+        let dimensions = nativeImageSize.fitted(CGSize(width: 1920.0, height: 1920.0))
         return UIImage.scalePhotoImage(self, dimensions: dimensions) ?? self
     }
     

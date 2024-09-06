@@ -175,16 +175,19 @@ class IndentifyMainViewController: BaseViewController {
             self.statusView.topTitle.textColor = .systemRed
             self.nextButton.setTitle("GET_LIMIT".localized, for: .normal)
             self.statusView.topAvatar.image = UIImage(name: .status_one)
+            self.nextButton.isHidden = false
         case .onlineIdentified:
             self.statusView.topTitle.text = "IDENTIFY_ONLINE".localized
             self.statusView.topTitle.textColor = Theme.current.tintColor
             self.nextButton.setTitle("GET_LIMIT".localized, for: .normal)
             self.statusView.topAvatar.image = UIImage(name: .status_two)
+            self.nextButton.isHidden = false
         case .identified:
             self.statusView.topAvatar.image = UIImage(name: .status_three)
             self.statusView.topTitle.text = "IDENTIFIED".localized
             self.statusView.topTitle.textColor = Theme.current.tintColor
             self.nextButton.setTitle("MAKE_CALL".localized, for: .normal)
+            self.nextButton.isHidden = true
             self.loadHelp()
         }
         self.statusView.topAvatar.tintColor = Theme.current.tintColor

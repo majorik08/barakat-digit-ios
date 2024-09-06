@@ -51,7 +51,7 @@
 "SEND_CHECK" = "Ирсоли расид";
 "SHOW_CHECK" = "Расид";
 "CONFIRM" = "Тасдиқ";
-"ERROR" = "Error";
+"ERROR" = "Хатогӣ";
 "PASSCODE_RENTER" = "Рамзро такроран ворид кунед";
 "PASSCODE_ENTER_NEW" = "Рамзи навро ворид намоед";
 "PASSCODE_DONT_MATCH" = "Рамзҳо якхела нестанд. Лутфан, аз нав кушиш намоед.";

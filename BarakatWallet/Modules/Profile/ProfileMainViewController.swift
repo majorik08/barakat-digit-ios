@@ -81,23 +81,28 @@ class ProfileMainViewController: BaseViewController, UITableViewDelegate, UITabl
     }
     
     func setStatus(result: AppMethods.Client.IdentifyGet.IdentifyResult) {
-        switch result.idStatus {
-        case .notidentified:
-            self.topAlertBar.isHidden = true
-            self.topAlertBar.infoLabel.text = ""
-        case .success:
-            self.topAlertBar.isHidden = true
-            self.topAlertBar.infoLabel.text = ""
-        case .rejected:
-            self.topAlertBar.isHidden = false
-            if let cause = result.cause {
-                self.topAlertBar.infoLabel.text = "IDEN_IN_DECLINED".localizedFormat(arguments: cause)
-            } else {
-                self.topAlertBar.infoLabel.text = "IDEN_IN_DECLINED_WITHOUTT".localized
+        if self.viewModel.accountInfo.client.limit.identifyed == .noIdentified  {
+            switch result.idStatus {
+            case .notidentified:
+                self.topAlertBar.isHidden = true
+                self.topAlertBar.infoLabel.text = ""
+            case .success:
+                self.topAlertBar.isHidden = true
+                self.topAlertBar.infoLabel.text = ""
+            case .rejected:
+                self.topAlertBar.isHidden = false
+                if let cause = result.cause {
+                    self.topAlertBar.infoLabel.text = "IDEN_IN_DECLINED".localizedFormat(arguments: cause)
+                } else {
+                    self.topAlertBar.infoLabel.text = "IDEN_IN_DECLINED_WITHOUTT".localized
+                }
+            case .inReview:
+                self.topAlertBar.isHidden = false
+                self.topAlertBar.infoLabel.text = "IDEN_IN_REVIEW".localized
             }
-        case .inReview:
-            self.topAlertBar.isHidden = false
-            self.topAlertBar.infoLabel.text = "IDEN_IN_REVIEW".localized
+        } else {
+            self.topAlertBar.isHidden = true
+            self.topAlertBar.infoLabel.text = ""
         }
     }
     
