@@ -102,7 +102,7 @@ class CurrencyFormatField: UIView, UITextFieldDelegate {
     
     public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         // get new value
-        let originalText = textField.text
+        //let originalText = textField.text
         let text = textField.text as NSString?
         let newValue = text?.replacingCharacters(in: range, with: string)
         let display = newValue != nil ? self.currencyFormat(str: newValue!, decimalPlaces: self.numberOfDecimalPlaces) : nil

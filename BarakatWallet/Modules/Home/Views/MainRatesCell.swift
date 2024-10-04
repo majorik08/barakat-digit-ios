@@ -165,7 +165,7 @@ class RateView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.axis = .vertical
         view.alignment = .fill
-        view.distribution = .fillProportionally
+        view.distribution = .fillEqually
         return view
     }()
     

@@ -82,7 +82,7 @@ class ProfilePrivacyViewController: BaseViewController, UITableViewDelegate, UIT
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let doc = self.docs[indexPath.row]
-        guard let url = URL(string: "https://payment.sharq.tj/mobile/\(doc.fileAddress)") else { return }
+        guard let url = URL(string: "\(Constants.ApiUrl)\(doc.fileAddress)") else { return }
         UIApplication.shared.open(url)
     }
     

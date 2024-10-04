@@ -124,7 +124,7 @@ class HistoryItemCell: UITableViewCell {
             self.iconView.loadImage(filePath: Theme.current.dark ? service.darkListImage : service.listImage)
         } else {
             self.titleView.text = "UNKNOWN".localized
-            self.iconView.image = UIImage(name: .wallet_icon)
+            self.iconView.image = UIImage(name: .wallet_inset)
         }
         self.detailView.text = "\(history.amount.balanceText)"
         if fromMe {

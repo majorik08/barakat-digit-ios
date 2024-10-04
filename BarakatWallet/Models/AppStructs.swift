@@ -408,7 +408,7 @@ struct AppStructs {
             let darkListImage: String
             let isCheck: Int
             let params: [Params]
-            let enable: Int
+            let enable: Int?
             
             var isEnabledForNotIden: Bool {
                 return self.enable == 1

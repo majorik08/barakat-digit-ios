@@ -97,7 +97,7 @@ internal extension UIImage {
         
         case check_dark
         case check_light
-        case checkmark
+        case checkmark_v
         case arrow_up
         case flag_eu
         case flag_ru

@@ -202,7 +202,7 @@ class HistoryFilterPickViewController: BaseViewController, UITableViewDelegate, 
             let filter = self.viewModel.entries[indexPath.row]
             cell.titleView.text = filter.name
             if type?.id == filter.id || (type == nil && filter.id == -1) {
-                cell.iconView.image = UIImage(name: .checkmark)
+                cell.iconView.image = UIImage(name: .checkmark_v)
             } else {
                 cell.iconView.image = nil
             }

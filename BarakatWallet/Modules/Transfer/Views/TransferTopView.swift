@@ -21,6 +21,7 @@ class TransferTopView: UIView {
         view.clipsToBounds = true
         view.layer.cornerRadius = 14
         view.backgroundColor = .clear
+        view.layer.maskedCorners = [.layerMaxXMaxYCorner, .layerMinXMaxYCorner]
         view.startColor = Theme.current.mainGradientStartColor
         view.endColor = Theme.current.mainGradientEndColor
         return view

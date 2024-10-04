@@ -99,7 +99,7 @@ struct Constants {
         }
     }
     
-    var baseUrl = "https://payment.sharq.tj/mobile/swagger/index.html#/"
+    var baseUrl = "https://mobile.barakatmoliya.tj/"
     
     static let keychain: KeychainSwift = {
         let k = KeychainSwift()
@@ -151,7 +151,7 @@ struct Constants {
     }
     
     static var ApiUrl: String {
-        return "https://payment.sharq.tj/mobile/"
+        return "https://mobile.barakatmoliya.tj/"
     }
     
     static var ApiKey: String {
@@ -184,22 +184,6 @@ struct Constants {
     
     static var AppUrl: String {
         return "https://google.tj/"
-    }
-    
-    static var FacebookUrl: String {
-        return "https://google.com"
-    }
-    
-    static var LinkedinUrl: String {
-        return "https://google.com"
-    }
-    
-    static var InstagramUrl: String {
-        return "https://google.com"
-    }
-    
-    static var TelegramUrl: String {
-        return "https://google.com"
     }
     
     static var SupportNumber: String {
