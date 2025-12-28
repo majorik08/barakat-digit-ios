@@ -11,7 +11,7 @@ import RxRelay
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    
+
     var window: UIWindow?
     var appCoordinator: AppCoordinator?
 
@@ -26,7 +26,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         application.registerForRemoteNotifications()
         return true
     }
-    
+
     func configureFonts() {
         UIFont.regular = "Montserrat-Regular"
         UIFont.regularItalic = "Montserrat-Italic"
@@ -37,7 +37,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UIFont.bold = "Montserrat-Bold"
         UIFont.boldItalic = "Montserrat-BoldItalic"
     }
-    
+
     func applicationWillResignActive(_ application: UIApplication) {
         let blurEffect = UIBlurEffect(style: Theme.current.dark ? .dark : .light)
         let blurEffectView = UIVisualEffectView(effect: blurEffect)
@@ -45,18 +45,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         blurEffectView.tag = 221122
         self.window?.addSubview(blurEffectView)
     }
-    
+
     func applicationDidBecomeActive(_ application: UIApplication) {
         self.window?.viewWithTag(221122)?.removeFromSuperview()
     }
-    
+
     func application(_ application: UIApplication, shouldAllowExtensionPointIdentifier extensionPointIdentifier: UIApplication.ExtensionPointIdentifier) -> Bool {
         if extensionPointIdentifier == UIApplication.ExtensionPointIdentifier.keyboard {
             return false
         }
         return true
     }
-    
+
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         DispatchQueue.main.async {
             let token = deviceToken.map { data in String(format: "%02.2hhx", data) }.joined()
@@ -65,10 +65,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 Constants.PushToken = token
                 Constants.PushTokenSent = false
             }
-            Logger.log(tag: "AppDelegate", message: "didRegisterForRemoteNotificationsWithDeviceToken: \(token)")
+            Logger.log(tag: "AppDelegate", message: "didRegisterForRemoteNotificationsWithDeviceToken")
         }
     }
-    
+
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         debugPrint(error)
     }
@@ -85,9 +85,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
         completionHandler(.newData)
-        debugPrint(userInfo)
     }
-    
+
     func applicationDidEnterBackground(_ application: UIApplication) {
         Logger.log(tag: "AppDelegate", message: "applicationDidEnterBackground")
         self.appCoordinator?.applicationDidEnterBackground()

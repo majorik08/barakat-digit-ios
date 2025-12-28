@@ -12,11 +12,13 @@ class RooTabBarViewController: BaseTabBarController, UITabBarControllerDelegate 
     private var tabShadowView: UIView = {
         let view = UIView(frame: .zero)
         view.clipsToBounds = false
+        view.isUserInteractionEnabled = false
         return view
     }()
     private var tabShapeView: UIView = {
         let view = UIView(frame: .zero)
         view.clipsToBounds = true
+        view.isUserInteractionEnabled = false
         return view
     }()
     weak var coordinator: RootTabCoordinator? = nil
@@ -38,8 +40,8 @@ class RooTabBarViewController: BaseTabBarController, UITabBarControllerDelegate 
             self.tabBar.shadowImage = UIImage()
             self.tabBar.backgroundImage = UIImage()
         }
-        self.tabBar.addSubview(self.tabShadowView)
-        self.tabBar.addSubview(self.tabShapeView)
+        self.tabBar.insertSubview(self.tabShadowView, at: 0)
+        self.tabBar.insertSubview(self.tabShapeView, at: 1)
         self.updateShadow()
         self.updateShapeView()
         self.hidesBottomBarWhenPushed = false
@@ -54,8 +56,9 @@ class RooTabBarViewController: BaseTabBarController, UITabBarControllerDelegate 
     }
     
     private func updateShadow() {
-        self.tabShadowView.frame = self.view.frame
-        let shadowPath0 = UIBezierPath(roundedRect: self.tabShadowView.bounds, cornerRadius: 15)
+        let bounds = self.tabBar.bounds
+        self.tabShadowView.frame = bounds
+        let shadowPath0 = UIBezierPath(roundedRect: bounds, cornerRadius: 15)
         let layer0: CALayer
         if let l = self.tabShadowView.layer.sublayers?.first {
             layer0 = l
@@ -68,12 +71,13 @@ class RooTabBarViewController: BaseTabBarController, UITabBarControllerDelegate 
         layer0.shadowOpacity = 0.6
         layer0.shadowRadius = 8
         layer0.shadowOffset = CGSize(width: 0, height: -2)
-        layer0.bounds = self.tabShadowView.bounds
-        layer0.position = self.tabShadowView.center
+        layer0.bounds = bounds
+        layer0.position = CGPoint(x: bounds.midX, y: bounds.midY)
     }
     
     private func updateShapeView() {
-        self.tabShapeView.frame = self.view.frame
+        let bounds = self.tabBar.bounds
+        self.tabShapeView.frame = bounds
         let layer0: CALayer
         if let l = self.tabShapeView.layer.sublayers?.first {
             layer0 = l
@@ -83,8 +87,14 @@ class RooTabBarViewController: BaseTabBarController, UITabBarControllerDelegate 
             self.tabShapeView.layer.cornerRadius = 15
         }
         layer0.backgroundColor = Theme.current.navigationColor.cgColor
-        layer0.bounds = self.tabShapeView.bounds
-        layer0.position = self.tabShapeView.center
+        layer0.bounds = bounds
+        layer0.position = CGPoint(x: bounds.midX, y: bounds.midY)
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        self.updateShadow()
+        self.updateShapeView()
     }
   
     override var preferredStatusBarStyle: UIStatusBarStyle {

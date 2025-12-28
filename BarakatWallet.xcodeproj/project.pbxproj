@@ -263,6 +263,11 @@
 		04FD91362AF3D2C5002C292E /* PaymentItemCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FD91352AF3D2C5002C292E /* PaymentItemCell.swift */; };
 		04FD91382AF3F84E002C292E /* HistoryItemCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FD91372AF3F84E002C292E /* HistoryItemCell.swift */; };
 		04FDAD3C2B84FE570058FB83 /* BasePrefixTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FDAD3B2B84FE570058FB83 /* BasePrefixTextField.swift */; };
+		0F1F10012D0B000000000001 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1F00012D0B000000000001 /* FeatureFlags.swift */; };
+		0F1F10022D0B000000000002 /* DeviceKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1F00022D0B000000000002 /* DeviceKeyService.swift */; };
+		0F1F10032D0B000000000003 /* RequestSigningInterceptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1F00032D0B000000000003 /* RequestSigningInterceptor.swift */; };
+		0F1F10042D0B000000000004 /* PinningConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1F00042D0B000000000004 /* PinningConfig.swift */; };
+		0F1F10052D0B000000000005 /* PublicKeyPinningTrustEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1F00052D0B000000000005 /* PublicKeyPinningTrustEvaluator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -517,6 +522,11 @@
 		04FD91352AF3D2C5002C292E /* PaymentItemCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentItemCell.swift; sourceTree = "<group>"; };
 		04FD91372AF3F84E002C292E /* HistoryItemCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemCell.swift; sourceTree = "<group>"; };
 		04FDAD3B2B84FE570058FB83 /* BasePrefixTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasePrefixTextField.swift; sourceTree = "<group>"; };
+		0F1F00012D0B000000000001 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
+		0F1F00022D0B000000000002 /* DeviceKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceKeyService.swift; sourceTree = "<group>"; };
+		0F1F00032D0B000000000003 /* RequestSigningInterceptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestSigningInterceptor.swift; sourceTree = "<group>"; };
+		0F1F00042D0B000000000004 /* PinningConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinningConfig.swift; sourceTree = "<group>"; };
+		0F1F00052D0B000000000005 /* PublicKeyPinningTrustEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicKeyPinningTrustEvaluator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -844,6 +854,9 @@
 			children = (
 				04F789B02AE82775005B8E68 /* NetworkClient.swift */,
 				04F789B62AE827E6005B8E68 /* NetworkProtocol.swift */,
+				0F1F00032D0B000000000003 /* RequestSigningInterceptor.swift */,
+				0F1F00042D0B000000000004 /* PinningConfig.swift */,
+				0F1F00052D0B000000000005 /* PublicKeyPinningTrustEvaluator.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -881,6 +894,8 @@
 				040498112AF0D314005317F7 /* DateUtils.swift */,
 				04E499EC2B7C5DD800B428F3 /* ContactUtils.swift */,
 				04B812A32B83B228004B7202 /* NotificationManager.swift */,
+				0F1F00012D0B000000000001 /* FeatureFlags.swift */,
+				0F1F00022D0B000000000002 /* DeviceKeyService.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -1485,6 +1500,11 @@
 				0457F3FC2AEFF293003130D6 /* IndentifyStatusView.swift in Sources */,
 				04C4FC872AFBCEBF000F254A /* ShowcaseListViewController.swift in Sources */,
 				04F789B72AE827E6005B8E68 /* NetworkProtocol.swift in Sources */,
+				0F1F10032D0B000000000003 /* RequestSigningInterceptor.swift in Sources */,
+				0F1F10042D0B000000000004 /* PinningConfig.swift in Sources */,
+				0F1F10052D0B000000000005 /* PublicKeyPinningTrustEvaluator.swift in Sources */,
+				0F1F10012D0B000000000001 /* FeatureFlags.swift in Sources */,
+				0F1F10022D0B000000000002 /* DeviceKeyService.swift in Sources */,
 				041A9B202AED50050001B62E /* PhotoPicker.swift in Sources */,
 				04F789872AE7E187005B8E68 /* TransferTypeView.swift in Sources */,
 				04C0DCAF2AEA489000B964B9 /* HomeCoordinator.swift in Sources */,

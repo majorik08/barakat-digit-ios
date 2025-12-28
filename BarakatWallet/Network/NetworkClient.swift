@@ -29,7 +29,24 @@ class APIManager {
     
     static let instance = APIManager()
     
-    private let sessionManager: Alamofire.Session
+    private lazy var deviceKeyService: DeviceKeyService = {
+        let service = DeviceKeyService()
+        service.ensureKeyExists()
+        return service
+    }()
+    private lazy var signingInterceptor: RequestSigningInterceptor = {
+        return RequestSigningInterceptor(deviceKeyService: self.deviceKeyService, tokenProvider: { [weak self] in
+            return self?.token
+        })
+    }()
+    private lazy var sessionManager: Alamofire.Session = {
+        let pinningEnabled = FeatureFlags.pinningEnabled
+        let pinningEvaluators: [String: ServerTrustEvaluating] = PinningConfig.allowedKeyHashes.reduce(into: [String: ServerTrustEvaluating]()) { dict, entry in
+            dict[entry.key] = PublicKeyPinningTrustEvaluator(allowedKeyHashes: entry.value)
+        }
+        let trustManager = pinningEnabled ? ServerTrustManager(allHostsMustBeEvaluated: true, evaluators: pinningEvaluators) : nil
+        return Session(configuration: URLSessionConfiguration.af.default, rootQueue: self.queue, startRequestsImmediately: true, interceptor: self.signingInterceptor, serverTrustManager: trustManager, eventMonitors: [])
+    }()
     private let queue = DispatchQueue(label: "download_queue")
     private let rootPath: String
     private let cachePath: String
@@ -48,7 +65,6 @@ class APIManager {
     private init() {
         self.rootPath = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true).first!
         self.cachePath = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.cachesDirectory, FileManager.SearchPathDomainMask.userDomainMask, true).first!
-        self.sessionManager = Session(configuration: URLSessionConfiguration.af.default, rootQueue: self.queue, startRequestsImmediately: true, eventMonitors: [])
         self.encoder = JSONEncoder()
         self.encoder.dateEncodingStrategy = .millisecondsSince1970
         self.decoder = JSONDecoder()
@@ -99,13 +115,12 @@ class APIManager {
         if req.method != .get {
             req.httpBody = data
         }
-        Logger.log(tag: "NetworkClient", message: "request: \(request.url)\n \(String(data: data, encoding: .utf8) ??  "")")
-        AF.request(req).validate().responseData { resp in
+        Logger.log(tag: "NetworkClient", message: "request: \(request.method.rawValue) \(request.url)")
+        self.sessionManager.request(req).validate().responseData { resp in
             Logger.log(tag: "NetworkClient", message: "statusCode: \(String(describing: resp.response?.statusCode))")
             let requestDecodeError: ResponseModel<Response> = ResponseModel(result: .failure(Self.decodeError))
             switch resp.result {
             case .success(let data):
-                Logger.log(tag: "NetworkClient", message: "response: \(String(data: data, encoding: .utf8) ??  "")")
                 do {
                     let natsResp = try self.decoder.decode(ResponseModel<Response>.self, from: data)
                     if case Result.failure(let networkError) = natsResp.result {
@@ -132,6 +147,7 @@ class APIManager {
                             completion(natsResp)
                         }
                     } else {
+                        self.tokenUpdateRetry = 0
                         completion(natsResp)
                     }
                 } catch {
@@ -140,12 +156,14 @@ class APIManager {
                 }
             case .failure(let error):
                 Logger.log(tag: "NetworkClient", error: error, send: true)
+                if FeatureFlags.pinningEnabled, case AFError.serverTrustEvaluationFailed(let reason) = error {
+                    Logger.log(tag: "NetworkClient", message: "TLS pinning failed: \(reason). Требуется обновление приложения.")
+                }
                 guard let data = resp.data else {
                     let networkError: ResponseModel<Response> = .init(result: .failure(.init(message: error.localizedDescription, error: String(describing: resp.response?.statusCode))))
                     completion(networkError)
                     return
                 }
-                Logger.log(tag: "NetworkClient", message: "failure: \(String(data: data, encoding: .utf8) ??  "")")
                 do {
                     let natsResp = try self.decoder.decode(NetworkError.self, from: data)
                     guard let error = natsResp.error else {
@@ -185,6 +203,7 @@ class APIManager {
             case .success(let token):
                 CoreAccount.updateToken(oldToken: tkn, newToken: token.token)
                 self.token = token.token
+                self.tokenUpdateRetry = 0
                 completion(true)
             case .failure(let error):
                 Logger.log(error: error)
@@ -231,7 +250,7 @@ class APIManager {
             } else {
                 let localUrl = self.getFileUrl(type: .image, name: hash)
                 let url = "\(Constants.ApiUrl)/\(filePath)"
-                AF.download(url, method: .get, headers: self.fileHeaders(auth: .auth), to:  { temporaryURL, response in
+                self.sessionManager.download(url, method: .get, headers: self.fileHeaders(auth: .auth), to:  { temporaryURL, response in
                     return (localUrl, [.removePreviousFile, .createIntermediateDirectories])
                 }).downloadProgress { progress in
                     print("downloadProgress: \(progress.fractionCompleted)")
@@ -253,7 +272,7 @@ class APIManager {
     }
     
     func startUpload(file: URL, completion: @escaping ((_ result: String?) -> Void)) {
-        AF.upload(multipartFormData: { multipartFormData in
+        self.sessionManager.upload(multipartFormData: { multipartFormData in
             multipartFormData.append(file, withName: "file", fileName: file.lastPathComponent, mimeType: "image/jpeg")
         }, to: "\(Constants.ApiUrl)/files/file", method: .post, headers: self.fileHeaders(auth: .auth))
         .uploadProgress { progress in

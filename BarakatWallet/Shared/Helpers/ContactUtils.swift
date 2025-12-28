@@ -32,7 +32,8 @@ public class ContactUtils {
             })
         case .restricted,.denied:
             completion(false, true)
-        @unknown default: break
+        @unknown default:
+            completion(false, true)
         }
     }
     

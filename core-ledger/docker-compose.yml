@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: core
+      POSTGRES_PASSWORD: core
+      POSTGRES_DB: core
+    ports:
+      - "5432:5432"
+    volumes:
+      - core-ledger-pg:/var/lib/postgresql/data
+
+  core-ledger:
+    build: .
+    environment:
+      CORE_LEDGER_DB_URL: postgres://core:core@postgres:5432/core?sslmode=disable
+      CORE_LEDGER_GRPC_ADDR: :8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+
+volumes:
+  core-ledger-pg:

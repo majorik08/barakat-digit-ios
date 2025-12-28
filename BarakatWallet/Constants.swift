@@ -151,7 +151,7 @@ struct Constants {
     }
     
     static var ApiUrl: String {
-        return "https://mobile.barakatmoliya.tj/"
+        return "http://localhost:3000/"
     }
     
     static var ApiKey: String {

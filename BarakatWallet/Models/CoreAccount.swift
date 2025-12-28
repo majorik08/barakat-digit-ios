@@ -62,10 +62,9 @@ final class CoreAccount: Codable {
                 let accounts = try dec.decode([CoreAccount].self, from: data)
                 return accounts
             } catch {
-                debugPrint(error)
+                Logger.log(tag: "CoreAccount", message: "Failed to decode accounts, removing corrupted entry")
+                Constants.keychain.delete(Constants.DeviceId)
             }
-        } else {
-            Constants.keychain.clear()
         }
         return []
     }
