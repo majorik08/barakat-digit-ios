@@ -253,7 +253,7 @@ class MainCardCell: UICollectionViewCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         // Optimize shadow performance by setting shadowPath
-        let shadowPath = UIBezierPath(roundedRect: rootView.bounds, cornerRadius: 16)
+        let shadowPath = UIBezierPath(roundedRect: rootView.bounds, cornerRadius: rootView.layer.cornerRadius)
         rootView.layer.shadowPath = shadowPath.cgPath
     }
     

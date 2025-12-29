@@ -83,11 +83,11 @@ class HeaderView: UIView {
     }
     
     func themeChanged(newTheme: Theme) {
-        self.avatarView.layer.borderColor = Theme.current.whiteColor.cgColor
+        self.avatarView.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor // Match modern styling
         self.avatarView.backgroundColor = Theme.current.secondTintColor
         self.menuView.imageView?.tintColor = Theme.current.whiteColor
         self.notifyView.imageView?.tintColor = Theme.current.whiteColor
-        self.searchView.layer.borderColor = Theme.current.whiteColor.cgColor
+        self.searchView.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor // Match modern styling
         self.searchView.leftIcon.tintColor = Theme.current.whiteColor
         self.searchView.searchField.textColor = Theme.current.whiteColor
     }
