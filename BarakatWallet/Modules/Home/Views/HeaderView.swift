@@ -75,6 +75,13 @@ class HeaderView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Optimize avatar shadow performance with shadowPath
+        let shadowPath = UIBezierPath(ovalIn: avatarView.bounds)
+        avatarView.layer.shadowPath = shadowPath.cgPath
+    }
+    
     func themeChanged(newTheme: Theme) {
         self.avatarView.layer.borderColor = Theme.current.whiteColor.cgColor
         self.avatarView.backgroundColor = Theme.current.secondTintColor

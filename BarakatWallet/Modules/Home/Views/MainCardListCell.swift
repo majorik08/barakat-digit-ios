@@ -250,6 +250,13 @@ class MainCardCell: UICollectionViewCell {
         self.cardTypeIconView.image = nil
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Optimize shadow performance by setting shadowPath
+        let shadowPath = UIBezierPath(roundedRect: rootView.bounds, cornerRadius: 16)
+        rootView.layer.shadowPath = shadowPath.cgPath
+    }
+    
     func configure(card: AppStructs.CreditDebitCard?) {
         if let card = card {
             self.rootView.endColor = Theme.current.cardGradientEndColor
