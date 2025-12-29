@@ -31,9 +31,13 @@ class AccountInfoView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.tintColor = Theme.current.whiteColor
         view.setImage(UIImage(name: .plus_icon), for: .normal)
-        view.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.19)
+        view.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.25) // Slightly more visible
         view.imageView?.contentMode = .scaleAspectFit
         view.imageEdgeInsets = .init(top: 4, left: 4, bottom: 4, right: 4)
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 4
+        view.layer.shadowOpacity = 0.1
         return view
     }()
     let hideButton: UIButton = {

@@ -34,7 +34,7 @@ public class Theme {
     public var secondaryTextColor: UIColor = UIColor(red:0.49, green:0.55, blue:0.60, alpha:1.0)
    
     public var groupedTableBackColor: UIColor = UIColor(red: 0.97, green: 0.97, blue: 1.00, alpha: 1.00)
-    public var plainTableBackColor: UIColor = .white
+    public var plainTableBackColor: UIColor = UIColor(red: 0.98, green: 0.98, blue: 0.99, alpha: 1.00) // Lighter modern background
     public var groupedTableCellColor: UIColor = .white
     public var plainTableCellColor: UIColor = UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1.00)
     public var groupedTableSeparatorColor: UIColor = UIColor(red: 0.783922, green: 0.780392, blue: 0.8, alpha: 1)
