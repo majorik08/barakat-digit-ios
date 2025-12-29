@@ -14,8 +14,13 @@ class HeaderView: UIView {
         let view = AvatarImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFill
-        view.layer.borderColor = Theme.current.whiteColor.cgColor
-        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor // More subtle border
+        view.layer.borderWidth = 2 // Slightly thicker for modern look
+        // Add subtle shadow for depth
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 4
+        view.layer.shadowOpacity = 0.15
         return view
     }()
     let searchView: CustomSearchBar = {
@@ -106,9 +111,10 @@ class CustomSearchBar: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        self.layer.borderColor = Theme.current.whiteColor.cgColor
-        self.layer.borderWidth = 1
-        self.layer.cornerRadius = 18
+        self.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor // More subtle border
+        self.layer.borderWidth = 1.5
+        self.layer.cornerRadius = 20 // Slightly more rounded
+        self.backgroundColor = UIColor.white.withAlphaComponent(0.15) // Frosted glass effect
         self.clipsToBounds = true
         self.addSubview(self.leftIcon)
         self.addSubview(self.searchField)
