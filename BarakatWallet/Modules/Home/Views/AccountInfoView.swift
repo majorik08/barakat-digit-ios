@@ -13,16 +13,16 @@ class AccountInfoView: UIView {
     let balanceLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 25)
-        view.textColor = .black
+        view.font = UIFont.bold(size: 32) // Much larger and bolder
+        view.textColor = .white
         view.text = "00.0 с."
         return view
     }()
     let bonusLabel: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.regular(size: 16)
-        view.textColor = .black
+        view.font = UIFont.medium(size: 15) // Slightly larger
+        view.textColor = UIColor.white.withAlphaComponent(0.85) // Slightly transparent for hierarchy
         view.text = "00.0 с. bonus"
         return view
     }()
@@ -31,9 +31,13 @@ class AccountInfoView: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.tintColor = Theme.current.whiteColor
         view.setImage(UIImage(name: .plus_icon), for: .normal)
-        view.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.19)
+        view.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.25) // Slightly more visible
         view.imageView?.contentMode = .scaleAspectFit
         view.imageEdgeInsets = .init(top: 4, left: 4, bottom: 4, right: 4)
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 4
+        view.layer.shadowOpacity = 0.1
         return view
     }()
     let hideButton: UIButton = {
@@ -66,11 +70,11 @@ class AccountInfoView: UIView {
             self.balanceLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings),
             self.balanceLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 10),
             self.balanceLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -Theme.current.mainPaddings),
-            self.balanceLabel.heightAnchor.constraint(equalToConstant: 24),
+            self.balanceLabel.heightAnchor.constraint(equalToConstant: 38), // Increased for larger font
             self.bonusLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Theme.current.mainPaddings + 1.5),
-            self.bonusLabel.topAnchor.constraint(equalTo: self.balanceLabel.bottomAnchor, constant: 6),
+            self.bonusLabel.topAnchor.constraint(equalTo: self.balanceLabel.bottomAnchor, constant: 4), // Reduced spacing
             self.bonusLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10),
-            self.bonusLabel.heightAnchor.constraint(equalToConstant: 16),
+            self.bonusLabel.heightAnchor.constraint(equalToConstant: 18), // Increased for larger font
             self.plusButton.leftAnchor.constraint(equalTo: self.bonusLabel.rightAnchor, constant: 10),
             self.plusButton.bottomAnchor.constraint(equalTo: self.bonusLabel.bottomAnchor, constant: 0),
             self.plusButton.heightAnchor.constraint(equalToConstant: 26),

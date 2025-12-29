@@ -27,12 +27,12 @@ class MainTopBarView: UIView {
     }()
     private var cornerView: GradientView = {
         let view = GradientView()
-        view.radius = 14
+        view.radius = 24 // Larger modern radius
         view.backgroundColor = .clear
         view.startColor = Theme.current.mainGradientStartColor
         view.endColor = Theme.current.mainGradientEndColor
-        view.startPoint = .init(x: 0, y: 0.5)
-        view.endPoint = .init(x: 1, y: 0)
+        view.startPoint = .init(x: 0, y: 0)
+        view.endPoint = .init(x: 1, y: 1) // Diagonal gradient for modern look
         return view
     }()
     private var shadowLayer: CALayer?

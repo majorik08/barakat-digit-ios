@@ -35,7 +35,7 @@ class HomeViewController: BaseViewController, UIScrollViewDelegate, UICollection
         view.register(MainFavouriteListCell.self, forCellWithReuseIdentifier: "favourite_list_cell")
         view.register(MainRatesCell.self, forCellWithReuseIdentifier: "rates_cell")
         view.backgroundColor = .clear
-        view.contentInset = .init(top: 20, left: 0, bottom: 20, right: 0)
+        view.contentInset = .init(top: 24, left: 0, bottom: 24, right: 0) // Increased spacing
         return view
     }()
     lazy var topViewMinHeight: CGFloat = {
