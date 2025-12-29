@@ -138,19 +138,24 @@ class MainCardCell: UICollectionViewCell {
     let rootView: GradientView = {
         let view = GradientView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 10
-        view.clipsToBounds = true
-        view.layer.borderColor = Theme.current.secondTintColor.withAlphaComponent(0.3).cgColor
-        view.layer.borderWidth = 0.5
+        view.layer.cornerRadius = 16 // Modern larger radius
+        view.clipsToBounds = false // Allow shadows
+        view.layer.borderColor = UIColor.clear.cgColor
+        view.layer.borderWidth = 0
         view.startColor = Theme.current.cardGradientStartColor
         view.endColor = Theme.current.cardGradientEndColor
+        // Add shadow for depth
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 4)
+        view.layer.shadowRadius = 12
+        view.layer.shadowOpacity = 0.15
         return view
     }()
     let mainImage: UIImageView = {
         let view = UIImageView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
         view.contentMode = .scaleAspectFit
-        view.layer.cornerRadius = 10
+        view.layer.cornerRadius = 16 // Match card radius
         view.clipsToBounds = true
         view.backgroundColor = .clear
         return view
@@ -158,7 +163,7 @@ class MainCardCell: UICollectionViewCell {
     let cardNumberView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.medium(size: 14)
+        view.font = UIFont.medium(size: 15) // Slightly larger
         view.textColor = .white
         view.numberOfLines = 1
         view.adjustsFontSizeToFitWidth = true
@@ -168,7 +173,7 @@ class MainCardCell: UICollectionViewCell {
     let cardBalanceView: UILabel = {
         let view = UILabel(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.font = UIFont.medium(size: 14)
+        view.font = UIFont.semibold(size: 16) // Bolder and larger
         view.textColor = .white
         view.numberOfLines = 1
         view.adjustsFontSizeToFitWidth = true

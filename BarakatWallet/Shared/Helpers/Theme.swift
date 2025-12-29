@@ -19,11 +19,11 @@ public class Theme {
     public var dark: Bool = false
     public var lightStatusBar: Bool = false
     public var searchBarTint: UIColor? = nil
-    public var tintColor: UIColor = UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 1.00)
-    public var secondTintColor: UIColor = UIColor(red: 0.58, green: 0.88, blue: 0.89, alpha: 1.00)
-    public var thirdColor: UIColor = UIColor(red: 0.98, green: 0.73, blue: 0.28, alpha: 1.00)
-    public var grayColor: UIColor = UIColor(red: 0.969, green: 0.973, blue: 0.98, alpha: 1)
-    public var shadowColor: UIColor = UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 0.38)
+    public var tintColor: UIColor = UIColor(red: 0.00, green: 0.82, blue: 0.88, alpha: 1.00) // Modern vibrant teal
+    public var secondTintColor: UIColor = UIColor(red: 0.40, green: 0.90, blue: 0.94, alpha: 1.00) // Lighter teal
+    public var thirdColor: UIColor = UIColor(red: 1.00, green: 0.70, blue: 0.20, alpha: 1.00) // Vibrant orange
+    public var grayColor: UIColor = UIColor(red: 0.96, green: 0.97, blue: 0.98, alpha: 1)
+    public var shadowColor: UIColor = UIColor(red: 0.00, green: 0.82, blue: 0.88, alpha: 0.25) // Softer shadow
     public var borderColor: UIColor = UIColor(red: 0.49, green: 0.88, blue: 0.89, alpha: 1.00)
     public var dimColor: UIColor = UIColor(red: 0.00, green: 0.04, blue: 0.15, alpha: 0.2)
    
@@ -42,10 +42,10 @@ public class Theme {
     public var groupedSelectedCellBackground: UIColor = UIColor(red:0.85, green:0.85, blue:0.85, alpha:1.0)
     public var plainSelectedCellBackground: UIColor = UIColor(red:0.85, green:0.85, blue:0.85, alpha:1.0)
     
-    public var mainGradientStartColor: UIColor = UIColor(red: 0.11, green: 0.70, blue: 0.71, alpha: 1.00)
-    public var mainGradientEndColor: UIColor = UIColor(red: 0.05, green: 0.79, blue: 0.80, alpha: 1.00)
-    public var cardGradientStartColor = UIColor(red: 0.407, green: 0.572, blue: 0.746, alpha: 1)
-    public var cardGradientEndColor = UIColor(red: 0, green: 0, blue: 0, alpha: 1)
+    public var mainGradientStartColor: UIColor = UIColor(red: 0.00, green: 0.74, blue: 0.83, alpha: 1.00) // Vibrant gradient start
+    public var mainGradientEndColor: UIColor = UIColor(red: 0.00, green: 0.87, blue: 0.92, alpha: 1.00) // Vibrant gradient end
+    public var cardGradientStartColor = UIColor(red: 0.20, green: 0.25, blue: 0.35, alpha: 1) // Dark elegant start
+    public var cardGradientEndColor = UIColor(red: 0.10, green: 0.12, blue: 0.18, alpha: 1) // Dark elegant end
     
 //    public var whiteColor: UIColor = UIColor(red: 0.976, green: 0.976, blue: 0.976, alpha: 1)
 //

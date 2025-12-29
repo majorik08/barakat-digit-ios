@@ -137,9 +137,9 @@ struct Constants {
     }
     
     static var cardColors: [(start: UIColor, end: UIColor)] = [
-        (start: UIColor(red: 0.11, green: 0.70, blue: 0.71, alpha: 1.00), end: UIColor(red: 0.11, green: 0.70, blue: 0.71, alpha: 1.00)),
-        (start: UIColor(red: 0.09, green: 0.12, blue: 0.15, alpha: 1.00), end: UIColor(red: 0.09, green: 0.12, blue: 0.15, alpha: 1.00)),
-        (start: UIColor(red: 0.03, green: 0.36, blue: 0.22, alpha: 1.00), end: UIColor(red: 0.03, green: 0.36, blue: 0.22, alpha: 1.00))
+        (start: UIColor(red: 0.00, green: 0.82, blue: 0.88, alpha: 1.00), end: UIColor(red: 0.00, green: 0.65, blue: 0.75, alpha: 1.00)), // Modern teal gradient
+        (start: UIColor(red: 0.15, green: 0.17, blue: 0.22, alpha: 1.00), end: UIColor(red: 0.08, green: 0.10, blue: 0.14, alpha: 1.00)), // Dark elegant gradient
+        (start: UIColor(red: 0.20, green: 0.55, blue: 0.35, alpha: 1.00), end: UIColor(red: 0.12, green: 0.42, blue: 0.25, alpha: 1.00)) // Modern green gradient
     ]
     
     static var DeviceId: String {
@@ -191,11 +191,11 @@ struct Constants {
     }
     
     static var DarkGlobalColor: UIColor {
-        return UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 1.00)
+        return UIColor(red: 0.00, green: 0.82, blue: 0.88, alpha: 1.00) // Modern vibrant teal
     }
     
     static var LighGlobalColor: UIColor {
-        return UIColor(red: 0.06, green: 0.85, blue: 0.86, alpha: 1.00)
+        return UIColor(red: 0.00, green: 0.82, blue: 0.88, alpha: 1.00) // Modern vibrant teal
     }
     
     static var phoneNumberKit = PhoneNumberKit()
